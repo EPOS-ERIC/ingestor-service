@@ -1,18 +1,22 @@
 package org.epos.core;
 
-import abstractapis.AbstractAPI;
-import dao.EposDataModelDAO;
-import model.*;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
-import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.riot.Lang;
-import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.util.iterator.ExtendedIterator;
 import org.epos.eposdatamodel.EPOSDataModelEntity;
 import org.epos.eposdatamodel.Group;
@@ -20,13 +24,12 @@ import org.epos.eposdatamodel.IriTemplate;
 import org.epos.eposdatamodel.LinkedEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import usermanagementapis.UserGroupManagementAPI;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.lang.reflect.Field;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
+import abstractapis.AbstractAPI;
+import dao.EposDataModelDAO;
+import model.Ontology;
+import model.StatusType;
+import usermanagementapis.UserGroupManagementAPI;
 
 public class MetadataPopulator {
 
@@ -35,7 +38,7 @@ public class MetadataPopulator {
     private static BeansCreation beansCreation = new BeansCreation();
 
     public static Model retrieveModelMapping(String inputMappingModel){
-        EposDataModelDAO eposDataModelDAO = new EposDataModelDAO();
+        EposDataModelDAO eposDataModelDAO = EposDataModelDAO.getInstance();
 
         /**
          * GET ALL ONTOLOGIES FROM DB AND POPULATE MODEL AND MODEL MAPPING
@@ -181,7 +184,7 @@ public class MetadataPopulator {
     }
 
 	private static Map<String, LinkedEntity> populateMetadata(Model model, String inputMappingModel,
-			Group selectedGroup) {
+			Group selectedGroup, StatusType status) {
 		/** RETRIEVE MAPPING MODEL AND MODEL FROM TTL **/
 		Map<String, LinkedEntity> returnMap = new HashMap<>();
 		Model modelmapping = retrieveModelMapping(inputMappingModel);
@@ -235,7 +238,7 @@ public class MetadataPopulator {
 			try {
 				AbstractAPI api = AbstractAPI.retrieveAPI(eposDataModelEntity.getClass().getSimpleName().toUpperCase());
 				// LOGGER.debug("Ingesting -> "+eposDataModelEntity);
-				LinkedEntity le = api.create(eposDataModelEntity, StatusType.PUBLISHED, null, null);
+				LinkedEntity le = api.create(eposDataModelEntity, status, null, null);
 				returnMap.put(le.getUid(), le);
 			} catch (Exception apiCreationException) {
 				apiCreationException.printStackTrace();
@@ -253,13 +256,13 @@ public class MetadataPopulator {
 		return returnMap;
 	}
 
-    public static Map<String,LinkedEntity> startMetadataPopulation(String url, String inputMappingModel, Group selectedGroup){
+    public static Map<String,LinkedEntity> startMetadataPopulation(String url, String inputMappingModel, Group selectedGroup, StatusType status){
 		Model model = retrieveMetadataModelFromTTL(url);
-		return populateMetadata(model, inputMappingModel, selectedGroup);
+		return populateMetadata(model, inputMappingModel, selectedGroup, status);
     }
 
-	public static Map<String, LinkedEntity> startMetadataPopulationFromContent(String ttlContent, String inputMappingModel, Group selectedGroup) {
+	public static Map<String, LinkedEntity> startMetadataPopulationFromContent(String ttlContent, String inputMappingModel, Group selectedGroup, StatusType status) {
 		Model model = retrieveMetadataModelFromString(ttlContent);
-		return populateMetadata(model, inputMappingModel, selectedGroup);
+		return populateMetadata(model, inputMappingModel, selectedGroup, status);
 	}
 }

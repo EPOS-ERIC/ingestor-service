@@ -31,7 +31,7 @@ public class CacheInvalidationApiController implements CacheInvalidationApi {
 
 	@Override
 	public ResponseEntity<Object> resourcesInvalidationCache() {
-		EposDataModelDAO.clearAllCaches();
+		EposDataModelDAO.getInstance().clearAllCaches();
 		return new ResponseEntity<>(HttpStatus.OK);
 	}
 }

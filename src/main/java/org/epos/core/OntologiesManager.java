@@ -47,7 +47,7 @@ public class OntologiesManager {
     }
 
     public static List retrieveOntologies() {
-        EposDataModelDAO eposDataModelDAO = new EposDataModelDAO();
+        EposDataModelDAO eposDataModelDAO = EposDataModelDAO.getInstance();
 
         return eposDataModelDAO.getAllFromDB(Ontology.class);
     }
