@@ -43,7 +43,6 @@ public class MetadataPopulationApiController implements MetadataPopulationApi {
 			@Parameter(in = ParameterIn.QUERY, description = "path of the file to use" ,required=false,schema=@Schema()) @RequestParam(value="path", required=false) String path,
 			@Parameter(in = ParameterIn.QUERY, description = "metadata model" ,required=true,schema=@Schema()) @RequestParam(value="model", required=true) String model,
 			@Parameter(in = ParameterIn.QUERY, description = "metadata mapping model" ,required=true,schema=@Schema()) @RequestParam(value="mapping", required=true) String mapping,
-			@Parameter(in = ParameterIn.QUERY, description = "security code for internal things" ,required=true,schema=@Schema()) @RequestParam(value="securityCode", required=true) String securityCode,
 			@Parameter(in = ParameterIn.QUERY, description = "metadata group where the resource should be placed" ,required=false,schema=@Schema()) @RequestParam(value="metadataGroup", required=false) String metadataGroup,
 			@Parameter(in = ParameterIn.QUERY, description = "status to ingest the file as", required = false, schema = @Schema()) @RequestParam(value = "status", required = false, defaultValue = "PUBLISHED") StatusType status,
 			@RequestBody(required = false) String body) {
@@ -56,9 +55,6 @@ public class MetadataPopulationApiController implements MetadataPopulationApi {
 					.contentType(MediaType.APPLICATION_JSON)
 					.body(errorResponse);
 		}
-
-		if(!validSecurityPhrase(securityCode) )
-			return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
 
 		if (metadataGroup == null || metadataGroup.isEmpty()) {
 			metadataGroup = "ALL";

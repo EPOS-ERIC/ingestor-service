@@ -4,6 +4,8 @@ import abstractapis.AbstractAPI;
 import dao.EposDataModelDAO;
 import metadataapis.EntityNames;
 import model.Ontology;
+import model.StatusType;
+
 import org.epos.core.MetadataPopulator;
 import org.epos.core.OntologiesManager;
 import org.epos.eposdatamodel.User;
@@ -50,7 +52,7 @@ public class IngestionComplexFromFileMetadataTest extends TestcontainersLifecycl
             throw new IllegalArgumentException("file not found!");
         }
 
-        MetadataPopulator.startMetadataPopulation(resource.toURI().toString(), "EDM-TO-DCAT-AP", null);
+        MetadataPopulator.startMetadataPopulation(resource.toURI().toString(), "EDM-TO-DCAT-AP", null, StatusType.PUBLISHED);
 
         AbstractAPI categorySchemeApi = AbstractAPI.retrieveAPI(EntityNames.CATEGORYSCHEME.name());
         AbstractAPI categoryApi = AbstractAPI.retrieveAPI(EntityNames.CATEGORY.name());
@@ -88,7 +90,7 @@ public class IngestionComplexFromFileMetadataTest extends TestcontainersLifecycl
             throw new IllegalArgumentException("file not found!");
         }
 
-        MetadataPopulator.startMetadataPopulation(resource.toURI().toString(), "EDM-TO-DCAT-AP", null);
+        MetadataPopulator.startMetadataPopulation(resource.toURI().toString(), "EDM-TO-DCAT-AP", null, StatusType.PUBLISHED);
 
         AbstractAPI organizationAPI = AbstractAPI.retrieveAPI(EntityNames.ORGANIZATION.name());
 
@@ -112,7 +114,7 @@ public class IngestionComplexFromFileMetadataTest extends TestcontainersLifecycl
             throw new IllegalArgumentException("file not found!");
         }
 
-        MetadataPopulator.startMetadataPopulation(resource.toURI().toString(), "EDM-TO-DCAT-AP", null);
+        MetadataPopulator.startMetadataPopulation(resource.toURI().toString(), "EDM-TO-DCAT-AP", null, StatusType.PUBLISHED);
 
         AbstractAPI dataproductAPI = AbstractAPI.retrieveAPI(EntityNames.DATAPRODUCT.name());
 

@@ -43,8 +43,7 @@ public interface OntologiesManagementApi {
     ResponseEntity<ApiResponseMessage> ontologyPopulate(
     		@Parameter(in = ParameterIn.QUERY, description = "path to the ontology file" ,required=true,schema=@Schema()) @RequestParam(value="path", required=true) String path,
     		@Parameter(in = ParameterIn.QUERY, description = "ontology name" ,required=true,schema=@Schema()) @RequestParam(value="name", required=true) String name,
-            @Parameter(in = ParameterIn.QUERY, description = "ontology type" ,required=true,schema=@Schema(allowableValues = {"BASE", "MAPPING"})) @RequestParam(value="type", required=true) String type,
-    		@Parameter(in = ParameterIn.QUERY, description = "security code for internal things" ,required=true,schema=@Schema()) @RequestParam(value="securityCode", required=true) String securityCode);
+            @Parameter(in = ParameterIn.QUERY, description = "ontology type" ,required=true,schema=@Schema(allowableValues = {"BASE", "MAPPING"})) @RequestParam(value="type", required=true) String type);
 
     @Operation(summary = "retrieve ontologies operation", description = "API for internal use only!.", tags={ "Ontologies Management Service" })
     @ApiResponses(value = {
@@ -67,7 +66,6 @@ public interface OntologiesManagementApi {
             produces = { "*/*" },
             method = RequestMethod.GET)
     ResponseEntity<List<Ontology>> ontologyRetrieve(
-            @Parameter(in = ParameterIn.QUERY, description = "security code for internal things" ,required=true,schema=@Schema()) @RequestParam(value="securityCode", required=true) String securityCode,
                     @Parameter(in = ParameterIn.QUERY, description = "plain content, not encoded" ,required=false,schema=@Schema()) @RequestParam(value="encoded", required=false) Boolean encoded,
                     @Parameter(in = ParameterIn.QUERY, description = "retrieve only name and type, without schema" ,required=false,schema=@Schema()) @RequestParam(value="nobody", required=false) Boolean nobody);
 
