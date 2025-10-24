@@ -4,6 +4,7 @@ import abstractapis.AbstractAPI;
 import dao.EposDataModelDAO;
 import metadataapis.EntityNames;
 import model.Ontology;
+import model.StatusType;
 import org.apache.jena.rdf.model.Model;
 import org.epos.core.BeansCreation;
 import org.epos.core.MetadataPopulator;
@@ -39,7 +40,7 @@ public class IngestionFromFileMetadataTest extends TestcontainersLifecycle {
         OntologiesManager.createOntology("EPOS-DCAT-AP-V3", "BASE", metadataOntologyDCATAPIV3);
         OntologiesManager.createOntology("EDM-TO-DCAT-AP", "MAPPING", metadataMappingEPOSDataModel);
 
-        EposDataModelDAO eposDataModelDAO = new EposDataModelDAO();
+        EposDataModelDAO eposDataModelDAO = EposDataModelDAO.getInstance();
         List<Ontology> ontologiesList = eposDataModelDAO.getAllFromDB(Ontology.class);
 
 
@@ -56,7 +57,7 @@ public class IngestionFromFileMetadataTest extends TestcontainersLifecycle {
             throw new IllegalArgumentException("file not found!");
         }
 
-        MetadataPopulator.startMetadataPopulation(resource.toURI().toString(), "EDM-TO-DCAT-AP", null);
+        MetadataPopulator.startMetadataPopulation(resource.toURI().toString(), "EDM-TO-DCAT-AP", null, StatusType.PUBLISHED);
 
         AbstractAPI categorySchemeApi = AbstractAPI.retrieveAPI(EntityNames.CATEGORYSCHEME.name());
         AbstractAPI categoryApi = AbstractAPI.retrieveAPI(EntityNames.CATEGORY.name());

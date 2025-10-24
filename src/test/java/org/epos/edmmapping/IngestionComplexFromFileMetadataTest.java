@@ -35,7 +35,7 @@ public class IngestionComplexFromFileMetadataTest extends TestcontainersLifecycl
         OntologiesManager.createOntology("EPOS-DCAT-AP-V3", "BASE", metadataOntologyDCATAPIV3);
         OntologiesManager.createOntology("EDM-TO-DCAT-AP", "MAPPING", metadataMappingEPOSDataModel);
 
-        EposDataModelDAO eposDataModelDAO = new EposDataModelDAO();
+        EposDataModelDAO eposDataModelDAO = EposDataModelDAO.getInstance();
         List<Ontology> ontologiesList = eposDataModelDAO.getAllFromDB(Ontology.class);
 
 

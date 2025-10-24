@@ -4,6 +4,7 @@ import abstractapis.AbstractAPI;
 import dao.EposDataModelDAO;
 import metadataapis.EntityNames;
 import model.Ontology;
+import model.StatusType;
 import org.epos.core.MetadataPopulator;
 import org.epos.core.OntologiesManager;
 import org.epos.eposdatamodel.Group;
@@ -35,7 +36,7 @@ public class IngestionComplexFullFileMetadataTest extends TestcontainersLifecycl
         OntologiesManager.createOntology("EPOS-DCAT-AP-V3", "BASE", metadataOntologyDCATAPIV3);
         OntologiesManager.createOntology("EDM-TO-DCAT-AP", "MAPPING", metadataMappingEPOSDataModel);
 
-        EposDataModelDAO eposDataModelDAO = new EposDataModelDAO();
+        EposDataModelDAO eposDataModelDAO = EposDataModelDAO.getInstance();
         List<Ontology> ontologiesList = eposDataModelDAO.getAllFromDB(Ontology.class);
 
 
@@ -60,7 +61,7 @@ public class IngestionComplexFullFileMetadataTest extends TestcontainersLifecycl
             }
         }
 
-        MetadataPopulator.startMetadataPopulation(resource.toURI().toString(), "EDM-TO-DCAT-AP", selectedGroup);
+        MetadataPopulator.startMetadataPopulation(resource.toURI().toString(), "EDM-TO-DCAT-AP", selectedGroup, StatusType.PUBLISHED);
 
         // Assert Categories and schemes
         AbstractAPI categorySchemeApi = AbstractAPI.retrieveAPI(EntityNames.CATEGORYSCHEME.name());

@@ -6,6 +6,7 @@ import metadataapis.EntityNames;
 import model.Category;
 import model.CategoryScheme;
 import model.Ontology;
+import model.StatusType;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
@@ -46,7 +47,7 @@ public class IngestionMetadataTest extends TestcontainersLifecycle {
         OntologiesManager.createOntology("EPOS-DCAT-AP-V3", "BASE", metadataOntologyDCATAPIV3);
         OntologiesManager.createOntology("EDM-TO-DCAT-AP", "MAPPING", metadataMappingEPOSDataModel);
 
-        EposDataModelDAO eposDataModelDAO = new EposDataModelDAO();
+        EposDataModelDAO eposDataModelDAO = EposDataModelDAO.getInstance();
         List<Ontology> ontologiesList = eposDataModelDAO.getAllFromDB(Ontology.class);
 
 
@@ -100,7 +101,7 @@ public class IngestionMetadataTest extends TestcontainersLifecycle {
 
         String metadataURL = "https://raw.githubusercontent.com/epos-eu/EPOS-DCAT-AP/EPOS-DCAT-AP-shapes/examples/EPOS-DCAT-AP_metadata_template.ttl";
 
-        Map<String, LinkedEntity> returnMap = MetadataPopulator.startMetadataPopulation(metadataURL, "EDM-TO-DCAT-AP", null);
+        Map<String, LinkedEntity> returnMap = MetadataPopulator.startMetadataPopulation(metadataURL, "EDM-TO-DCAT-AP", null, StatusType.PUBLISHED);
 
         System.out.println(returnMap);
 

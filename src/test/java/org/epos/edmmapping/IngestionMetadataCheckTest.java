@@ -4,6 +4,7 @@ import abstractapis.AbstractAPI;
 import dao.EposDataModelDAO;
 import metadataapis.EntityNames;
 import model.Ontology;
+import model.StatusType;
 import org.apache.jena.rdf.model.Model;
 import org.epos.core.BeansCreation;
 import org.epos.core.MetadataPopulator;
@@ -43,7 +44,7 @@ public class IngestionMetadataCheckTest extends TestcontainersLifecycle {
         OntologiesManager.createOntology("EPOS-DCAT-AP-V3", "BASE", metadataOntologyDCATAPIV3);
         OntologiesManager.createOntology("EDM-TO-DCAT-AP", "MAPPING", metadataMappingEPOSDataModel);
 
-        EposDataModelDAO eposDataModelDAO = new EposDataModelDAO();
+        EposDataModelDAO eposDataModelDAO = EposDataModelDAO.getInstance();
         List<Ontology> ontologiesList = eposDataModelDAO.getAllFromDB(Ontology.class);
 
 
@@ -57,7 +58,7 @@ public class IngestionMetadataCheckTest extends TestcontainersLifecycle {
 
         String metadataURL = "https://raw.githubusercontent.com/epos-eu/EPOS-DCAT-AP/EPOS-DCAT-AP-shapes/examples/EPOS-DCAT-AP_metadata_template.ttl";
 
-        MetadataPopulator.startMetadataPopulation(metadataURL, "EDM-TO-DCAT-AP");
+        MetadataPopulator.startMetadataPopulation(metadataURL, "EDM-TO-DCAT-AP", null, StatusType.PUBLISHED);
 
         AbstractAPI dataproductAPI = AbstractAPI.retrieveAPI(EntityNames.DATAPRODUCT.name());
 
@@ -79,7 +80,7 @@ public class IngestionMetadataCheckTest extends TestcontainersLifecycle {
 
         String metadataURL = "https://raw.githubusercontent.com/epos-eu/EPOS-DCAT-AP/EPOS-DCAT-AP-shapes/examples/EPOS-DCAT-AP_metadata_template.ttl";
 
-        MetadataPopulator.startMetadataPopulation(metadataURL, "EDM-TO-DCAT-AP", null);
+        MetadataPopulator.startMetadataPopulation(metadataURL, "EDM-TO-DCAT-AP", null, StatusType.PUBLISHED);
 
         AbstractAPI dataproductAPI = AbstractAPI.retrieveAPI(EntityNames.DATAPRODUCT.name());
 
