@@ -2,19 +2,26 @@ package org.epos.core;
 
 import java.io.StringWriter;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
+import java.util.Queue;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.jena.datatypes.xsd.XSDDatatype;
+import org.apache.jena.query.QueryExecutionFactory;
+import org.apache.jena.query.QueryFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.riot.RDFFormat;
 import org.epos.eposdatamodel.EPOSDataModelEntity;
 import org.epos.eposdatamodel.LinkedEntity;
 import org.slf4j.Logger;
@@ -26,37 +33,63 @@ import metadataapis.EntityNames;
 public class MetadataExporter {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(MetadataExporter.class);
+	private static final int MAX_DEPTH = 20;
+	private static final int MAX_ENTITIES = 1000;
 
-	public static String exportToTurtle(EntityNames entityType, String mappingName, List<String> ids) {
-		if (entityType == null) {
-			throw new IllegalArgumentException("Entity type cannot be null or empty");
-		}
+	public static String exportToRDF(
+			EntityNames entityType,
+			String mappingName,
+			String format,
+			List<String> ids,
+			Boolean includeLinked) {
 
 		if (mappingName == null || mappingName.trim().isEmpty()) {
 			throw new IllegalArgumentException("Mapping name cannot be null or empty");
 		}
 
+		if (format == null || format.trim().isEmpty()) {
+			format = "turtle";
+		}
+
+		if (!format.matches("(?i)(turtle|json-ld)")) {
+			throw new IllegalArgumentException("Format must be one of: turtle, json-ld");
+		}
+
+		if (ids != null && !ids.isEmpty() && entityType == null) {
+			throw new IllegalArgumentException("Entity type must be specified when providing specific IDs");
+		}
+
 		try {
-			LOGGER.info("Starting export for entity type '{}' using mapping '{}'", entityType, mappingName);
+			LOGGER.info("Starting export for entity type '{}' using mapping '{}' in format '{}'",
+					entityType != null ? entityType : "all types", mappingName, format);
 
-			// 1. Retrieve mapping model (reverse of current)
-			LOGGER.debug("Retrieving reverse mapping model for '{}'", mappingName);
 			Model mappingModel = retrieveReverseMapping(mappingName);
-			LOGGER.info("Retrieved reverse mapping with {} triples", mappingModel.size());
+			LOGGER.debug("Retrieved reverse mapping with {} triples", mappingModel.size());
 
-			// 2. Retrieve entities from DB
-			List<EPOSDataModelEntity> entities = retrieveEntities(entityType, ids);
-			LOGGER.info("Retrieved {} entities of type '{}' from database", entities.size(), entityType);
-
-			if (entities.isEmpty()) {
-				LOGGER.info("No entities found for type: {}", entityType);
-				return ""; // Return empty string for no content
+			List<EPOSDataModelEntity> entities;
+			if (entityType != null) {
+				entities = retrieveEntities(entityType, ids);
+				LOGGER.debug("Retrieved {} entities of type '{}' from database", entities.size(), entityType);
+			} else {
+				entities = retrieveAllEntities(ids);
+				LOGGER.debug("Retrieved {} entities from all types from database", entities.size());
 			}
 
-			// 3. Create RDF model
+			if (entities.isEmpty()) {
+				LOGGER.info("No entities found for type: {}", entityType != null ? entityType : "all types");
+				return "";
+			}
+
+			// Only collect linked entities when exporting a specific type
+			// When exporting all entities (entityType=null), all entities are already
+			// retrieved
+			if (includeLinked && entityType != null) {
+				entities = collectAllLinkedEntities(entities);
+				LOGGER.debug("After collecting linked entities: {} total entities", entities.size());
+			}
+
 			Model rdfModel = ModelFactory.createDefaultModel();
 
-			// Set prefixes for readable Turtle output
 			rdfModel.setNsPrefix("adms", "http://www.w3.org/ns/adms#");
 			rdfModel.setNsPrefix("dash", "http://datashapes.org/dash#");
 			rdfModel.setNsPrefix("dc", "http://purl.org/dc/elements/1.1/");
@@ -83,34 +116,26 @@ public class MetadataExporter {
 			rdfModel.setNsPrefix("gsp", "http://www.opengis.net/ont/geosparql#");
 			rdfModel.setNsPrefix("dqv", "http://www.w3.org/ns/dqv#");
 
-			LOGGER.debug("Created empty RDF model for conversion");
-
-			// 4. Convert entities to RDF triples (recursive for nested entities)
 			int processedCount = 0;
 			for (EPOSDataModelEntity entity : entities) {
 				LOGGER.debug("Converting entity {} of {}: {}", ++processedCount, entities.size(), entity.getUid());
 				convertEntityToRDF(entity, rdfModel, mappingModel, null);
 			}
-			LOGGER.info("Converted {} entities to RDF triples", entities.size());
-			LOGGER.info("RDF model now has {} statements", rdfModel.size());
+			LOGGER.debug("Converted {} entities to RDF triples", entities.size());
+			LOGGER.debug("RDF model now has {} statements", rdfModel.size());
 
-			// 5. Serialize to Turtle
 			StringWriter writer = new StringWriter();
-			RDFDataMgr.write(writer, rdfModel, RDFFormat.TURTLE);
-			String turtleContent = writer.toString();
-			LOGGER.info("Serialized RDF model to {} characters of Turtle content", turtleContent.length());
-			LOGGER.debug("First 500 characters of Turtle content: {}",
-					turtleContent.substring(0, Math.min(500, turtleContent.length())));
-			if (turtleContent.trim().equals("{}") || turtleContent.trim().isEmpty()) {
-				LOGGER.error("Turtle content is empty or just '{}', RDF model has {} statements", rdfModel.size());
-				rdfModel.listStatements().forEachRemaining(stmt -> LOGGER.debug("Triple: {} {} {}", stmt.getSubject(),
-						stmt.getPredicate(), stmt.getObject()));
-			}
+			Lang lang = getLangForFormat(format);
+			RDFDataMgr.write(writer, rdfModel, lang);
+			String content = writer.toString();
+			LOGGER.info("Serialized RDF model to {} characters of {} content", content.length(), format);
 
-			return turtleContent;
-
+			return cleanupPrefixes(content);
+		} catch (IllegalArgumentException e) {
+			throw e;
 		} catch (Exception e) {
 			LOGGER.error("Error during export: {}", e.getLocalizedMessage());
+			e.printStackTrace();
 			throw new RuntimeException("Export failed", e);
 		}
 	}
@@ -120,7 +145,7 @@ public class MetadataExporter {
 		Model originalMapping = MetadataPopulator.retrieveModelMapping(mappingName);
 		if (originalMapping == null) {
 			LOGGER.error("Original mapping model not found: {}", mappingName);
-			throw new RuntimeException("Mapping model not found: " + mappingName);
+			throw new IllegalArgumentException("Mapping model not found: " + mappingName);
 		}
 		LOGGER.debug("Original mapping has {} triples", originalMapping.size());
 
@@ -147,7 +172,7 @@ public class MetadataExporter {
 		return reverseMapping;
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private static List<EPOSDataModelEntity> retrieveEntities(EntityNames entityType, List<String> ids) {
 		try {
 			LOGGER.debug("Retrieving API for entity type '{}'", entityType.name());
@@ -159,7 +184,7 @@ public class MetadataExporter {
 				entities = ids.stream()
 						.map(id -> {
 							LOGGER.debug("Retrieving entity with ID: {}", id);
-							return (EPOSDataModelEntity) api.retrieve(id);
+							return (EPOSDataModelEntity) api.retrieveByUID(id);
 						})
 						.filter(Objects::nonNull)
 						.collect(Collectors.toList());
@@ -177,13 +202,56 @@ public class MetadataExporter {
 		}
 	}
 
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private static List<EPOSDataModelEntity> retrieveAllEntities(List<String> ids) {
+		try {
+			List<EPOSDataModelEntity> allEntities = new ArrayList<>();
+
+			for (EntityNames entityType : EntityNames.values()) {
+				try {
+					LOGGER.debug("Retrieving entities for type: {}", entityType);
+					AbstractAPI api = AbstractAPI.retrieveAPI(entityType.name());
+
+					List<EPOSDataModelEntity> entities;
+					if (ids != null && !ids.isEmpty()) {
+						LOGGER.debug("Retrieving {} specific entities by IDs for type {}", ids.size(), entityType);
+						entities = ids.stream()
+								.map(id -> {
+									LOGGER.debug("Retrieving entity with ID: {} for type {}", id, entityType);
+									return (EPOSDataModelEntity) api.retrieveByUID(id);
+								})
+								.filter(Objects::nonNull)
+								.collect(Collectors.toList());
+					} else {
+						LOGGER.debug("Retrieving all entities for type {}", entityType);
+						entities = (List<EPOSDataModelEntity>) api.retrieveAll();
+					}
+
+					LOGGER.debug("Retrieved {} entities for type {}", entities.size(), entityType);
+					allEntities.addAll(entities);
+				} catch (Exception e) {
+					LOGGER.warn("Error retrieving entities for type {}: {}", entityType, e.getLocalizedMessage());
+					e.printStackTrace();
+					// Continue with other types even if one fails
+				}
+			}
+
+			LOGGER.debug("Total entities retrieved from all types: {}", allEntities.size());
+			return allEntities;
+		} catch (Exception e) {
+			LOGGER.error("Error retrieving entities from all types: {}", e.getLocalizedMessage());
+			e.printStackTrace();
+			throw new RuntimeException("Failed to retrieve entities from all types", e);
+		}
+	}
+
 	private static void convertEntityToRDF(
 			EPOSDataModelEntity entity,
 			Model rdfModel,
 			Model mappingModel,
-			java.util.Set<String> processedEntities) {
+			Set<String> processedEntities) {
 		if (processedEntities == null) {
-			processedEntities = new java.util.HashSet<>();
+			processedEntities = new HashSet<>();
 		}
 
 		if (processedEntities.contains(entity.getUid())) {
@@ -241,6 +309,7 @@ public class MetadataExporter {
 						}
 					} catch (Exception e) {
 						LOGGER.warn("Error processing property {}: {}", method.getName(), e.getLocalizedMessage());
+						e.printStackTrace();
 					}
 				}
 			}
@@ -250,6 +319,7 @@ public class MetadataExporter {
 
 		} catch (Exception e) {
 			LOGGER.error("Error converting entity {} to RDF: {}", entity.getUid(), e.getLocalizedMessage());
+			e.printStackTrace();
 		}
 	}
 
@@ -265,8 +335,8 @@ public class MetadataExporter {
 				"}";
 
 		try {
-			var query = org.apache.jena.query.QueryFactory.create(queryString);
-			var qexec = org.apache.jena.query.QueryExecutionFactory.create(query, mappingModel);
+			var query = QueryFactory.create(queryString);
+			var qexec = QueryExecutionFactory.create(query, mappingModel);
 			var results = qexec.execSelect();
 
 			if (results.hasNext()) {
@@ -279,6 +349,7 @@ public class MetadataExporter {
 			}
 		} catch (Exception e) {
 			LOGGER.warn("Error finding DCAT class for {}: {}", edmClassName, e.getLocalizedMessage());
+			e.printStackTrace();
 		}
 
 		return null;
@@ -295,8 +366,8 @@ public class MetadataExporter {
 				"}";
 
 		try {
-			var query = org.apache.jena.query.QueryFactory.create(queryString);
-			var qexec = org.apache.jena.query.QueryExecutionFactory.create(query, mappingModel);
+			var query = QueryFactory.create(queryString);
+			var qexec = QueryExecutionFactory.create(query, mappingModel);
 			var results = qexec.execSelect();
 
 			if (results.hasNext()) {
@@ -310,13 +381,19 @@ public class MetadataExporter {
 		} catch (Exception e) {
 			LOGGER.debug("Error finding DCAT property for {}.{}: {}", edmClassName, propertyName,
 					e.getLocalizedMessage());
+			e.printStackTrace();
 		}
 
 		return null;
 	}
 
-	private static void addPropertyToRDF(Resource subject, String propertyUri, Object value, Model rdfModel,
-			Model mappingModel, java.util.Set<String> processedEntities) {
+	private static void addPropertyToRDF(
+			Resource subject,
+			String propertyUri,
+			Object value,
+			Model rdfModel,
+			Model mappingModel,
+			Set<String> processedEntities) {
 		Property property = ResourceFactory.createProperty(propertyUri);
 		LOGGER.debug("Adding property {} with value type: {}", propertyUri, value.getClass().getSimpleName());
 
@@ -355,5 +432,125 @@ public class MetadataExporter {
 			rdfModel.add(subject, property, rdfModel.createLiteral(value.toString()));
 			LOGGER.debug("Added default string literal: {}", value.toString());
 		}
+	}
+
+	private static List<EPOSDataModelEntity> collectAllLinkedEntities(List<EPOSDataModelEntity> startingEntities) {
+		Set<EPOSDataModelEntity> allEntities = new LinkedHashSet<>(startingEntities);
+		Set<String> visitedUids = new HashSet<>();
+		Queue<EPOSDataModelEntity> queue = new LinkedList<>();
+
+		// Initialize with starting entities
+		for (EPOSDataModelEntity entity : startingEntities) {
+			visitedUids.add(entity.getUid());
+			queue.add(entity);
+		}
+
+		int currentDepth = 0;
+
+		while (!queue.isEmpty() && currentDepth < MAX_DEPTH && allEntities.size() < MAX_ENTITIES) {
+			int levelSize = queue.size();
+			currentDepth++;
+
+			for (int i = 0; i < levelSize; i++) {
+				EPOSDataModelEntity currentEntity = queue.poll();
+				LOGGER.debug("Processing entity {} at depth {}", currentEntity.getUid(), currentDepth);
+
+				// Scan all getter methods for LinkedEntity properties
+				Method[] methods = currentEntity.getClass().getMethods();
+				for (Method method : methods) {
+					if (method.getName().startsWith("get") && method.getParameterCount() == 0 &&
+							!method.getName().equals("getClass") && !method.getName().equals("getUid")) {
+
+						try {
+							Object value = method.invoke(currentEntity);
+							if (value != null) {
+								if (value instanceof LinkedEntity) {
+									EPOSDataModelEntity linkedEntity = resolveLinkedEntity((LinkedEntity) value);
+									if (linkedEntity != null && !visitedUids.contains(linkedEntity.getUid())) {
+										visitedUids.add(linkedEntity.getUid());
+										allEntities.add(linkedEntity);
+										queue.add(linkedEntity);
+										LOGGER.debug("Added linked entity: {}", linkedEntity.getUid());
+									}
+								} else if (value instanceof List) {
+									@SuppressWarnings("unchecked")
+									List<Object> list = (List<Object>) value;
+									for (Object item : list) {
+										if (item instanceof LinkedEntity) {
+											EPOSDataModelEntity linkedEntity = resolveLinkedEntity((LinkedEntity) item);
+											if (linkedEntity != null && !visitedUids.contains(linkedEntity.getUid())) {
+												visitedUids.add(linkedEntity.getUid());
+												allEntities.add(linkedEntity);
+												queue.add(linkedEntity);
+												LOGGER.debug("Added linked entity from list: {}",
+														linkedEntity.getUid());
+											}
+										}
+									}
+								}
+							}
+						} catch (Exception e) {
+							LOGGER.warn("Error processing property {} for entity traversal: {}", method.getName(),
+									e.getLocalizedMessage());
+							e.printStackTrace();
+						}
+					}
+				}
+			}
+		}
+
+		if (allEntities.size() >= MAX_ENTITIES) {
+			LOGGER.warn("Reached maximum entity limit ({}) during linked entity collection", MAX_ENTITIES);
+		}
+		if (currentDepth >= MAX_DEPTH) {
+			LOGGER.warn("Reached maximum depth limit ({}) during linked entity collection", MAX_DEPTH);
+		}
+
+		return new ArrayList<>(allEntities);
+	}
+
+	private static EPOSDataModelEntity resolveLinkedEntity(LinkedEntity linkedEntity) {
+		try {
+			String entityTypeStr = linkedEntity.getEntityType();
+			EntityNames entityType = EntityNames.valueOf(entityTypeStr);
+			@SuppressWarnings("rawtypes")
+			AbstractAPI api = AbstractAPI.retrieveAPI(entityType.name());
+			EPOSDataModelEntity entity = (EPOSDataModelEntity) api.retrieve(linkedEntity.getInstanceId());
+			if (entity == null) {
+				LOGGER.warn("Linked entity not found: {} of type {}", linkedEntity.getInstanceId(), entityTypeStr);
+			}
+			return entity;
+		} catch (Exception e) {
+			LOGGER.warn("Error resolving linked entity {}: {}", linkedEntity.getInstanceId(), e.getLocalizedMessage());
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	private static Lang getLangForFormat(String format) {
+		String lowerFormat = format.toLowerCase();
+		if ("json-ld".equals(lowerFormat)) {
+			return Lang.JSONLD;
+		} else {
+			return Lang.TTL;
+		}
+	}
+
+	private static String cleanupPrefixes(String content) {
+		// Only apply prefix cleanup for Turtle format
+		if (content.contains("@prefix") || content.contains("PREFIX")) {
+			StringBuilder sb = new StringBuilder();
+			boolean inPrefixes = true;
+			for (String line : content.split("\n")) {
+				if (inPrefixes && line.startsWith("PREFIX")) {
+					line = line.replace("PREFIX", "@prefix") + " .";
+				} else {
+					inPrefixes = false;
+				}
+				sb.append(line).append("\n");
+			}
+			return sb.toString();
+		}
+		return content;
 	}
 }

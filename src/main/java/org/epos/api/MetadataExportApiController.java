@@ -26,50 +26,72 @@ public class MetadataExportApiController implements MetadataExportApi {
 	public MetadataExportApiController() {
 	}
 
-	@RequestMapping(value = "/export", produces = { "text/turtle" }, method = RequestMethod.GET)
+	@RequestMapping(value = "/export", produces = { "text/turtle", "application/ld+json" }, method = RequestMethod.GET)
 	public ResponseEntity<String> metadataExport(
-			@Parameter(in = ParameterIn.QUERY, description = "entity type to export", required = true, schema = @Schema()) @RequestParam(value = "entityType", required = true) EntityNames entityType,
+			@Parameter(in = ParameterIn.QUERY, description = "entity type to export (optional - if not provided, exports all entity types)", required = false, schema = @Schema()) @RequestParam(value = "entityType", required = false) EntityNames entityType,
 			@Parameter(in = ParameterIn.QUERY, description = "metadata mapping model", required = true, schema = @Schema()) @RequestParam(value = "mapping", required = true) String mapping,
-			@Parameter(in = ParameterIn.QUERY, description = "specific entity IDs to export (optional)", required = false, schema = @Schema()) @RequestParam(value = "ids", required = false) List<String> ids) {
+			@Parameter(in = ParameterIn.QUERY, description = "output format (optional, default: turtle)", required = false, schema = @Schema(allowableValues = {
+					"turtle",
+					"json-ld" })) @RequestParam(value = "format", required = false, defaultValue = "turtle") String format,
+			@Parameter(in = ParameterIn.QUERY, description = "specific entity IDs to export (optional)", required = false, schema = @Schema()) @RequestParam(value = "ids", required = false) List<String> ids,
+			@Parameter(in = ParameterIn.QUERY, description = "whether to include transitively linked entities in the export (default: false)", required = false, schema = @Schema()) @RequestParam(value = "includeLinked", required = false, defaultValue = "false") Boolean includeLinked) {
 
 		// Validation
-		if (entityType == null) {
-			return ResponseEntity.badRequest()
-					.contentType(MediaType.TEXT_PLAIN)
-					.body("Parameter 'entityType' cannot be empty");
-		}
-
 		if (mapping == null || mapping.trim().isEmpty()) {
 			return ResponseEntity.badRequest()
 					.contentType(MediaType.TEXT_PLAIN)
 					.body("Parameter 'mapping' cannot be empty");
 		}
 
-		try {
-			LOGGER.info("[Export initialized] Exporting {} entities using mapping '{}', IDs: {}",
-					entityType, mapping, ids != null ? ids : "all");
-			String turtleContent = MetadataExporter.exportToTurtle(entityType, mapping, ids);
-			LOGGER.info("[Export finished] Successfully exported {} entities to {} characters of Turtle content",
-					entityType, turtleContent != null ? turtleContent.length() : 0);
+		if (format != null && !format.matches("(?i)(turtle|json-ld)")) {
+			return ResponseEntity.badRequest()
+					.contentType(MediaType.TEXT_PLAIN)
+					.body("Parameter 'format' must be one of: turtle, json-ld");
+		}
 
-			if (turtleContent == null || turtleContent.trim().isEmpty()) {
-				LOGGER.warn("[Export result] No content generated for export request");
-				return ResponseEntity.noContent().build();
+		try {
+			LOGGER.info(
+					"[Export initialized] Exporting {} entities using mapping '{}', format: {}, IDs: {}, includeLinked: {}",
+					entityType != null ? entityType : "all types", mapping, format, ids != null ? ids : "all",
+					includeLinked);
+			String content = MetadataExporter.exportToRDF(entityType, mapping, format, ids, includeLinked);
+			LOGGER.info("[Export finished] Successfully exported {} entities to {} characters of {} content",
+					entityType != null ? entityType : "all types", content != null ? content.length() : 0, format);
+
+			if (content == null || content.trim().isEmpty()) {
+				if (ids != null && !ids.isEmpty()) {
+					LOGGER.warn("[Export result] No entities found for requested IDs: {}", ids);
+					return ResponseEntity.notFound().build();
+				} else {
+					LOGGER.warn("[Export result] No content generated for export request");
+					return ResponseEntity.noContent().build();
+				}
 			}
 
 			return ResponseEntity.ok()
-					.contentType(MediaType.parseMediaType("text/turtle; charset=utf-8"))
-					.body(turtleContent);
+					.contentType(MediaType.parseMediaType(getContentTypeForFormat(format)))
+					.body(content);
 		} catch (IllegalArgumentException e) {
-			LOGGER.warn("[VALIDATION ERROR] Export failed for entity type {}: {}", entityType, e.getLocalizedMessage());
+			LOGGER.warn("[VALIDATION ERROR] Export failed for entity type {}: {}",
+					entityType != null ? entityType : "all types", e.getLocalizedMessage());
 			return ResponseEntity.badRequest()
 					.contentType(MediaType.TEXT_PLAIN)
 					.body(("Validation error: " + e.getLocalizedMessage()));
 		} catch (Exception e) {
-			LOGGER.error("[ERROR] Export failed for entity type {}: {}", entityType, e.getLocalizedMessage());
+			LOGGER.error("[ERROR] Export failed for entity type {}: {}", entityType != null ? entityType : "all types",
+					e.getLocalizedMessage());
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
 					.contentType(MediaType.TEXT_PLAIN)
 					.body(("Export failed: " + e.getLocalizedMessage()));
+		}
+	}
+
+	private String getContentTypeForFormat(String format) {
+		String lowerFormat = format.toLowerCase();
+		if ("json-ld".equals(lowerFormat)) {
+			return "application/ld+json; charset=utf-8";
+		} else {
+			return "text/turtle; charset=utf-8";
 		}
 	}
 }
