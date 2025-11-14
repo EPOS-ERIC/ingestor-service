@@ -23,7 +23,9 @@ import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.epos.eposdatamodel.EPOSDataModelEntity;
+import org.epos.eposdatamodel.IriTemplate;
 import org.epos.eposdatamodel.LinkedEntity;
+import org.epos.eposdatamodel.Operation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -280,6 +282,11 @@ public class MetadataExporter {
 					rdfModel.createProperty("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
 					typeResource);
 
+			// Special handling for Operation to create proper IriTemplate structure
+			if (entity instanceof Operation) {
+				convertOperationToRDF((Operation) entity, subject, rdfModel, mappingModel, processedEntities);
+			}
+
 			// Get all getter methods and convert properties
 			Method[] methods = entity.getClass().getMethods();
 			int processedProperties = 0;
@@ -288,6 +295,13 @@ public class MetadataExporter {
 			for (Method method : methods) {
 				if (method.getName().startsWith("get") && method.getParameterCount() == 0 &&
 						!method.getName().equals("getClass") && !method.getName().equals("getUid")) {
+
+					// Skip template and mapping properties for Operation as they are handled
+					// specially
+					if (entity instanceof Operation
+							&& (method.getName().equals("getTemplate") || method.getName().equals("getMapping"))) {
+						continue;
+					}
 
 					try {
 						Object value = method.invoke(entity);
@@ -323,15 +337,46 @@ public class MetadataExporter {
 		}
 	}
 
+	private static void convertOperationToRDF(
+			Operation op,
+			Resource subject,
+			Model rdfModel,
+			Model mappingModel,
+			Set<String> processedEntities) {
+		IriTemplate iriTemplate = op.getIriTemplateObject();
+		if (iriTemplate != null) {
+			Resource templateNode = rdfModel.createResource();
+			rdfModel.add(templateNode,
+					rdfModel.createProperty("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
+					rdfModel.createResource("http://www.w3.org/ns/hydra/core#IriTemplate"));
+
+			String templateStr = iriTemplate.getTemplate();
+			if (templateStr != null) {
+				rdfModel.add(templateNode, rdfModel.createProperty("http://www.w3.org/ns/hydra/core#template"),
+						rdfModel.createTypedLiteral(templateStr, XSDDatatype.XSDstring));
+			}
+
+			List<LinkedEntity> mappingEntities = iriTemplate.getMappings();
+			if (mappingEntities != null) {
+				for (LinkedEntity le : mappingEntities) {
+					Resource mappingNode = rdfModel.createResource(le.getUid());
+					rdfModel.add(templateNode, rdfModel.createProperty("http://www.w3.org/ns/hydra/core#mapping"),
+							mappingNode);
+				}
+			}
+
+			rdfModel.add(subject, rdfModel.createProperty("http://www.w3.org/ns/hydra/core#property"), templateNode);
+		}
+	}
+
 	private static String findDCATClassUri(String edmClassName, Model mappingModel) {
 		LOGGER.debug("Searching for DCAT class mapping for EDM class: {}", edmClassName);
 
 		// Query for equivalent class in reverse mapping
 		String queryString = "PREFIX owl: <http://www.w3.org/2002/07/owl#> " +
+				"PREFIX edm: <http://www.epos-eu.org/epos-data-model#>" +
 				"SELECT ?dcatClass WHERE { " +
-				"  ?dcatClass owl:equivalentClass ?edmClass . " +
-				"  FILTER(STRSTARTS(str(?edmClass), \"http://www.epos-eu.org/epos-data-model#\")) " +
-				"  FILTER(STRENDS(str(?edmClass), \"" + edmClassName + "\")) " +
+				"  ?dcatClass owl:equivalentClass edm:" + edmClassName + " . " +
 				"}";
 
 		try {
@@ -398,7 +443,7 @@ public class MetadataExporter {
 		LOGGER.debug("Adding property {} with value type: {}", propertyUri, value.getClass().getSimpleName());
 
 		if (value instanceof String) {
-			rdfModel.add(subject, property, rdfModel.createLiteral((String) value));
+			rdfModel.add(subject, property, rdfModel.createTypedLiteral((String) value, XSDDatatype.XSDstring));
 			LOGGER.debug("Added string literal: {}", value);
 		} else if (value instanceof Integer) {
 			rdfModel.add(subject, property, rdfModel.createTypedLiteral(value, XSDDatatype.XSDinteger));
