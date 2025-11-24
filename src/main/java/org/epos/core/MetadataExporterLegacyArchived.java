@@ -37,9 +37,9 @@ import org.slf4j.LoggerFactory;
 import abstractapis.AbstractAPI;
 import metadataapis.EntityNames;
 
-public class MetadataExporter {
+public class MetadataExporterLegacyArchived {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(MetadataExporter.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(MetadataExporterLegacyArchived.class);
 	private static final int MAX_DEPTH = 20;
 	private static final int MAX_ENTITIES = 1000;
 	private static Model shaclModel = null;

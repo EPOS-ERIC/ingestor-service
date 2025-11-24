@@ -1,0 +1,27 @@
+package org.epos.core.export.mappers;
+
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
+import org.epos.core.export.util.RDFConstants;
+import org.epos.core.export.util.RDFHelper;
+import org.epos.eposdatamodel.OutputMapping;
+
+import java.util.Map;
+
+/**
+ * Stub mapper for OutputMapping entities.
+ */
+public class OutputMappingMapper implements EntityMapper<OutputMapping> {
+
+    @Override
+    public Resource mapToRDF(OutputMapping entity, Model model, Map<String, org.epos.eposdatamodel.EPOSDataModelEntity> entityMap) {
+        Resource subject = model.createResource(entity.getUid());
+        RDFHelper.addType(model, subject, RDFConstants.RDFS_RESOURCE);
+        return subject;
+    }
+
+    @Override
+    public String getDCATClassURI() {
+        return RDFConstants.RDFS_NS + "Resource";
+    }
+}

@@ -2,7 +2,7 @@ package org.epos.api;
 
 import java.util.List;
 
-import org.epos.core.MetadataExporter;
+import org.epos.core.export.MetadataExporter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -29,7 +29,6 @@ public class MetadataExportApiController implements MetadataExportApi {
 	@RequestMapping(value = "/export", produces = { "text/turtle", "application/ld+json" }, method = RequestMethod.GET)
 	public ResponseEntity<String> metadataExport(
 			@Parameter(in = ParameterIn.QUERY, description = "entity type to export (optional - if not provided, exports all entity types)", required = false, schema = @Schema()) @RequestParam(value = "entityType", required = false) EntityNames entityType,
-			@Parameter(in = ParameterIn.QUERY, description = "metadata mapping model", required = true, schema = @Schema()) @RequestParam(value = "mapping", required = true) String mapping,
 			@Parameter(in = ParameterIn.QUERY, description = "output format (optional, default: turtle)", required = false, schema = @Schema(allowableValues = {
 					"turtle",
 					"json-ld" })) @RequestParam(value = "format", required = false, defaultValue = "turtle") String format,
@@ -37,12 +36,6 @@ public class MetadataExportApiController implements MetadataExportApi {
 			@Parameter(in = ParameterIn.QUERY, description = "whether to include transitively linked entities in the export (default: false)", required = false, schema = @Schema()) @RequestParam(value = "includeLinked", required = false, defaultValue = "false") Boolean includeLinked) {
 
 		// Validation
-		if (mapping == null || mapping.trim().isEmpty()) {
-			return ResponseEntity.badRequest()
-					.contentType(MediaType.TEXT_PLAIN)
-					.body("Parameter 'mapping' cannot be empty");
-		}
-
 		if (format != null && !format.matches("(?i)(turtle|json-ld)")) {
 			return ResponseEntity.badRequest()
 					.contentType(MediaType.TEXT_PLAIN)
@@ -51,14 +44,14 @@ public class MetadataExportApiController implements MetadataExportApi {
 
 		try {
 			LOGGER.info(
-					"[Export initialized] Exporting {} entities using mapping '{}', format: {}, IDs: {}, includeLinked: {}",
-					entityType != null ? entityType : "all types", mapping, format, ids != null ? ids : "all",
+					"[Export initialized] Exporting {} entities in format: {}, IDs: {}, includeLinked: {}",
+					entityType != null ? entityType : "all types", format, ids != null ? ids : "all",
 					includeLinked);
-			String content = MetadataExporter.exportToRDF(entityType, mapping, format, ids, includeLinked);
-			LOGGER.info("[Export finished] Successfully exported {} entities to {} characters of {} content",
-					entityType != null ? entityType : "all types", content != null ? content.length() : 0, format);
+			String rdfOutput = MetadataExporter.exportToRDF(entityType, format, ids, includeLinked);
+			LOGGER.info("[Export finished] Successfully exported entities to {} characters of {} content",
+					rdfOutput != null ? rdfOutput.length() : 0, format);
 
-			if (content == null || content.trim().isEmpty()) {
+			if (rdfOutput == null || rdfOutput.trim().isEmpty()) {
 				if (ids != null && !ids.isEmpty()) {
 					LOGGER.warn("[Export result] No entities found for requested IDs: {}", ids);
 					return ResponseEntity.notFound().build();
@@ -70,7 +63,7 @@ public class MetadataExportApiController implements MetadataExportApi {
 
 			return ResponseEntity.ok()
 					.contentType(MediaType.parseMediaType(getContentTypeForFormat(format)))
-					.body(content);
+					.body(rdfOutput);
 		} catch (IllegalArgumentException e) {
 			LOGGER.warn("[VALIDATION ERROR] Export failed for entity type {}: {}",
 					entityType != null ? entityType : "all types", e.getLocalizedMessage());
