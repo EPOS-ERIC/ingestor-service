@@ -3,15 +3,20 @@ package org.epos.core;
 import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.jena.datatypes.BaseDatatype;
+import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QueryFactory;
@@ -37,6 +42,7 @@ public class MetadataExporter {
 	private static final Logger LOGGER = LoggerFactory.getLogger(MetadataExporter.class);
 	private static final int MAX_DEPTH = 20;
 	private static final int MAX_ENTITIES = 1000;
+	private static Model shaclModel = null;
 
 	public static String exportToRDF(
 			EntityNames entityType,
@@ -65,8 +71,14 @@ public class MetadataExporter {
 			LOGGER.info("Starting export for entity type '{}' using mapping '{}' in format '{}'",
 					entityType != null ? entityType : "all types", mappingName, format);
 
-			Model mappingModel = retrieveReverseMapping(mappingName);
-			LOGGER.debug("Retrieved reverse mapping with {} triples", mappingModel.size());
+			Model mappingModel = MetadataPopulator.retrieveModelMapping(mappingName);
+			LOGGER.debug("Retrieved original mapping with {} triples", mappingModel.size());
+
+			if (shaclModel == null) {
+				shaclModel = RDFDataMgr.loadModel(
+						"https://raw.githubusercontent.com/epos-eu/EPOS-DCAT-AP/refs/heads/EPOS-DCAT-AP-shapes/epos-dcat-ap_shapes.ttl");
+				LOGGER.debug("Loaded SHACL model with {} triples", shaclModel.size());
+			}
 
 			List<EPOSDataModelEntity> entities;
 			if (entityType != null) {
@@ -98,7 +110,7 @@ public class MetadataExporter {
 			rdfModel.setNsPrefix("dcat", "http://www.w3.org/ns/dcat#");
 			rdfModel.setNsPrefix("dct", "http://purl.org/dc/terms/");
 			rdfModel.setNsPrefix("epos", "https://www.epos-eu.org/epos-dcat-ap#");
-			rdfModel.setNsPrefix("foaf", "http://xmlns.com/foaf/spec/#term_");
+			rdfModel.setNsPrefix("foaf", "http://xmlns.com/foaf/0.1/");
 			rdfModel.setNsPrefix("cnt", "http://www.w3.org/2011/content#");
 			rdfModel.setNsPrefix("oa", "http://www.w3.org/ns/oa#");
 			rdfModel.setNsPrefix("org", "http://www.w3.org/ns/org#");
@@ -118,10 +130,34 @@ public class MetadataExporter {
 			rdfModel.setNsPrefix("gsp", "http://www.opengis.net/ont/geosparql#");
 			rdfModel.setNsPrefix("dqv", "http://www.w3.org/ns/dqv#");
 
+			// Create map for lookups
+			Map<String, EPOSDataModelEntity> entityMap = entities.stream()
+					.collect(Collectors.toMap(EPOSDataModelEntity::getUid, e -> e, (e1, e2) -> e1));
+
+			// We only iterate over the requested roots, but we use the full set for
+			// resolution
+			List<EPOSDataModelEntity> rootEntities;
+			if (entityType != null) {
+				rootEntities = retrieveEntities(entityType, ids);
+			} else {
+				rootEntities = retrieveAllEntities(ids);
+			}
+
+			// Filter out blank nodes from roots to avoid standalone export
+			rootEntities = rootEntities.stream()
+					.filter(e -> !e.getUid().startsWith("_:"))
+					.collect(Collectors.toList());
+
+			// Shared set of processed entities to avoid duplication across the entire
+			// export
+			Set<String> processedEntities = new HashSet<>();
+
 			int processedCount = 0;
-			for (EPOSDataModelEntity entity : entities) {
-				LOGGER.debug("Converting entity {} of {}: {}", ++processedCount, entities.size(), entity.getUid());
-				convertEntityToRDF(entity, rdfModel, mappingModel, null);
+			for (EPOSDataModelEntity entity : rootEntities) {
+				LOGGER.debug("Converting entity {} of {}: {}", ++processedCount, rootEntities.size(), entity.getUid());
+				Resource subject = rdfModel.createResource(entity.getUid());
+				convertEntityToRDF(entity, subject, rdfModel, mappingModel, shaclModel, processedEntities, null,
+						entityMap);
 			}
 			LOGGER.debug("Converted {} entities to RDF triples", entities.size());
 			LOGGER.debug("RDF model now has {} statements", rdfModel.size());
@@ -142,36 +178,122 @@ public class MetadataExporter {
 		}
 	}
 
-	private static Model retrieveReverseMapping(String mappingName) {
-		LOGGER.debug("Retrieving original mapping model '{}'", mappingName);
-		Model originalMapping = MetadataPopulator.retrieveModelMapping(mappingName);
-		if (originalMapping == null) {
-			LOGGER.error("Original mapping model not found: {}", mappingName);
-			throw new IllegalArgumentException("Mapping model not found: " + mappingName);
+	private static RDFDatatype findDatatypeConstraint(String classUri, String propertyUri, Model shaclModel) {
+		if (classUri == null || propertyUri == null || shaclModel == null) {
+			return null;
 		}
-		LOGGER.debug("Original mapping has {} triples", originalMapping.size());
-
-		// Create a reverse mapping by inverting equivalent class/property relationships
-		Model reverseMapping = ModelFactory.createDefaultModel();
-		reverseMapping.setNsPrefixes(originalMapping.getNsPrefixMap());
-
-		// Copy all triples, but invert owl:equivalentClass and owl:equivalentProperty
-		originalMapping.listStatements().forEachRemaining(stmt -> {
-			if (stmt.getPredicate().getURI().equals("http://www.w3.org/2002/07/owl#equivalentClass") ||
-					stmt.getPredicate().getURI().equals("http://www.w3.org/2002/07/owl#equivalentProperty")) {
-				// Invert subject and object
-				reverseMapping.add(reverseMapping.createStatement(
-						stmt.getObject().asResource(),
-						stmt.getPredicate(),
-						stmt.getSubject()));
-				LOGGER.debug("Inverted mapping: {} -> {}", stmt.getSubject(), stmt.getObject());
-			} else {
-				// Copy other triples as-is
-				reverseMapping.add(stmt);
+		String queryString = "PREFIX sh: <http://www.w3.org/ns/shacl#> " +
+				"SELECT ?datatype WHERE { " +
+				"  ?shape sh:targetClass <" + classUri + "> ; " +
+				"         sh:property [ sh:path <" + propertyUri + "> ; " +
+				"                       sh:datatype ?datatype ] . " +
+				"}";
+		try {
+			var query = QueryFactory.create(queryString);
+			var qexec = QueryExecutionFactory.create(query, shaclModel);
+			var results = qexec.execSelect();
+			if (results.hasNext()) {
+				var soln = results.next();
+				String datatypeUri = soln.get("datatype").toString();
+				return mapUriToRDFDatatype(datatypeUri);
 			}
-		});
+		} catch (Exception e) {
+			LOGGER.debug("Error querying SHACL for {}.{}: {}", classUri, propertyUri, e.getLocalizedMessage());
+		}
+		return null;
+	}
 
-		return reverseMapping;
+	private static List<String> findClassConstraints(String classUri, String propertyUri, Model shaclModel) {
+		if (classUri == null || propertyUri == null || shaclModel == null) {
+			return null;
+		}
+		List<String> classes = new ArrayList<>();
+		String queryString = "PREFIX sh: <http://www.w3.org/ns/shacl#> " +
+				"PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> " +
+				"SELECT ?class WHERE { " +
+				"  ?shape sh:targetClass <" + classUri + "> ; " +
+				"         sh:property [ sh:path <" + propertyUri + "> ; " +
+				"                       sh:or ?or ] . " +
+				"  ?or (rdf:rest*/rdf:first) [ sh:class ?class ] . " +
+				"}";
+		try {
+			var query = QueryFactory.create(queryString);
+			var qexec = QueryExecutionFactory.create(query, shaclModel);
+			var results = qexec.execSelect();
+			while (results.hasNext()) {
+				var soln = results.next();
+				String classUriResult = soln.get("class").toString();
+				classes.add(classUriResult);
+			}
+		} catch (Exception e) {
+			LOGGER.debug("Error querying SHACL for class constraints on {}.{}: {}", classUri, propertyUri,
+					e.getLocalizedMessage());
+		}
+		return classes.isEmpty() ? null : classes;
+	}
+
+	private static String selectBestClass(List<String> allowedClasses, EPOSDataModelEntity entity) {
+		String propertyValueUri = "http://schema.org/PropertyValue";
+		String identifierUri = "http://www.w3.org/ns/adms#Identifier";
+
+		// Check if entity has propertyID-like data
+		try {
+			Method getTypeMethod = entity.getClass().getMethod("getType");
+			Object typeValue = getTypeMethod.invoke(entity);
+			if (typeValue instanceof String && !isUriLike((String) typeValue)
+					&& allowedClasses.contains(propertyValueUri)) {
+				return propertyValueUri;
+			}
+		} catch (Exception e) {
+			// Ignore, not propertyID
+		}
+
+		// Prefer Identifier if allowed
+		if (allowedClasses.contains(identifierUri)) {
+			return identifierUri;
+		}
+
+		// Else, return the first allowed
+		return allowedClasses.get(0);
+	}
+
+	private static RDFDatatype mapUriToRDFDatatype(String uri) {
+		if (uri.startsWith("http://www.w3.org/2001/XMLSchema#")) {
+			switch (uri) {
+				case "http://www.w3.org/2001/XMLSchema#string":
+					return XSDDatatype.XSDstring;
+				case "http://www.w3.org/2001/XMLSchema#anyURI":
+					return XSDDatatype.XSDanyURI;
+				case "http://www.w3.org/2001/XMLSchema#integer":
+					return XSDDatatype.XSDinteger;
+				case "http://www.w3.org/2001/XMLSchema#boolean":
+					return XSDDatatype.XSDboolean;
+				case "http://www.w3.org/2001/XMLSchema#date":
+					return XSDDatatype.XSDdate;
+				case "http://www.w3.org/2001/XMLSchema#dateTime":
+					return XSDDatatype.XSDdateTime;
+				case "http://www.w3.org/2001/XMLSchema#decimal":
+					return XSDDatatype.XSDdecimal;
+				default:
+					LOGGER.debug("Unknown XSD datatype URI: {}", uri);
+					return null;
+			}
+		} else {
+			return new BaseDatatype(uri);
+		}
+	}
+
+	private static String getSubjectClassUri(Resource subject) {
+		var typeStmt = subject
+				.getProperty(ResourceFactory.createProperty("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"));
+		if (typeStmt != null && typeStmt.getObject().isURIResource()) {
+			return typeStmt.getObject().asResource().getURI();
+		}
+		return null;
+	}
+
+	private static boolean isUriLike(String value) {
+		return value != null && (value.startsWith("http://") || value.startsWith("https://"));
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -249,9 +371,13 @@ public class MetadataExporter {
 
 	private static void convertEntityToRDF(
 			EPOSDataModelEntity entity,
+			Resource subject,
 			Model rdfModel,
 			Model mappingModel,
-			Set<String> processedEntities) {
+			Model shaclModel,
+			Set<String> processedEntities,
+			String forcedClassUri,
+			Map<String, EPOSDataModelEntity> entityMap) {
 		if (processedEntities == null) {
 			processedEntities = new HashSet<>();
 		}
@@ -267,7 +393,8 @@ public class MetadataExporter {
 
 		try {
 			String edmClassName = entity.getClass().getSimpleName();
-			String dcatClassUri = findDCATClassUri(edmClassName, mappingModel);
+			String dcatClassUri = forcedClassUri != null ? forcedClassUri
+					: findDCATClassUri(edmClassName, mappingModel);
 
 			if (dcatClassUri == null) {
 				LOGGER.warn("No DCAT mapping found for EDM class: {}", edmClassName);
@@ -275,16 +402,28 @@ public class MetadataExporter {
 			}
 
 			LOGGER.debug("Found DCAT class mapping: {} -> {}", edmClassName, dcatClassUri);
-			Resource subject = rdfModel.createResource(entity.getUid());
+			LOGGER.debug("Found DCAT class mapping: {} -> {}", edmClassName, dcatClassUri);
+			// Resource subject is passed in
 			Resource typeResource = rdfModel.createResource(dcatClassUri);
 			rdfModel.add(
 					subject,
 					rdfModel.createProperty("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
 					typeResource);
 
+			// Add dct:identifier for Dataset and Distribution using the UID
+			if ("http://www.w3.org/ns/dcat#Dataset".equals(dcatClassUri) ||
+					"http://www.w3.org/ns/dcat#Distribution".equals(dcatClassUri)) {
+				Property identifierProp = rdfModel.createProperty("http://purl.org/dc/terms/identifier");
+				rdfModel.add(subject, identifierProp,
+						rdfModel.createTypedLiteral(entity.getUid(), XSDDatatype.XSDanyURI));
+				LOGGER.debug("Added dct:identifier for {} using UID: {}", dcatClassUri, entity.getUid());
+			}
+
 			// Special handling for Operation to create proper IriTemplate structure
 			if (entity instanceof Operation) {
-				convertOperationToRDF((Operation) entity, subject, rdfModel, mappingModel, processedEntities);
+				convertOperationToRDF((Operation) entity, subject, rdfModel, mappingModel, shaclModel,
+						processedEntities,
+						entityMap);
 			}
 
 			// Get all getter methods and convert properties
@@ -299,7 +438,9 @@ public class MetadataExporter {
 					// Skip template and mapping properties for Operation as they are handled
 					// specially
 					if (entity instanceof Operation
-							&& (method.getName().equals("getTemplate") || method.getName().equals("getMapping"))) {
+							&& (method.getName().equals("getTemplate") || method.getName().equals("getMapping")
+									|| method.getName().equals("getIriTemplateObject")
+									|| method.getName().equals("getIriTemplate"))) {
 						continue;
 					}
 
@@ -310,13 +451,21 @@ public class MetadataExporter {
 							String propertyName = method.getName().substring(3); // Remove "get"
 							propertyName = Character.toLowerCase(propertyName.charAt(0)) + propertyName.substring(1);
 
-							String dcatPropertyUri = findDCATPropertyUri(edmClassName, propertyName, mappingModel);
+							String dcatPropertyUri = resolveDCATProperty(edmClassName, propertyName, dcatClassUri,
+									mappingModel);
 							if (dcatPropertyUri != null) {
 								mappedProperties++;
 								LOGGER.debug("Mapping property {}.{} -> {}", edmClassName, propertyName,
 										dcatPropertyUri);
-								addPropertyToRDF(subject, dcatPropertyUri, value, rdfModel, mappingModel,
-										processedEntities);
+								addPropertyToRDF(
+										subject,
+										dcatPropertyUri,
+										value,
+										rdfModel,
+										mappingModel,
+										shaclModel,
+										processedEntities,
+										entityMap);
 							} else {
 								LOGGER.debug("No mapping found for property {}.{}", edmClassName, propertyName);
 							}
@@ -342,7 +491,9 @@ public class MetadataExporter {
 			Resource subject,
 			Model rdfModel,
 			Model mappingModel,
-			Set<String> processedEntities) {
+			Model shaclModel,
+			Set<String> processedEntities,
+			Map<String, EPOSDataModelEntity> entityMap) {
 		IriTemplate iriTemplate = op.getIriTemplateObject();
 		if (iriTemplate != null) {
 			Resource templateNode = rdfModel.createResource();
@@ -359,9 +510,8 @@ public class MetadataExporter {
 			List<LinkedEntity> mappingEntities = iriTemplate.getMappings();
 			if (mappingEntities != null) {
 				for (LinkedEntity le : mappingEntities) {
-					Resource mappingNode = rdfModel.createResource(le.getUid());
-					rdfModel.add(templateNode, rdfModel.createProperty("http://www.w3.org/ns/hydra/core#mapping"),
-							mappingNode);
+					addPropertyToRDF(templateNode, "http://www.w3.org/ns/hydra/core#mapping", le, rdfModel,
+							mappingModel, shaclModel, processedEntities, entityMap);
 				}
 			}
 
@@ -372,11 +522,10 @@ public class MetadataExporter {
 	private static String findDCATClassUri(String edmClassName, Model mappingModel) {
 		LOGGER.debug("Searching for DCAT class mapping for EDM class: {}", edmClassName);
 
-		// Query for equivalent class in reverse mapping
 		String queryString = "PREFIX owl: <http://www.w3.org/2002/07/owl#> " +
 				"PREFIX edm: <http://www.epos-eu.org/epos-data-model#>" +
 				"SELECT ?dcatClass WHERE { " +
-				"  ?dcatClass owl:equivalentClass edm:" + edmClassName + " . " +
+				"  edm:" + edmClassName + " owl:equivalentClass ?dcatClass . " +
 				"}";
 
 		try {
@@ -403,23 +552,36 @@ public class MetadataExporter {
 	private static String findDCATPropertyUri(String edmClassName, String propertyName, Model mappingModel) {
 		LOGGER.debug("Searching for DCAT property mapping for {}.{}", edmClassName, propertyName);
 
-		// Query for equivalent property
 		String queryString = "PREFIX owl: <http://www.w3.org/2002/07/owl#> " +
 				"PREFIX edm: <http://www.epos-eu.org/epos-data-model#> " +
+				"PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> " +
 				"SELECT ?dcatProperty WHERE { " +
-				"  ?dcatProperty owl:equivalentProperty edm:" + propertyName + " . " +
+				"  edm:" + propertyName + " rdfs:domain edm:" + edmClassName + " . " +
+				"  edm:" + propertyName + " owl:equivalentProperty ?dcatProperty . " +
 				"}";
+
+		LOGGER.debug("SPARQL Query: {}", queryString);
 
 		try {
 			var query = QueryFactory.create(queryString);
 			var qexec = QueryExecutionFactory.create(query, mappingModel);
 			var results = qexec.execSelect();
 
-			if (results.hasNext()) {
+			List<String> foundMappings = new ArrayList<>();
+			while (results.hasNext()) {
 				var soln = results.next();
 				String dcatPropertyUri = soln.get("dcatProperty").toString();
-				LOGGER.debug("Found DCAT property mapping: {}.{} -> {}", edmClassName, propertyName, dcatPropertyUri);
-				return dcatPropertyUri;
+				foundMappings.add(dcatPropertyUri);
+			}
+
+			LOGGER.debug("Found {} mappings for {}.{}: {}", foundMappings.size(), edmClassName, propertyName,
+					foundMappings);
+
+			if (!foundMappings.isEmpty()) {
+				String selectedMapping = selectBestPropertyMapping(foundMappings, edmClassName);
+				LOGGER.debug("Selected DCAT property mapping: {}.{} -> {}", edmClassName, propertyName,
+						selectedMapping);
+				return selectedMapping;
 			} else {
 				LOGGER.debug("No DCAT property mapping found for {}.{}", edmClassName, propertyName);
 			}
@@ -432,45 +594,189 @@ public class MetadataExporter {
 		return null;
 	}
 
+	/**
+	 * Selects the best property mapping from a list of candidates based on the EDM
+	 * class.
+	 * Prioritizes vocabulary-specific properties over generic schema.org
+	 * properties.
+	 */
+	private static String selectBestPropertyMapping(List<String> mappings, String edmClassName) {
+		// Define priority mappings for specific classes
+		Map<String, List<String>> priorityPrefixes = new HashMap<>();
+
+		// For SKOS Concepts, prefer skos: properties
+		priorityPrefixes.put("Category", Arrays.asList(
+				"http://www.w3.org/2004/02/skos/core#",
+				"http://purl.org/dc/terms/",
+				"http://schema.org/"));
+
+		// For Hydra classes, prefer hydra: properties
+		priorityPrefixes.put("Documentation", Arrays.asList(
+				"http://www.w3.org/ns/hydra/core#",
+				"http://purl.org/dc/terms/",
+				"http://schema.org/"));
+
+		// For DCAT classes, prefer dcat: and dct: properties
+		priorityPrefixes.put("DataProduct", Arrays.asList(
+				"http://www.w3.org/ns/dcat#",
+				"http://purl.org/dc/terms/",
+				"http://schema.org/"));
+
+		priorityPrefixes.put("Distribution", Arrays.asList(
+				"http://www.w3.org/ns/dcat#",
+				"http://purl.org/dc/terms/",
+				"http://schema.org/"));
+
+		// For FOAF Agents, prefer foaf: properties
+		priorityPrefixes.put("Organization", Arrays.asList(
+				"http://xmlns.com/foaf/0.1/",
+				"http://schema.org/"));
+
+		// Get priority list for this class
+		List<String> priorities = priorityPrefixes.get(edmClassName);
+
+		if (priorities != null) {
+			// Try each priority prefix in order
+			for (String prefix : priorities) {
+				for (String mapping : mappings) {
+					if (mapping.startsWith(prefix)) {
+						return mapping;
+					}
+				}
+			}
+		}
+
+		// Fallback to first mapping if no priority match
+		return mappings.get(0);
+	}
+
+	private static String resolveDCATProperty(String edmClassName, String propertyName, String dcatClassUri,
+			Model mappingModel) {
+		// Context-aware property mapping
+		if ("http://schema.org/PropertyValue".equals(dcatClassUri)) {
+			if ("type".equals(propertyName)) {
+				return "http://schema.org/propertyID";
+			} else if ("identifier".equals(propertyName)) {
+				return "http://schema.org/value";
+			}
+		}
+
+		// Default mapping
+		return findDCATPropertyUri(edmClassName, propertyName, mappingModel);
+	}
+
 	private static void addPropertyToRDF(
 			Resource subject,
 			String propertyUri,
 			Object value,
 			Model rdfModel,
 			Model mappingModel,
-			Set<String> processedEntities) {
+			Model shaclModel,
+			Set<String> processedEntities,
+			Map<String, EPOSDataModelEntity> entityMap) {
 		Property property = ResourceFactory.createProperty(propertyUri);
 		LOGGER.debug("Adding property {} with value type: {}", propertyUri, value.getClass().getSimpleName());
 
+		String classUri = getSubjectClassUri(subject);
+		RDFDatatype expectedDatatype = findDatatypeConstraint(classUri, propertyUri, shaclModel);
+		if (expectedDatatype != null) {
+			try {
+				rdfModel.add(subject, property, rdfModel.createTypedLiteral(value, expectedDatatype));
+				LOGGER.debug("Added typed literal with expected datatype {}: {}", expectedDatatype.getURI(), value);
+				return;
+			} catch (Exception e) {
+				throw new IllegalArgumentException("Value '" + value + "' does not match expected datatype "
+						+ expectedDatatype.getURI() + " for property " + propertyUri, e);
+			}
+		}
+
 		if (value instanceof String) {
-			rdfModel.add(subject, property, rdfModel.createTypedLiteral((String) value, XSDDatatype.XSDstring));
-			LOGGER.debug("Added string literal: {}", value);
+			String stringValue = (String) value;
+			XSDDatatype datatype = XSDDatatype.XSDstring;
+			if (isUriLike(stringValue)) {
+				datatype = XSDDatatype.XSDanyURI;
+			}
+			rdfModel.add(subject, property, rdfModel.createTypedLiteral(stringValue, datatype));
+			LOGGER.debug("Added string literal with datatype {}: {}", datatype.getURI(), value);
 		} else if (value instanceof Integer) {
 			rdfModel.add(subject, property, rdfModel.createTypedLiteral(value, XSDDatatype.XSDinteger));
 			LOGGER.debug("Added integer literal: {}", value);
 		} else if (value instanceof Boolean) {
 			rdfModel.add(subject, property, rdfModel.createTypedLiteral(value, XSDDatatype.XSDboolean));
 			LOGGER.debug("Added boolean literal: {}", value);
+		} else if (value instanceof java.time.LocalDateTime) {
+			rdfModel.add(subject, property, rdfModel.createTypedLiteral(value, XSDDatatype.XSDdateTime));
+			LOGGER.debug("Added dateTime literal: {}", value);
 		} else if (value instanceof LinkedEntity) {
 			LinkedEntity linkedEntity = (LinkedEntity) value;
-			Resource objectResource = rdfModel.createResource(linkedEntity.getUid());
-			rdfModel.add(subject, property, objectResource);
-			LOGGER.debug("Added linked entity reference: {}", linkedEntity.getUid());
+			EPOSDataModelEntity resolvedEntity = entityMap != null ? entityMap.get(linkedEntity.getUid()) : null;
+
+			if (resolvedEntity != null) {
+				// Treat as nested entity
+				String inferredClassUri = null;
+				// Inline node: infer type from SHACL
+				List<String> allowedClasses = findClassConstraints(classUri, propertyUri, shaclModel);
+				if (allowedClasses != null && !allowedClasses.isEmpty()) {
+					inferredClassUri = selectBestClass(allowedClasses, resolvedEntity);
+					LOGGER.debug("Inferred class {} for inline identifier on property {}", inferredClassUri,
+							propertyUri);
+				}
+
+				// DCAT-AP compliance: If this is an Identifier object and property is
+				// dct:identifier,
+				// change to adms:identifier (dct:identifier should be simple literals only)
+				Property actualProperty = property;
+				if ("http://purl.org/dc/terms/identifier".equals(propertyUri) &&
+						resolvedEntity.getClass().getSimpleName().equals("Identifier")) {
+					actualProperty = rdfModel.createProperty("http://www.w3.org/ns/adms#identifier");
+					LOGGER.debug("Changed dct:identifier to adms:identifier for complex Identifier object");
+				}
+
+				Resource objectResource;
+				if (resolvedEntity.getUid().startsWith("_:")) {
+					objectResource = rdfModel.createResource(); // Anonymous node for inline
+				} else {
+					objectResource = rdfModel.createResource(resolvedEntity.getUid());
+				}
+				rdfModel.add(subject, actualProperty, objectResource);
+				convertEntityToRDF(resolvedEntity, objectResource, rdfModel, mappingModel, shaclModel,
+						processedEntities, inferredClassUri, entityMap);
+			} else {
+				// Fallback to reference
+				Resource objectResource = rdfModel.createResource(linkedEntity.getUid());
+				rdfModel.add(subject, property, objectResource);
+				LOGGER.debug("Added linked entity reference: {}", linkedEntity.getUid());
+			}
 		} else if (value instanceof EPOSDataModelEntity) {
 			// Handle nested EPOS entities recursively
 			EPOSDataModelEntity nestedEntity = (EPOSDataModelEntity) value;
-			Resource objectResource = rdfModel.createResource(nestedEntity.getUid());
+			String inferredClassUri = null;
+			// Inline node: infer type from SHACL
+			List<String> allowedClasses = findClassConstraints(classUri, propertyUri, shaclModel);
+			if (allowedClasses != null && !allowedClasses.isEmpty()) {
+				inferredClassUri = selectBestClass(allowedClasses, nestedEntity);
+				LOGGER.debug("Inferred class {} for inline identifier on property {}", inferredClassUri,
+						propertyUri);
+			}
+			Resource objectResource;
+			if (nestedEntity.getUid().startsWith("_:")) {
+				objectResource = rdfModel.createResource(); // Anonymous node for inline
+			} else {
+				objectResource = rdfModel.createResource(nestedEntity.getUid());
+			}
 			rdfModel.add(subject, property, objectResource);
 			LOGGER.debug("Added nested entity reference: {} (will process recursively)", nestedEntity.getUid());
 			// Recursively convert the nested entity
-			convertEntityToRDF(nestedEntity, rdfModel, mappingModel, processedEntities);
+			convertEntityToRDF(nestedEntity, objectResource, rdfModel, mappingModel, shaclModel, processedEntities,
+					inferredClassUri, entityMap);
 		} else if (value instanceof List) {
 			// Handle lists - recursively process each item
 			@SuppressWarnings("unchecked")
 			List<Object> list = (List<Object>) value;
 			LOGGER.debug("Processing list with {} items", list.size());
 			for (Object item : list) {
-				addPropertyToRDF(subject, propertyUri, item, rdfModel, mappingModel, processedEntities);
+				addPropertyToRDF(subject, propertyUri, item, rdfModel, mappingModel, shaclModel, processedEntities,
+						entityMap);
 			}
 		} else {
 			// Default to string representation
