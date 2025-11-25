@@ -16,9 +16,13 @@ import java.util.Map;
 public class EquipmentMapper implements EntityMapper<Equipment> {
 
     @Override
-    public Resource mapToRDF(Equipment entity, Model model, Map<String, EPOSDataModelEntity> entityMap) {
+    public Resource mapToRDF(Equipment entity, Model model, Map<String, EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
+        if (resourceCache.containsKey(entity.getUid())) {
+            return resourceCache.get(entity.getUid());
+        }
         // Create resource
         Resource subject = model.createResource(entity.getUid());
+        resourceCache.put(entity.getUid(), subject);
 
         // Add type
         RDFHelper.addType(model, subject, RDFConstants.EPOS_EQUIPMENT);
@@ -39,7 +43,7 @@ public class EquipmentMapper implements EntityMapper<Equipment> {
             EPOSDataModelEntity manufacturerEntity = entityMap.get(entity.getManufacturer().getUid());
             if (manufacturerEntity instanceof org.epos.eposdatamodel.Organization) {
                 OrganizationMapper organizationMapper = new OrganizationMapper();
-                Resource manufacturerResource = organizationMapper.mapToRDF((org.epos.eposdatamodel.Organization) manufacturerEntity, model, entityMap);
+                Resource manufacturerResource = organizationMapper.mapToRDF((org.epos.eposdatamodel.Organization) manufacturerEntity, model, entityMap, resourceCache);
                 model.add(subject, RDFConstants.SCHEMA_MANUFACTURER, manufacturerResource);
             }
         }
@@ -57,7 +61,7 @@ public class EquipmentMapper implements EntityMapper<Equipment> {
                 EPOSDataModelEntity locationEntity = entityMap.get(linkedEntity.getUid());
                 if (locationEntity instanceof org.epos.eposdatamodel.Location) {
                     LocationMapper locationMapper = new LocationMapper();
-                    Resource locationResource = locationMapper.mapToRDF((org.epos.eposdatamodel.Location) locationEntity, model, entityMap);
+                    Resource locationResource = locationMapper.mapToRDF((org.epos.eposdatamodel.Location) locationEntity, model, entityMap, resourceCache);
                     model.add(subject, RDFConstants.DCT_SPATIAL, locationResource);
                 }
             }
@@ -69,7 +73,7 @@ public class EquipmentMapper implements EntityMapper<Equipment> {
                 EPOSDataModelEntity periodEntity = entityMap.get(linkedEntity.getUid());
                 if (periodEntity instanceof org.epos.eposdatamodel.PeriodOfTime) {
                     PeriodOfTimeMapper periodMapper = new PeriodOfTimeMapper();
-                    Resource periodResource = periodMapper.mapToRDF((org.epos.eposdatamodel.PeriodOfTime) periodEntity, model, entityMap);
+                    Resource periodResource = periodMapper.mapToRDF((org.epos.eposdatamodel.PeriodOfTime) periodEntity, model, entityMap, resourceCache);
                     model.add(subject, RDFConstants.DCT_TEMPORAL, periodResource);
                 }
             }
@@ -81,7 +85,7 @@ public class EquipmentMapper implements EntityMapper<Equipment> {
                 EPOSDataModelEntity categoryEntity = entityMap.get(linkedEntity.getUid());
                 if (categoryEntity instanceof org.epos.eposdatamodel.Category) {
                     CategoryMapper categoryMapper = new CategoryMapper();
-                    Resource categoryResource = categoryMapper.mapToRDF((org.epos.eposdatamodel.Category) categoryEntity, model, entityMap);
+                    Resource categoryResource = categoryMapper.mapToRDF((org.epos.eposdatamodel.Category) categoryEntity, model, entityMap, resourceCache);
                     model.add(subject, RDFConstants.DCAT_THEME, categoryResource);
                 }
             }
@@ -93,7 +97,7 @@ public class EquipmentMapper implements EntityMapper<Equipment> {
                 EPOSDataModelEntity contactEntity = entityMap.get(linkedEntity.getUid());
                 if (contactEntity instanceof org.epos.eposdatamodel.ContactPoint) {
                     ContactPointMapper contactMapper = new ContactPointMapper();
-                    Resource contactResource = contactMapper.mapToRDF((org.epos.eposdatamodel.ContactPoint) contactEntity, model, entityMap);
+                    Resource contactResource = contactMapper.mapToRDF((org.epos.eposdatamodel.ContactPoint) contactEntity, model, entityMap, resourceCache);
                     model.add(subject, RDFConstants.DCAT_CONTACT_POINT, contactResource);
                 }
             }

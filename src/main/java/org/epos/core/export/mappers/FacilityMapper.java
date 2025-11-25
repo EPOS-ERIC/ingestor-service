@@ -16,9 +16,13 @@ import java.util.Map;
 public class FacilityMapper implements EntityMapper<Facility> {
 
     @Override
-    public Resource mapToRDF(Facility entity, Model model, Map<String, EPOSDataModelEntity> entityMap) {
+    public Resource mapToRDF(Facility entity, Model model, Map<String, EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
+        if (resourceCache.containsKey(entity.getUid())) {
+            return resourceCache.get(entity.getUid());
+        }
         // Create resource
         Resource subject = model.createResource(entity.getUid());
+        resourceCache.put(entity.getUid(), subject);
 
         // Add type
         RDFHelper.addType(model, subject, RDFConstants.EPOS_FACILITY);
@@ -58,7 +62,7 @@ public class FacilityMapper implements EntityMapper<Facility> {
                 EPOSDataModelEntity locationEntity = entityMap.get(linkedEntity.getUid());
                 if (locationEntity instanceof org.epos.eposdatamodel.Location) {
                     LocationMapper locationMapper = new LocationMapper();
-                    Resource locationResource = locationMapper.mapToRDF((org.epos.eposdatamodel.Location) locationEntity, model, entityMap);
+                    Resource locationResource = locationMapper.mapToRDF((org.epos.eposdatamodel.Location) locationEntity, model, entityMap, resourceCache);
                     model.add(subject, RDFConstants.DCT_SPATIAL, locationResource);
                 }
             }
@@ -70,7 +74,7 @@ public class FacilityMapper implements EntityMapper<Facility> {
                 EPOSDataModelEntity categoryEntity = entityMap.get(linkedEntity.getUid());
                 if (categoryEntity instanceof org.epos.eposdatamodel.Category) {
                     CategoryMapper categoryMapper = new CategoryMapper();
-                    Resource categoryResource = categoryMapper.mapToRDF((org.epos.eposdatamodel.Category) categoryEntity, model, entityMap);
+                    Resource categoryResource = categoryMapper.mapToRDF((org.epos.eposdatamodel.Category) categoryEntity, model, entityMap, resourceCache);
                     model.add(subject, RDFConstants.DCAT_THEME, categoryResource);
                 }
             }
@@ -82,7 +86,7 @@ public class FacilityMapper implements EntityMapper<Facility> {
                 EPOSDataModelEntity contactEntity = entityMap.get(linkedEntity.getUid());
                 if (contactEntity instanceof org.epos.eposdatamodel.ContactPoint) {
                     ContactPointMapper contactMapper = new ContactPointMapper();
-                    Resource contactResource = contactMapper.mapToRDF((org.epos.eposdatamodel.ContactPoint) contactEntity, model, entityMap);
+                    Resource contactResource = contactMapper.mapToRDF((org.epos.eposdatamodel.ContactPoint) contactEntity, model, entityMap, resourceCache);
                     model.add(subject, RDFConstants.DCAT_CONTACT_POINT, contactResource);
                 }
             }

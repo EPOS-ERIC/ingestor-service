@@ -16,9 +16,13 @@ import java.util.Map;
 public class CategorySchemeMapper implements EntityMapper<CategoryScheme> {
 
     @Override
-    public Resource mapToRDF(CategoryScheme entity, Model model, Map<String, EPOSDataModelEntity> entityMap) {
+    public Resource mapToRDF(CategoryScheme entity, Model model, Map<String, EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
+        if (resourceCache.containsKey(entity.getUid())) {
+            return resourceCache.get(entity.getUid());
+        }
         // Create resource
         Resource subject = model.createResource(entity.getUid());
+        resourceCache.put(entity.getUid(), subject);
 
         // Add type
         RDFHelper.addType(model, subject, RDFConstants.SKOS_CONCEPT_SCHEME);
@@ -38,7 +42,7 @@ public class CategorySchemeMapper implements EntityMapper<CategoryScheme> {
                 EPOSDataModelEntity relatedEntity = entityMap.get(linkedEntity.getUid());
                 if (relatedEntity instanceof org.epos.eposdatamodel.Category) {
                     CategoryMapper categoryMapper = new CategoryMapper();
-                    Resource categoryResource = categoryMapper.mapToRDF((org.epos.eposdatamodel.Category) relatedEntity, model, entityMap);
+                    Resource categoryResource = categoryMapper.mapToRDF((org.epos.eposdatamodel.Category) relatedEntity, model, entityMap, resourceCache);
                     model.add(subject, RDFConstants.SKOS_HAS_TOP_CONCEPT, categoryResource);
                 }
             }

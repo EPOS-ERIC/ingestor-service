@@ -19,9 +19,13 @@ import java.util.Map;
 public class OperationMapper implements EntityMapper<Operation> {
 
 	@Override
-	public Resource mapToRDF(Operation entity, Model model, Map<String, EPOSDataModelEntity> entityMap) {
+	public Resource mapToRDF(Operation entity, Model model, Map<String, EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
+		if (resourceCache.containsKey(entity.getUid())) {
+			return resourceCache.get(entity.getUid());
+		}
 		// Create resource
 		Resource subject = model.createResource(entity.getUid());
+		resourceCache.put(entity.getUid(), subject);
 
 		// Add type
 		RDFHelper.addType(model, subject, RDFConstants.HYDRA_OPERATION);

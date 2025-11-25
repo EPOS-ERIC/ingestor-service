@@ -15,8 +15,12 @@ import java.util.Map;
 public class SoftwareSourceCodeMapper implements EntityMapper<SoftwareSourceCode> {
 
     @Override
-    public Resource mapToRDF(SoftwareSourceCode entity, Model model, Map<String, org.epos.eposdatamodel.EPOSDataModelEntity> entityMap) {
+    public Resource mapToRDF(SoftwareSourceCode entity, Model model, Map<String, org.epos.eposdatamodel.EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
+        if (resourceCache.containsKey(entity.getUid())) {
+            return resourceCache.get(entity.getUid());
+        }
         Resource subject = model.createResource(entity.getUid());
+        resourceCache.put(entity.getUid(), subject);
         RDFHelper.addType(model, subject, RDFConstants.SCHEMA_SOFTWARE_SOURCE_CODE);
         RDFHelper.addLiteral(model, subject, RDFConstants.SCHEMA_IDENTIFIER, entity.getUid());
         RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_NAME, entity.getName());

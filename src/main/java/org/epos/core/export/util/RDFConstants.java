@@ -37,10 +37,11 @@ public class RDFConstants {
     public static final Resource DCAT_DATASET = ResourceFactory.createResource(DCAT_NS + "Dataset");
     public static final Resource DCAT_DISTRIBUTION_CLASS = ResourceFactory.createResource(DCAT_NS + "Distribution");
     public static final Resource DCAT_DATA_SERVICE = ResourceFactory.createResource(DCAT_NS + "DataService");
+    public static final Resource DCAT_CONTACT_POINT_CLASS = ResourceFactory.createResource(DCAT_NS + "ContactPoint");
     public static final Resource FOAF_AGENT = ResourceFactory.createResource(FOAF_NS + "Agent");
     public static final Resource SCHEMA_ORGANIZATION = ResourceFactory.createResource(SCHEMA_NS + "Organization");
     public static final Resource SCHEMA_PERSON = ResourceFactory.createResource(SCHEMA_NS + "Person");
-    public static final Property SCHEMA_CONTACT_POINT = ResourceFactory.createProperty(SCHEMA_NS, "contactPoint");
+    public static final Property SCHEMA_CONTACT_POINT = ResourceFactory.createProperty(SCHEMA_NS, "ContactPoint");
     public static final Resource SCHEMA_DEVICE = ResourceFactory.createResource(SCHEMA_NS + "Device");
     public static final Resource SCHEMA_SOFTWARE_APPLICATION = ResourceFactory.createResource(SCHEMA_NS + "SoftwareApplication");
     public static final Resource SCHEMA_QUANTITATIVE_VALUE = ResourceFactory.createResource(SCHEMA_NS + "QuantitativeValue");

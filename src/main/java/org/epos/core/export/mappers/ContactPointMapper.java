@@ -14,12 +14,16 @@ import java.util.Map;
 public class ContactPointMapper implements EntityMapper<ContactPoint> {
 
     @Override
-    public Resource mapToRDF(ContactPoint entity, Model model, Map<String, org.epos.eposdatamodel.EPOSDataModelEntity> entityMap) {
+    public Resource mapToRDF(ContactPoint entity, Model model, Map<String, org.epos.eposdatamodel.EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
+        if (resourceCache.containsKey(entity.getUid())) {
+            return resourceCache.get(entity.getUid());
+        }
         // Create resource
         Resource subject = model.createResource(entity.getUid());
+        resourceCache.put(entity.getUid(), subject);
 
         // Add type
-        RDFHelper.addType(model, subject, RDFConstants.SCHEMA_CONTACT_POINT);
+        RDFHelper.addType(model, subject, RDFConstants.DCAT_CONTACT_POINT_CLASS);
 
         // Add email (multiple)
         if (entity.getEmail() != null) {

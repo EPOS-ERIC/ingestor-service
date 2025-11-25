@@ -16,9 +16,13 @@ import java.util.Map;
 public class SoftwareApplicationMapper implements EntityMapper<SoftwareApplication> {
 
     @Override
-    public Resource mapToRDF(SoftwareApplication entity, Model model, Map<String, EPOSDataModelEntity> entityMap) {
+    public Resource mapToRDF(SoftwareApplication entity, Model model, Map<String, EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
+        if (resourceCache.containsKey(entity.getUid())) {
+            return resourceCache.get(entity.getUid());
+        }
         // Create resource
         Resource subject = model.createResource(entity.getUid());
+        resourceCache.put(entity.getUid(), subject);
 
         // Add type
         RDFHelper.addType(model, subject, RDFConstants.SCHEMA_SOFTWARE_APPLICATION);
@@ -38,7 +42,7 @@ public class SoftwareApplicationMapper implements EntityMapper<SoftwareApplicati
                 EPOSDataModelEntity categoryEntity = entityMap.get(linkedEntity.getUid());
                 if (categoryEntity instanceof org.epos.eposdatamodel.Category) {
                     CategoryMapper categoryMapper = new CategoryMapper();
-                    Resource categoryResource = categoryMapper.mapToRDF((org.epos.eposdatamodel.Category) categoryEntity, model, entityMap);
+                    Resource categoryResource = categoryMapper.mapToRDF((org.epos.eposdatamodel.Category) categoryEntity, model, entityMap, resourceCache);
                     model.add(subject, RDFConstants.DCAT_THEME, categoryResource);
                 }
             }
@@ -50,7 +54,7 @@ public class SoftwareApplicationMapper implements EntityMapper<SoftwareApplicati
                 EPOSDataModelEntity contactEntity = entityMap.get(linkedEntity.getUid());
                 if (contactEntity instanceof org.epos.eposdatamodel.ContactPoint) {
                     ContactPointMapper contactMapper = new ContactPointMapper();
-                    Resource contactResource = contactMapper.mapToRDF((org.epos.eposdatamodel.ContactPoint) contactEntity, model, entityMap);
+                    Resource contactResource = contactMapper.mapToRDF((org.epos.eposdatamodel.ContactPoint) contactEntity, model, entityMap, resourceCache);
                     model.add(subject, RDFConstants.DCAT_CONTACT_POINT, contactResource);
                 }
             }
@@ -62,7 +66,7 @@ public class SoftwareApplicationMapper implements EntityMapper<SoftwareApplicati
                 EPOSDataModelEntity identifierEntity = entityMap.get(linkedEntity.getUid());
                 if (identifierEntity instanceof org.epos.eposdatamodel.Identifier) {
                     IdentifierMapper identifierMapper = new IdentifierMapper();
-                    Resource identifierResource = identifierMapper.mapToRDF((org.epos.eposdatamodel.Identifier) identifierEntity, model, entityMap);
+                    Resource identifierResource = identifierMapper.mapToRDF((org.epos.eposdatamodel.Identifier) identifierEntity, model, entityMap, resourceCache);
                     model.add(subject, RDFConstants.ADMS_IDENTIFIER, identifierResource);
                 }
             }

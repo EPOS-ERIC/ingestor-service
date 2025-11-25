@@ -1,5 +1,6 @@
 package org.epos.core.export.mappers;
 
+import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.epos.core.export.util.RDFConstants;
@@ -17,9 +18,13 @@ import java.util.Map;
 public class DataProductMapper implements EntityMapper<DataProduct> {
 
 	@Override
-	public Resource mapToRDF(DataProduct entity, Model model, Map<String, EPOSDataModelEntity> entityMap) {
+	public Resource mapToRDF(DataProduct entity, Model model, Map<String, EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
+		if (resourceCache.containsKey(entity.getUid())) {
+			return resourceCache.get(entity.getUid());
+		}
 		// Create resource
 		Resource subject = model.createResource(entity.getUid());
+		resourceCache.put(entity.getUid(), subject);
 
 		// Add type
 		RDFHelper.addType(model, subject, RDFConstants.DCAT_DATASET);
@@ -40,7 +45,7 @@ public class DataProductMapper implements EntityMapper<DataProduct> {
 				EPOSDataModelEntity identifierEntity = entityMap.get(linkedEntity.getUid());
 				if (identifierEntity instanceof org.epos.eposdatamodel.Identifier) {
 					IdentifierMapper identifierMapper = new IdentifierMapper();
-					Resource identifierResource = identifierMapper .mapToRDF((org.epos.eposdatamodel.Identifier) identifierEntity, model, entityMap);
+					Resource identifierResource = identifierMapper .mapToRDF((org.epos.eposdatamodel.Identifier) identifierEntity, model, entityMap, resourceCache);
 					model.add(subject, RDFConstants.ADMS_IDENTIFIER, identifierResource);
 				}
 			}
@@ -101,8 +106,15 @@ public class DataProductMapper implements EntityMapper<DataProduct> {
 			LinkedEntity firstTemporal = entity.getTemporalExtent().get(0);
 			EPOSDataModelEntity temporalEntity = entityMap.get(firstTemporal.getUid());
 			if (temporalEntity instanceof org.epos.eposdatamodel.PeriodOfTime) {
-				PeriodOfTimeMapper periodMapper = new PeriodOfTimeMapper();
-				Resource temporalResource = periodMapper.mapToRDF((org.epos.eposdatamodel.PeriodOfTime) temporalEntity, model, entityMap);
+				org.epos.eposdatamodel.PeriodOfTime periodOfTime = (org.epos.eposdatamodel.PeriodOfTime) temporalEntity;
+				Resource temporalResource = model.createResource();
+				RDFHelper.addType(model, temporalResource, RDFConstants.DCT_PERIOD_OF_TIME);
+				if (periodOfTime.getStartDate() != null) {
+					model.add(temporalResource, RDFConstants.SCHEMA_START_DATE, model.createTypedLiteral(periodOfTime.getStartDate().toString(), XSDDatatype.XSDdateTime));
+				}
+				if (periodOfTime.getEndDate() != null) {
+					model.add(temporalResource, RDFConstants.SCHEMA_END_DATE, model.createTypedLiteral(periodOfTime.getEndDate().toString(), XSDDatatype.XSDdateTime));
+				}
 				model.add(subject, RDFConstants.DCT_TEMPORAL, temporalResource);
 			}
 		}
@@ -113,7 +125,7 @@ public class DataProductMapper implements EntityMapper<DataProduct> {
 				EPOSDataModelEntity categoryEntity = entityMap.get(linkedEntity.getUid());
 				if (categoryEntity instanceof org.epos.eposdatamodel.Category) {
 					CategoryMapper categoryMapper = new CategoryMapper();
-					Resource categoryResource = categoryMapper.mapToRDF((org.epos.eposdatamodel.Category) categoryEntity, model, entityMap);
+					Resource categoryResource = categoryMapper.mapToRDF((org.epos.eposdatamodel.Category) categoryEntity, model, entityMap, resourceCache);
 					model.add(subject, RDFConstants.DCAT_THEME, categoryResource);
 				}
 			}
@@ -133,7 +145,7 @@ public class DataProductMapper implements EntityMapper<DataProduct> {
 				EPOSDataModelEntity contactPointEntity = entityMap.get(linkedEntity.getUid());
 				if (contactPointEntity instanceof org.epos.eposdatamodel.ContactPoint) {
 					ContactPointMapper contactPointMapper = new ContactPointMapper();
-					Resource contactPointResource = contactPointMapper.mapToRDF((org.epos.eposdatamodel.ContactPoint) contactPointEntity, model, entityMap);
+					Resource contactPointResource = contactPointMapper.mapToRDF((org.epos.eposdatamodel.ContactPoint) contactPointEntity, model, entityMap, resourceCache);
 					model.add(subject, RDFConstants.DCAT_CONTACT_POINT, contactPointResource);
 				}
 			}
@@ -145,7 +157,7 @@ public class DataProductMapper implements EntityMapper<DataProduct> {
 				EPOSDataModelEntity distributionEntity = entityMap.get(linkedEntity.getUid());
 				if (distributionEntity instanceof org.epos.eposdatamodel.Distribution) {
 					DistributionMapper distributionMapper = new DistributionMapper();
-					Resource distributionResource = distributionMapper.mapToRDF((org.epos.eposdatamodel.Distribution) distributionEntity, model, entityMap);
+					Resource distributionResource = distributionMapper.mapToRDF((org.epos.eposdatamodel.Distribution) distributionEntity, model, entityMap, resourceCache);
 					model.add(subject, RDFConstants.DCAT_DISTRIBUTION, distributionResource);
 				}
 			}
@@ -157,7 +169,7 @@ public class DataProductMapper implements EntityMapper<DataProduct> {
 				EPOSDataModelEntity publisherEntity = entityMap.get(linkedEntity.getUid());
 				if (publisherEntity instanceof org.epos.eposdatamodel.Organization) {
 					OrganizationMapper organizationMapper = new OrganizationMapper();
-					Resource organizationResource = organizationMapper.mapToRDF((org.epos.eposdatamodel.Organization) publisherEntity, model, entityMap);
+					Resource organizationResource = organizationMapper.mapToRDF((org.epos.eposdatamodel.Organization) publisherEntity, model, entityMap, resourceCache);
 					model.add(subject, RDFConstants.DCT_PUBLISHER, organizationResource);
 				}
 			}

@@ -16,9 +16,13 @@ import java.util.Map;
 public class PersonMapper implements EntityMapper<Person> {
 
     @Override
-    public Resource mapToRDF(Person entity, Model model, Map<String, EPOSDataModelEntity> entityMap) {
+    public Resource mapToRDF(Person entity, Model model, Map<String, EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
+        if (resourceCache.containsKey(entity.getUid())) {
+            return resourceCache.get(entity.getUid());
+        }
         // Create resource
         Resource subject = model.createResource(entity.getUid());
+        resourceCache.put(entity.getUid(), subject);
 
         // Add type
         RDFHelper.addType(model, subject, RDFConstants.SCHEMA_PERSON);
@@ -46,7 +50,7 @@ public class PersonMapper implements EntityMapper<Person> {
             EPOSDataModelEntity addressEntity = entityMap.get(entity.getAddress().getUid());
             if (addressEntity instanceof org.epos.eposdatamodel.Address) {
                 AddressMapper addressMapper = new AddressMapper();
-                Resource addressResource = addressMapper.mapToRDF((org.epos.eposdatamodel.Address) addressEntity, model, entityMap);
+                Resource addressResource = addressMapper.mapToRDF((org.epos.eposdatamodel.Address) addressEntity, model, entityMap, resourceCache);
                 model.add(subject, RDFConstants.SCHEMA_ADDRESS, addressResource);
             }
         }

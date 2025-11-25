@@ -16,13 +16,17 @@ import java.util.Map;
 public class CategoryMapper implements EntityMapper<Category> {
 
     @Override
-    public Resource mapToRDF(Category entity, Model model, Map<String, EPOSDataModelEntity> entityMap) {
+    public Resource mapToRDF(Category entity, Model model, Map<String, EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
+        if (resourceCache.containsKey(entity.getUid())) {
+            return resourceCache.get(entity.getUid());
+        }
+		System.err.println("DEBUGPRINT: CategoryMapper.java:22: entity=" + entity);
         // Create resource
         Resource subject = model.createResource(entity.getUid());
+        resourceCache.put(entity.getUid(), subject);
 
         // Determine if this is a ConceptScheme or Concept
-        boolean isScheme = entity.getInScheme() == null;
-        Resource rdfType = isScheme ? RDFConstants.SKOS_CONCEPT_SCHEME : RDFConstants.SKOS_CONCEPT;
+        Resource rdfType =  RDFConstants.SKOS_CONCEPT;
 
         // Check if already mapped to prevent recursion
         if (model.contains(subject, RDFConstants.RDF_TYPE, rdfType)) {
@@ -32,53 +36,42 @@ public class CategoryMapper implements EntityMapper<Category> {
         // Add type
         RDFHelper.addType(model, subject, rdfType);
 
-        if (isScheme) {
-            // Add ConceptScheme properties
-            RDFHelper.addStringLiteral(model, subject, RDFConstants.SKOS_PREF_LABEL, "DOMAIN TEST");
-            RDFHelper.addStringLiteral(model, subject, RDFConstants.DCT_TITLE, entity.getName());
-            RDFHelper.addStringLiteral(model, subject, RDFConstants.DCT_DESCRIPTION, entity.getDescription());
-            RDFHelper.addURILiteral(model, subject, RDFConstants.FOAF_LOGO, "assets/img/logo/NFO_logo.png");
-            RDFHelper.addURILiteral(model, subject, RDFConstants.FOAF_HOMEPAGE, "https://www.epos-eu.org/tcs/near-fault-observatories");
-            RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_COLOR, "#5e3160");
-            RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_ORDER_ITEM_NUMBER, "1");
-        } else {
-            // Add Concept properties
-            RDFHelper.addStringLiteral(model, subject, RDFConstants.SKOS_PREF_LABEL, entity.getName());
-            RDFHelper.addStringLiteral(model, subject, RDFConstants.SKOS_DEFINITION, entity.getDescription());
+		// Add Concept properties
+		RDFHelper.addStringLiteral(model, subject, RDFConstants.SKOS_PREF_LABEL, entity.getName());
+		RDFHelper.addStringLiteral(model, subject, RDFConstants.SKOS_DEFINITION, entity.getDescription());
 
-            // Add inScheme
-            if (entity.getInScheme() != null) {
-                EPOSDataModelEntity relatedEntity = entityMap.get(entity.getInScheme().getUid());
-                if (relatedEntity instanceof org.epos.eposdatamodel.CategoryScheme) {
-                    CategorySchemeMapper categorySchemeMapper = new CategorySchemeMapper();
-                    Resource schemeResource = categorySchemeMapper.mapToRDF((org.epos.eposdatamodel.CategoryScheme) relatedEntity, model, entityMap);
-                    model.add(subject, RDFConstants.SKOS_IN_SCHEME, schemeResource);
-                }
-            }
+		// Add inScheme
+		if (entity.getInScheme() != null) {
+			EPOSDataModelEntity relatedEntity = entityMap.get(entity.getInScheme().getUid());
+			if (relatedEntity instanceof org.epos.eposdatamodel.CategoryScheme) {
+				CategorySchemeMapper categorySchemeMapper = new CategorySchemeMapper();
+				Resource schemeResource = categorySchemeMapper.mapToRDF((org.epos.eposdatamodel.CategoryScheme) relatedEntity, model, entityMap, resourceCache);
+				model.add(subject, RDFConstants.SKOS_IN_SCHEME, schemeResource);
+			}
+		}
 
-            // Add broader
-            if (entity.getBroader() != null) {
-                for (LinkedEntity linkedEntity : entity.getBroader()) {
-                    EPOSDataModelEntity relatedEntity = entityMap.get(linkedEntity.getUid());
-                    if (relatedEntity instanceof Category) {
-                        CategoryMapper categoryMapper = new CategoryMapper();
-                        Resource broaderResource = categoryMapper.mapToRDF((Category) relatedEntity, model, entityMap);
-                        model.add(subject, RDFConstants.SKOS_BROADER, broaderResource);
-                    }
-                }
-            }
+		// Add broader
+		if (entity.getBroader() != null) {
+			for (LinkedEntity linkedEntity : entity.getBroader()) {
+				EPOSDataModelEntity relatedEntity = entityMap.get(linkedEntity.getUid());
+				if (relatedEntity instanceof Category) {
+					CategoryMapper categoryMapper = new CategoryMapper();
+					Resource broaderResource = categoryMapper.mapToRDF((Category) relatedEntity, model, entityMap, resourceCache);
+					model.add(subject, RDFConstants.SKOS_BROADER, broaderResource);
+				}
+			}
+		}
 
-            // Add narrower
-            if (entity.getNarrower() != null) {
-                for (LinkedEntity linkedEntity : entity.getNarrower()) {
-                    EPOSDataModelEntity relatedEntity = entityMap.get(linkedEntity.getUid());
-                    if (relatedEntity instanceof Category) {
-                        CategoryMapper categoryMapper = new CategoryMapper();
-                        Resource narrowerResource = categoryMapper.mapToRDF((Category) relatedEntity, model, entityMap);
-                        model.add(subject, RDFConstants.SKOS_NARROWER, narrowerResource);
-                    }
-                }
-            }
+		// Add narrower
+		if (entity.getNarrower() != null) {
+			for (LinkedEntity linkedEntity : entity.getNarrower()) {
+				EPOSDataModelEntity relatedEntity = entityMap.get(linkedEntity.getUid());
+				if (relatedEntity instanceof Category) {
+					CategoryMapper categoryMapper = new CategoryMapper();
+					Resource narrowerResource = categoryMapper.mapToRDF((Category) relatedEntity, model, entityMap, resourceCache);
+					model.add(subject, RDFConstants.SKOS_NARROWER, narrowerResource);
+				}
+			}
         }
 
         return subject;

@@ -18,9 +18,13 @@ import java.util.Map;
 public class DistributionMapper implements EntityMapper<Distribution> {
 
     @Override
-    public Resource mapToRDF(Distribution entity, Model model, Map<String, EPOSDataModelEntity> entityMap) {
+    public Resource mapToRDF(Distribution entity, Model model, Map<String, EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
+        if (resourceCache.containsKey(entity.getUid())) {
+            return resourceCache.get(entity.getUid());
+        }
         // Create resource
         Resource subject = model.createResource(entity.getUid());
+        resourceCache.put(entity.getUid(), subject);
 
         // Add type
         RDFHelper.addType(model, subject, RDFConstants.DCAT_DISTRIBUTION_CLASS);

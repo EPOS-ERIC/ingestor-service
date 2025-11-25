@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.epos.core.export.mappers.*;
@@ -125,7 +126,10 @@ public class MetadataExporter {
 			Model rdfModel = ModelFactory.createDefaultModel();
 			setNamespacePrefixes(rdfModel);
 
-			// 4. For each root entity, get mapper and call mapToRDF
+			// 4. Initialize resource cache
+			Map<String, Resource> resourceCache = new HashMap<>();
+
+			// 5. For each root entity, get mapper and call mapToRDF
 			List<EPOSDataModelEntity> rootEntities;
 			if (entityType != null) {
 				rootEntities = entities.stream()
@@ -147,7 +151,7 @@ public class MetadataExporter {
 				EntityMapper<EPOSDataModelEntity> mapper = (EntityMapper<EPOSDataModelEntity>) MAPPERS
 						.get(entity.getClass());
 				if (mapper != null) {
-					mapper.mapToRDF(entity, rdfModel, entityMap);
+					mapper.mapToRDF(entity, rdfModel, entityMap, resourceCache);
 				} else {
 					LOGGER.warn("No mapper found for entity type: {}", entity.getClass().getSimpleName());
 				}

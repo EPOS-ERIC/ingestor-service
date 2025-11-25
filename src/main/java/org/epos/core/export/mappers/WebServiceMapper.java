@@ -20,9 +20,13 @@ import java.util.Map;
 public class WebServiceMapper implements EntityMapper<WebService> {
 
     @Override
-    public Resource mapToRDF(WebService entity, Model model, Map<String, EPOSDataModelEntity> entityMap) {
+    public Resource mapToRDF(WebService entity, Model model, Map<String, EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
+        if (resourceCache.containsKey(entity.getUid())) {
+            return resourceCache.get(entity.getUid());
+        }
         // Create resource
         Resource subject = model.createResource(entity.getUid());
+        resourceCache.put(entity.getUid(), subject);
 
         // Add type
         RDFHelper.addType(model, subject, RDFConstants.EPOS_WEBSERVICE);
@@ -59,7 +63,7 @@ public class WebServiceMapper implements EntityMapper<WebService> {
             EPOSDataModelEntity providerEntity = entityMap.get(entity.getProvider().getUid());
             if (providerEntity instanceof org.epos.eposdatamodel.Organization) {
                 OrganizationMapper organizationMapper = new OrganizationMapper();
-                Resource providerResource = organizationMapper.mapToRDF((org.epos.eposdatamodel.Organization) providerEntity, model, entityMap);
+                Resource providerResource = organizationMapper.mapToRDF((org.epos.eposdatamodel.Organization) providerEntity, model, entityMap, resourceCache);
                 model.add(subject, RDFConstants.SCHEMA_PROVIDER, providerResource);
             }
         }
@@ -70,7 +74,7 @@ public class WebServiceMapper implements EntityMapper<WebService> {
                 EPOSDataModelEntity operationEntity = entityMap.get(linkedEntity.getUid());
                 if (operationEntity instanceof org.epos.eposdatamodel.Operation) {
                     OperationMapper operationMapper = new OperationMapper();
-                    Resource operationResource = operationMapper.mapToRDF((org.epos.eposdatamodel.Operation) operationEntity, model, entityMap);
+                    Resource operationResource = operationMapper.mapToRDF((org.epos.eposdatamodel.Operation) operationEntity, model, entityMap, resourceCache);
                     model.add(subject, RDFConstants.HYDRA_SUPPORTED_OPERATION, operationResource);
                 }
             }
@@ -119,7 +123,7 @@ public class WebServiceMapper implements EntityMapper<WebService> {
                 EPOSDataModelEntity categoryEntity = entityMap.get(linkedEntity.getUid());
                 if (categoryEntity instanceof org.epos.eposdatamodel.Category) {
                     CategoryMapper categoryMapper = new CategoryMapper();
-                    Resource categoryResource = categoryMapper.mapToRDF((org.epos.eposdatamodel.Category) categoryEntity, model, entityMap);
+                    Resource categoryResource = categoryMapper.mapToRDF((org.epos.eposdatamodel.Category) categoryEntity, model, entityMap, resourceCache);
                     model.add(subject, RDFConstants.DCAT_THEME, categoryResource);
                 }
             }
@@ -131,7 +135,7 @@ public class WebServiceMapper implements EntityMapper<WebService> {
                 EPOSDataModelEntity contactEntity = entityMap.get(linkedEntity.getUid());
                 if (contactEntity instanceof org.epos.eposdatamodel.ContactPoint) {
                     ContactPointMapper contactMapper = new ContactPointMapper();
-                    Resource contactResource = contactMapper.mapToRDF((org.epos.eposdatamodel.ContactPoint) contactEntity, model, entityMap);
+                    Resource contactResource = contactMapper.mapToRDF((org.epos.eposdatamodel.ContactPoint) contactEntity, model, entityMap, resourceCache);
                     model.add(subject, RDFConstants.DCAT_CONTACT_POINT, contactResource);
                 }
             }

@@ -14,8 +14,12 @@ import java.util.Map;
 public class MappingMapper implements EntityMapper<Mapping> {
 
     @Override
-    public Resource mapToRDF(Mapping entity, Model model, Map<String, org.epos.eposdatamodel.EPOSDataModelEntity> entityMap) {
+    public Resource mapToRDF(Mapping entity, Model model, Map<String, org.epos.eposdatamodel.EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
+        if (resourceCache.containsKey(entity.getUid())) {
+            return resourceCache.get(entity.getUid());
+        }
         Resource subject = model.createResource(entity.getUid());
+        resourceCache.put(entity.getUid(), subject);
         RDFHelper.addType(model, subject, RDFConstants.HYDRA_IRI_TEMPLATE_MAPPING);
         RDFHelper.addLiteral(model, subject, RDFConstants.HYDRA_VARIABLE, entity.getVariable());
         return subject;

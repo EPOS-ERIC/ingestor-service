@@ -16,8 +16,12 @@ import java.util.Map;
 public class PayloadMapper implements EntityMapper<Payload> {
 
     @Override
-    public Resource mapToRDF(Payload entity, Model model, Map<String, org.epos.eposdatamodel.EPOSDataModelEntity> entityMap) {
+    public Resource mapToRDF(Payload entity, Model model, Map<String, org.epos.eposdatamodel.EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
+        if (resourceCache.containsKey(entity.getUid())) {
+            return resourceCache.get(entity.getUid());
+        }
         Resource subject = model.createResource(entity.getUid());
+        resourceCache.put(entity.getUid(), subject);
         RDFHelper.addType(model, subject, RDFConstants.HYDRA_CLASS);
         RDFHelper.addStringLiteral(model, subject, RDFConstants.HYDRA_TITLE, "Payload description");
         RDFHelper.addStringLiteral(model, subject, RDFConstants.HYDRA_DESCRIPTION, "Payload description");
