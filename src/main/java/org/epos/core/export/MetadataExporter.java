@@ -19,7 +19,30 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
-import org.epos.core.export.mappers.*;
+import org.epos.core.export.mappers.AddressMapper;
+import org.epos.core.export.mappers.AttributionMapper;
+import org.epos.core.export.mappers.CategoryMapper;
+import org.epos.core.export.mappers.CategorySchemeMapper;
+import org.epos.core.export.mappers.ContactPointMapper;
+import org.epos.core.export.mappers.DataProductMapper;
+import org.epos.core.export.mappers.DistributionMapper;
+import org.epos.core.export.mappers.DocumentationMapper;
+import org.epos.core.export.mappers.EntityMapper;
+import org.epos.core.export.mappers.EquipmentMapper;
+import org.epos.core.export.mappers.FacilityMapper;
+import org.epos.core.export.mappers.IdentifierMapper;
+import org.epos.core.export.mappers.LocationMapper;
+import org.epos.core.export.mappers.MappingMapper;
+import org.epos.core.export.mappers.OperationMapper;
+import org.epos.core.export.mappers.OrganizationMapper;
+import org.epos.core.export.mappers.OutputMappingMapper;
+import org.epos.core.export.mappers.PayloadMapper;
+import org.epos.core.export.mappers.PeriodOfTimeMapper;
+import org.epos.core.export.mappers.PersonMapper;
+import org.epos.core.export.mappers.QuantitativeValueMapper;
+import org.epos.core.export.mappers.SoftwareApplicationMapper;
+import org.epos.core.export.mappers.SoftwareSourceCodeMapper;
+import org.epos.core.export.mappers.WebServiceMapper;
 import org.epos.eposdatamodel.EPOSDataModelEntity;
 import org.epos.eposdatamodel.LinkedEntity;
 import org.slf4j.Logger;
@@ -28,11 +51,6 @@ import org.slf4j.LoggerFactory;
 import abstractapis.AbstractAPI;
 import metadataapis.EntityNames;
 
-/**
- * New code-driven RDF export implementation replacing the ontology-driven
- * SPARQL approach.
- * Provides explicit mapping from EPOS Data Model entities to DCAT-AP RDF.
- */
 public class MetadataExporter {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(MetadataExporter.class);
@@ -59,7 +77,6 @@ public class MetadataExporter {
 		MAPPERS.put(org.epos.eposdatamodel.SoftwareApplication.class, new SoftwareApplicationMapper());
 		MAPPERS.put(org.epos.eposdatamodel.Attribution.class, new AttributionMapper());
 		MAPPERS.put(org.epos.eposdatamodel.Documentation.class, new DocumentationMapper());
-
 		MAPPERS.put(org.epos.eposdatamodel.QuantitativeValue.class, new QuantitativeValueMapper());
 		MAPPERS.put(org.epos.eposdatamodel.Mapping.class, new MappingMapper());
 		MAPPERS.put(org.epos.eposdatamodel.OutputMapping.class, new OutputMappingMapper());

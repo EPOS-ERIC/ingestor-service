@@ -9,7 +9,8 @@ import org.epos.eposdatamodel.Documentation;
 import java.util.Map;
 
 /**
- * Mapper for Documentation entities.
+ * Mapper for Documentation entities to Hydra ApiDocumentation.
+ * Follows EPOS-DCAT-AP v3 specification.
  */
 public class DocumentationMapper implements EntityMapper<Documentation> {
 
