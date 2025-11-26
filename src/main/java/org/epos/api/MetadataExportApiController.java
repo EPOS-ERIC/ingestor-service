@@ -67,13 +67,13 @@ public class MetadataExportApiController implements MetadataExportApi {
 					entityType != null ? entityType : "all types", e.getLocalizedMessage());
 			return ResponseEntity.badRequest()
 					.contentType(MediaType.TEXT_PLAIN)
-					.body(("Validation error: " + e.getLocalizedMessage()));
+					.body("Validation error: " + e.getLocalizedMessage());
 		} catch (Exception e) {
 			LOGGER.error("[ERROR] Export failed for entity type {}: {}", entityType != null ? entityType : "all types",
 					e.getLocalizedMessage());
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
 					.contentType(MediaType.TEXT_PLAIN)
-					.body(("Export failed: " + e.getLocalizedMessage()));
+					.body("Export failed: " + e.getLocalizedMessage());
 		}
 	}
 

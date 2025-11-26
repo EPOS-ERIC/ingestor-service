@@ -394,6 +394,10 @@ public class MetadataExporter {
 	private static EPOSDataModelEntity resolveLinkedEntity(LinkedEntity linkedEntity) {
 		try {
 			String entityTypeStr = linkedEntity.getEntityType();
+			if (entityTypeStr == null) {
+				LOGGER.warn("Linked entity has null entity type: {}", linkedEntity.getInstanceId());
+				return null;
+			}
 			EntityNames entityType = EntityNames.valueOf(entityTypeStr);
 			@SuppressWarnings("rawtypes")
 			AbstractAPI api = AbstractAPI.retrieveAPI(entityType.name());

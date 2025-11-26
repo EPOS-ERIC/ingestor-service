@@ -14,8 +14,8 @@ import java.util.Map;
  */
 public class AttributionMapper implements EntityMapper<Attribution> {
 
-    @Override
-    public Resource mapToRDF(Attribution entity, Model model, Map<String, EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
+	@Override
+	public Resource mapToRDF(Attribution entity, Model model, Map<String, EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
         if (resourceCache.containsKey(entity.getUid())) {
             return resourceCache.get(entity.getUid());
         }
@@ -43,10 +43,10 @@ public class AttributionMapper implements EntityMapper<Attribution> {
         }
 
         return subject;
-    }
+	}
 
-    @Override
-    public String getDCATClassURI() {
-        return RDFConstants.PROV_NS + "Attribution";
-    }
+	@Override
+	public String getDCATClassURI() {
+		return RDFConstants.PROV_NS + "Attribution";
+	}
 }

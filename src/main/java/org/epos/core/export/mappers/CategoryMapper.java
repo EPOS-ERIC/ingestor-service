@@ -17,8 +17,15 @@ import java.util.Map;
 public class CategoryMapper implements EntityMapper<Category> {
 
 	@Override
-	public Resource mapToRDF(Category entity, Model model, Map<String, EPOSDataModelEntity> entityMap,
-			Map<String, Resource> resourceCache) {
+	public Resource mapToRDF(Category entity, Model model, Map<String, EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
+		// In v3, description and name are mandatory (1..1)
+		if (entity.getDescription() == null ||
+				entity.getDescription().trim().isEmpty() ||
+				entity.getName() == null ||
+				entity.getName().trim().isEmpty()) {
+			return null;
+		}
+
 		if (resourceCache.containsKey(entity.getUid())) {
 			return resourceCache.get(entity.getUid());
 		}
