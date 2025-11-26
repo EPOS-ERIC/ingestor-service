@@ -5,16 +5,18 @@ import org.apache.jena.rdf.model.Resource;
 import org.epos.core.export.util.RDFConstants;
 import org.epos.core.export.util.RDFHelper;
 import org.epos.eposdatamodel.ContactPoint;
+import org.epos.eposdatamodel.EPOSDataModelEntity;
 
 import java.util.Map;
 
 /**
  * Mapper for ContactPoint entities to Schema.org ContactPoint.
+ * Follows EPOS-DCAT-AP v3 specification.
  */
 public class ContactPointMapper implements EntityMapper<ContactPoint> {
 
     @Override
-    public Resource mapToRDF(ContactPoint entity, Model model, Map<String, org.epos.eposdatamodel.EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
+    public Resource mapToRDF(ContactPoint entity, Model model, Map<String, EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
         if (resourceCache.containsKey(entity.getUid())) {
             return resourceCache.get(entity.getUid());
         }
@@ -25,22 +27,29 @@ public class ContactPointMapper implements EntityMapper<ContactPoint> {
         // Add type
         RDFHelper.addType(model, subject, RDFConstants.DCAT_CONTACT_POINT_CLASS);
 
-        // Add email (multiple)
-        if (entity.getEmail() != null) {
-            for (String email : entity.getEmail()) {
-                RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_EMAIL, email);
-            }
-        }
+        // schema:contactType, literal, 0..1
+        RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_CONTACT_TYPE, entity.getRole());
 
-        // Add available language (multiple)
-        if (entity.getLanguage() != null) {
+        // schema:availableLanguage, literal, 0..n
+        if (entity.getLanguage() != null && !entity.getLanguage().isEmpty()) {
             for (String language : entity.getLanguage()) {
                 RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_AVAILABLE_LANGUAGE, language);
             }
         }
 
-        // Add contact type
-        RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_CONTACT_TYPE, entity.getRole());
+        // schema:email, literal, 0..n
+        if (entity.getEmail() != null && !entity.getEmail().isEmpty()) {
+            for (String email : entity.getEmail()) {
+                RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_EMAIL, email);
+            }
+        }
+
+        // schema:telephone, literal, 0..n
+        if (entity.getTelephone() != null && !entity.getTelephone().isEmpty()) {
+            for (String telephone : entity.getTelephone()) {
+                RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_TELEPHONE, telephone);
+            }
+        }
 
         return subject;
     }

@@ -15,12 +15,14 @@ import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
 /**
- * Mapper for WebService entities to EPOS WebService.
+ * Mapper for WebService entities to DCAT DataService.
+ * Follows EPOS-DCAT-AP v3 specification.
  */
 public class WebServiceMapper implements EntityMapper<WebService> {
 
     @Override
-    public Resource mapToRDF(WebService entity, Model model, Map<String, EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
+    public Resource mapToRDF(WebService entity, Model model, Map<String, EPOSDataModelEntity> entityMap,
+            Map<String, Resource> resourceCache) {
         if (resourceCache.containsKey(entity.getUid())) {
             return resourceCache.get(entity.getUid());
         }
@@ -29,136 +31,145 @@ public class WebServiceMapper implements EntityMapper<WebService> {
         resourceCache.put(entity.getUid(), subject);
 
         // Add type
-        RDFHelper.addType(model, subject, RDFConstants.EPOS_WEBSERVICE);
+        RDFHelper.addType(model, subject, RDFConstants.DCAT_DATA_SERVICE);
 
-        // Add identifier
-        RDFHelper.addLiteral(model, subject, RDFConstants.SCHEMA_IDENTIFIER, entity.getUid());
+        // dcat:endpointURL, rdfs:Resource, 1..n
+        RDFHelper.addURILiteral(model, subject, RDFConstants.DCAT_ENDPOINT_URL, entity.getEntryPoint());
 
-        // Add basic properties
-        RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_NAME, entity.getName());
-        RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_DESCRIPTION, entity.getDescription());
-        RDFHelper.addURILiteral(model, subject, RDFConstants.DCT_LICENSE, entity.getLicense());
-        RDFHelper.addURILiteral(model, subject, RDFConstants.HYDRA_ENTRYPOINT, entity.getEntryPoint());
+        // dct:identifier, literal, 1..1
+        RDFHelper.addStringLiteral(model, subject, RDFConstants.DCT_IDENTIFIER, entity.getUid());
 
-        // Add published/modified dates
-        if (entity.getDatePublished() != null) {
-            String dateString = ((LocalDateTime) entity.getDatePublished()).atZone(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT);
-            RDFHelper.addTypedLiteral(model, subject, RDFConstants.SCHEMA_DATE_PUBLISHED, dateString, XSDDatatype.XSDdateTime);
-        }
-        if (entity.getDateModified() != null) {
-            String dateString = ((LocalDateTime) entity.getDateModified()).atZone(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT);
-            RDFHelper.addTypedLiteral(model, subject, RDFConstants.SCHEMA_DATE_MODIFIED, dateString, XSDDatatype.XSDdateTime);
-        }
+        // dct:title, literal, 1..n
+        RDFHelper.addStringLiteral(model, subject, RDFConstants.DCT_TITLE, entity.getName());
 
-        // Add keywords
-        if (entity.getKeywords() != null) {
-            String[] keywords = entity.getKeywords().split(",");
-            for (String keyword : keywords) {
-                RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_KEYWORDS, keyword.trim());
+        // dct:conformsTo, dct:Standard, 0..n
+        if (entity.getDocumentation() != null && !entity.getDocumentation().isEmpty()) {
+            for (LinkedEntity linked : entity.getDocumentation()) {
+                model.add(subject, RDFConstants.DCT_CONFORMS_TO, model.createResource(linked.getUid()));
             }
         }
 
-        // Add provider (inline Organization)
-        if (entity.getProvider() != null) {
-            EPOSDataModelEntity providerEntity = entityMap.get(entity.getProvider().getUid());
-            if (providerEntity instanceof org.epos.eposdatamodel.Organization) {
-                OrganizationMapper organizationMapper = new OrganizationMapper();
-                Resource providerResource = organizationMapper.mapToRDF((org.epos.eposdatamodel.Organization) providerEntity, model, entityMap, resourceCache);
-                model.add(subject, RDFConstants.SCHEMA_PROVIDER, providerResource);
-            }
-        }
-
-        // Add supported operations (inline)
-        if (entity.getSupportedOperation() != null) {
-            for (LinkedEntity linkedEntity : entity.getSupportedOperation()) {
-                EPOSDataModelEntity operationEntity = entityMap.get(linkedEntity.getUid());
-                if (operationEntity instanceof org.epos.eposdatamodel.Operation) {
-                    OperationMapper operationMapper = new OperationMapper();
-                    Resource operationResource = operationMapper.mapToRDF((org.epos.eposdatamodel.Operation) operationEntity, model, entityMap, resourceCache);
-                    model.add(subject, RDFConstants.HYDRA_SUPPORTED_OPERATION, operationResource);
-                }
-            }
-        }
-
-        // Add spatial extent (inline Location)
-        if (entity.getSpatialExtent() != null) {
-            for (LinkedEntity linkedEntity : entity.getSpatialExtent()) {
-                EPOSDataModelEntity locationEntity = entityMap.get(linkedEntity.getUid());
-                if (locationEntity instanceof org.epos.eposdatamodel.Location) {
-                    org.epos.eposdatamodel.Location loc = (org.epos.eposdatamodel.Location) locationEntity;
-                    Resource blankNode = model.createResource(); // blank node
-                    RDFHelper.addType(model, blankNode, RDFConstants.DCT_LOCATION);
-                    if (loc.getLocation() != null) {
-                        RDFHelper.addLiteral(model, blankNode, RDFConstants.LOCN_GEOMETRY, loc.getLocation());
-                    }
-                    model.add(subject, RDFConstants.DCT_SPATIAL, blankNode);
-                }
-            }
-        }
-
-        // Add temporal extent (inline PeriodOfTime)
-        if (entity.getTemporalExtent() != null) {
-            for (LinkedEntity linkedEntity : entity.getTemporalExtent()) {
-                EPOSDataModelEntity periodEntity = entityMap.get(linkedEntity.getUid());
-                if (periodEntity instanceof org.epos.eposdatamodel.PeriodOfTime) {
-                    org.epos.eposdatamodel.PeriodOfTime pot = (org.epos.eposdatamodel.PeriodOfTime) periodEntity;
-                    Resource blankNode = model.createResource(); // blank node
-                    RDFHelper.addType(model, blankNode, RDFConstants.DCT_PERIOD_OF_TIME);
-                    if (pot.getStartDate() != null) {
-                        String dateString = ((LocalDateTime) pot.getStartDate()).atZone(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT);
-                        RDFHelper.addTypedLiteral(model, blankNode, RDFConstants.SCHEMA_START_DATE, dateString, XSDDatatype.XSDdateTime);
-                    }
-                    if (pot.getEndDate() != null) {
-                        String dateString = ((LocalDateTime) pot.getEndDate()).atZone(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT);
-                        RDFHelper.addTypedLiteral(model, blankNode, RDFConstants.SCHEMA_END_DATE, dateString, XSDDatatype.XSDdateTime);
-                    }
-                    model.add(subject, RDFConstants.DCT_TEMPORAL, blankNode);
-                }
-            }
-        }
-
-        // Add categories
-        if (entity.getCategory() != null) {
-            for (LinkedEntity linkedEntity : entity.getCategory()) {
-                EPOSDataModelEntity categoryEntity = entityMap.get(linkedEntity.getUid());
-                if (categoryEntity instanceof org.epos.eposdatamodel.Category) {
-                    CategoryMapper categoryMapper = new CategoryMapper();
-                    Resource categoryResource = categoryMapper.mapToRDF((org.epos.eposdatamodel.Category) categoryEntity, model, entityMap, resourceCache);
-                    model.add(subject, RDFConstants.DCAT_THEME, categoryResource);
-                }
-            }
-        }
-
-        // Add contact points
-        if (entity.getContactPoint() != null) {
+        // dcat:contactPoint, vcard:Kind or schema:ContactPoint, 0..n
+        if (entity.getContactPoint() != null && !entity.getContactPoint().isEmpty()) {
             for (LinkedEntity linkedEntity : entity.getContactPoint()) {
                 EPOSDataModelEntity contactEntity = entityMap.get(linkedEntity.getUid());
                 if (contactEntity instanceof org.epos.eposdatamodel.ContactPoint) {
                     ContactPointMapper contactMapper = new ContactPointMapper();
-                    Resource contactResource = contactMapper.mapToRDF((org.epos.eposdatamodel.ContactPoint) contactEntity, model, entityMap, resourceCache);
+                    Resource contactResource = contactMapper.mapToRDF(
+                            (org.epos.eposdatamodel.ContactPoint) contactEntity, model, entityMap, resourceCache);
                     model.add(subject, RDFConstants.DCAT_CONTACT_POINT, contactResource);
                 }
             }
         }
 
-        // Add identifiers (inline)
-        if (entity.getIdentifier() != null) {
-            for (LinkedEntity linkedEntity : entity.getIdentifier()) {
-                EPOSDataModelEntity identifierEntity = entityMap.get(linkedEntity.getUid());
-                if (identifierEntity instanceof org.epos.eposdatamodel.Identifier) {
-                    Resource identifierResource = model.createResource(); // blank node
-                    RDFHelper.addType(model, identifierResource, RDFConstants.SCHEMA_PROPERTY_VALUE);
-                    RDFHelper.addLiteral(model, identifierResource, RDFConstants.SCHEMA_PROPERTY_ID, ((org.epos.eposdatamodel.Identifier) identifierEntity).getType());
-                    RDFHelper.addLiteral(model, identifierResource, RDFConstants.SCHEMA_VALUE, ((org.epos.eposdatamodel.Identifier) identifierEntity).getIdentifier());
-                    model.add(subject, RDFConstants.SCHEMA_IDENTIFIER, identifierResource);
+        // dct:description, literal, 0..n
+        RDFHelper.addStringLiteral(model, subject, RDFConstants.DCT_DESCRIPTION, entity.getDescription());
+
+        // dcat:endpointDescription, rdfs:Resource or hydra:Operation, 0..n
+        if (entity.getSupportedOperation() != null && !entity.getSupportedOperation().isEmpty()) {
+            for (LinkedEntity linkedEntity : entity.getSupportedOperation()) {
+                EPOSDataModelEntity operationEntity = entityMap.get(linkedEntity.getUid());
+                if (operationEntity instanceof org.epos.eposdatamodel.Operation) {
+                    OperationMapper operationMapper = new OperationMapper();
+                    Resource operationResource = operationMapper.mapToRDF(
+                            (org.epos.eposdatamodel.Operation) operationEntity, model, entityMap, resourceCache);
+                    model.add(subject, RDFConstants.DCAT_ENDPOINT_DESCRIPTION, operationResource);
                 }
             }
         }
 
-        // Add conformsTo for documentation
-        if (entity.getDocumentation() != null) {
-            for (LinkedEntity linked : entity.getDocumentation()) {
-                model.add(subject, RDFConstants.DCT_CONFORMS_TO, model.createResource(linked.getUid()));
+        // dct:issued, literal typed as xsd:date or xsd:dateTime, 0..1
+        if (entity.getDatePublished() != null) {
+            String dateString = ((LocalDateTime) entity.getDatePublished()).atZone(ZoneOffset.UTC)
+                    .format(DateTimeFormatter.ISO_INSTANT);
+            RDFHelper.addTypedLiteral(model, subject, RDFConstants.DCT_ISSUED, dateString, XSDDatatype.XSDdateTime);
+        }
+
+        // dcat:keyword, literal, 0..n
+        if (entity.getKeywords() != null && !entity.getKeywords().isEmpty()) {
+            String[] keywords = entity.getKeywords().split(",");
+            for (String keyword : keywords) {
+                RDFHelper.addStringLiteral(model, subject, RDFConstants.DCAT_KEYWORD, keyword.trim());
+            }
+        }
+
+        // dct:modified, literal typed as xsd:date or xsd:dateTime, 0..1
+        if (entity.getDateModified() != null) {
+            String dateString = ((LocalDateTime) entity.getDateModified()).atZone(ZoneOffset.UTC)
+                    .format(DateTimeFormatter.ISO_INSTANT);
+            RDFHelper.addTypedLiteral(model, subject, RDFConstants.DCT_MODIFIED, dateString, XSDDatatype.XSDdateTime);
+        }
+
+        // dct:publisher, foaf:Agent or schema:Organization, 0..1
+        if (entity.getProvider() != null) {
+            EPOSDataModelEntity providerEntity = entityMap.get(entity.getProvider().getUid());
+            if (providerEntity instanceof org.epos.eposdatamodel.Organization) {
+                OrganizationMapper organizationMapper = new OrganizationMapper();
+                Resource providerResource = organizationMapper.mapToRDF(
+                        (org.epos.eposdatamodel.Organization) providerEntity, model, entityMap, resourceCache);
+                model.add(subject, RDFConstants.DCT_PUBLISHER, providerResource);
+            }
+        }
+
+        // dcat:servesDataset, dcat:Dataset, 0..n
+        // Note: WebService entity may not have this property - would need to check
+        // entity model
+
+        // dcat:theme, skos:Concept, 0..n
+        if (entity.getCategory() != null && !entity.getCategory().isEmpty()) {
+            for (LinkedEntity linkedEntity : entity.getCategory()) {
+                EPOSDataModelEntity categoryEntity = entityMap.get(linkedEntity.getUid());
+                if (categoryEntity instanceof org.epos.eposdatamodel.Category) {
+                    CategoryMapper categoryMapper = new CategoryMapper();
+                    Resource categoryResource = categoryMapper.mapToRDF(
+                            (org.epos.eposdatamodel.Category) categoryEntity, model, entityMap, resourceCache);
+                    model.add(subject, RDFConstants.DCAT_THEME, categoryResource);
+                }
+            }
+        }
+
+        // dct:license, dct:LicenseDocument, 0..1
+        RDFHelper.addURILiteral(model, subject, RDFConstants.DCT_LICENSE, entity.getLicense());
+
+        // dct:spatial, dct:Location, 0..n
+        if (entity.getSpatialExtent() != null && !entity.getSpatialExtent().isEmpty()) {
+            for (LinkedEntity linkedEntity : entity.getSpatialExtent()) {
+                EPOSDataModelEntity locationEntity = entityMap.get(linkedEntity.getUid());
+                if (locationEntity instanceof org.epos.eposdatamodel.Location) {
+                    org.epos.eposdatamodel.Location loc = (org.epos.eposdatamodel.Location) locationEntity;
+                    Resource spatialResource = RDFHelper.createBlankNode(model);
+                    RDFHelper.addType(model, spatialResource, RDFConstants.DCT_LOCATION);
+                    if (loc.getLocation() != null && !loc.getLocation().isEmpty()) {
+                        RDFHelper.addTypedLiteral(model, spatialResource, RDFConstants.DCAT_BBOX, loc.getLocation(),
+                                RDFConstants.GSP_WKT_LITERAL_DATATYPE);
+                    }
+                    model.add(subject, RDFConstants.DCT_SPATIAL, spatialResource);
+                }
+            }
+        }
+
+        // dct:temporal, dct:PeriodOfTime, 0..n
+        if (entity.getTemporalExtent() != null && !entity.getTemporalExtent().isEmpty()) {
+            for (LinkedEntity linkedEntity : entity.getTemporalExtent()) {
+                EPOSDataModelEntity periodEntity = entityMap.get(linkedEntity.getUid());
+                if (periodEntity instanceof org.epos.eposdatamodel.PeriodOfTime) {
+                    org.epos.eposdatamodel.PeriodOfTime pot = (org.epos.eposdatamodel.PeriodOfTime) periodEntity;
+                    Resource temporalResource = RDFHelper.createBlankNode(model);
+                    RDFHelper.addType(model, temporalResource, RDFConstants.DCT_PERIOD_OF_TIME);
+                    if (pot.getStartDate() != null) {
+                        String dateString = ((LocalDateTime) pot.getStartDate()).atZone(ZoneOffset.UTC)
+                                .format(DateTimeFormatter.ISO_INSTANT);
+                        RDFHelper.addTypedLiteral(model, temporalResource, RDFConstants.DCAT_START_DATE, dateString,
+                                XSDDatatype.XSDdateTime);
+                    }
+                    if (pot.getEndDate() != null) {
+                        String dateString = ((LocalDateTime) pot.getEndDate()).atZone(ZoneOffset.UTC)
+                                .format(DateTimeFormatter.ISO_INSTANT);
+                        RDFHelper.addTypedLiteral(model, temporalResource, RDFConstants.DCAT_END_DATE, dateString,
+                                XSDDatatype.XSDdateTime);
+                    }
+                    model.add(subject, RDFConstants.DCT_TEMPORAL, temporalResource);
+                }
             }
         }
 
@@ -167,6 +178,6 @@ public class WebServiceMapper implements EntityMapper<WebService> {
 
     @Override
     public String getDCATClassURI() {
-        return RDFConstants.EPOS_NS + "WebService";
+        return RDFConstants.DCAT_NS + "DataService";
     }
 }

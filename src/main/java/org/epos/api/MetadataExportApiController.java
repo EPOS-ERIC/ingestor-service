@@ -32,8 +32,7 @@ public class MetadataExportApiController implements MetadataExportApi {
 			@Parameter(in = ParameterIn.QUERY, description = "output format (optional, default: turtle)", required = false, schema = @Schema(allowableValues = {
 					"turtle",
 					"json-ld" })) @RequestParam(value = "format", required = false, defaultValue = "turtle") String format,
-			@Parameter(in = ParameterIn.QUERY, description = "specific entity IDs to export (optional)", required = false, schema = @Schema()) @RequestParam(value = "ids", required = false) List<String> ids,
-			@Parameter(in = ParameterIn.QUERY, description = "whether to include transitively linked entities in the export (default: false)", required = false, schema = @Schema()) @RequestParam(value = "includeLinked", required = false, defaultValue = "false") Boolean includeLinked) {
+			@Parameter(in = ParameterIn.QUERY, description = "specific entity IDs to export (optional)", required = false, schema = @Schema()) @RequestParam(value = "ids", required = false) List<String> ids) {
 
 		// Validation
 		if (format != null && !format.matches("(?i)(turtle|json-ld)")) {
@@ -44,10 +43,9 @@ public class MetadataExportApiController implements MetadataExportApi {
 
 		try {
 			LOGGER.info(
-					"[Export initialized] Exporting {} entities in format: {}, IDs: {}, includeLinked: {}",
-					entityType != null ? entityType : "all types", format, ids != null ? ids : "all",
-					includeLinked);
-			String rdfOutput = MetadataExporter.exportToRDF(entityType, format, ids, includeLinked);
+					"[Export initialized] Exporting {} entities in format: {}, IDs: {}",
+					entityType != null ? entityType : "all types", format, ids != null ? ids : "all");
+			String rdfOutput = MetadataExporter.exportToRDF(entityType, format, ids);
 			LOGGER.info("[Export finished] Successfully exported entities to {} characters of {} content",
 					rdfOutput != null ? rdfOutput.length() : 0, format);
 

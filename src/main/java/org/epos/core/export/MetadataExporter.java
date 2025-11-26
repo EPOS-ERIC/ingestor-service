@@ -70,17 +70,15 @@ public class MetadataExporter {
 	/**
 	 * Exports EPOS Data Model entities to RDF in the specified format.
 	 *
-	 * @param entityType    The type of entities to export (null for all types)
-	 * @param format        The output format ("turtle" or "json-ld")
-	 * @param ids           Specific entity IDs to export (null for all)
-	 * @param includeLinked Whether to include linked entities
+	 * @param entityType The type of entities to export (null for all types)
+	 * @param format     The output format ("turtle" or "json-ld")
+	 * @param ids        Specific entity IDs to export (null for all)
 	 * @return RDF content as string
 	 */
 	public static String exportToRDF(
 			EntityNames entityType,
 			String format,
-			List<String> ids,
-			Boolean includeLinked) {
+			List<String> ids) {
 
 		if (format == null || format.trim().isEmpty()) {
 			format = "turtle";
@@ -114,7 +112,7 @@ public class MetadataExporter {
 			}
 
 			// 2. Build entity map
-			if (includeLinked && entityType != null) {
+			if (entityType != null) {
 				entities = collectAllLinkedEntities(entities);
 				LOGGER.debug("After collecting linked entities: {} total entities", entities.size());
 			}

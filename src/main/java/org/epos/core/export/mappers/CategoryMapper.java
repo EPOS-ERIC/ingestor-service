@@ -11,74 +11,52 @@ import org.epos.eposdatamodel.LinkedEntity;
 import java.util.Map;
 
 /**
- * Mapper for Category entities to SKOS Concept or ConceptScheme.
+ * Mapper for Category entities to SKOS Concept.
+ * Follows EPOS-DCAT-AP v3 specification.
  */
 public class CategoryMapper implements EntityMapper<Category> {
 
-    @Override
-    public Resource mapToRDF(Category entity, Model model, Map<String, EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
-        if (resourceCache.containsKey(entity.getUid())) {
-            return resourceCache.get(entity.getUid());
-        }
-		System.err.println("DEBUGPRINT: CategoryMapper.java:22: entity=" + entity);
-        // Create resource
-        Resource subject = model.createResource(entity.getUid());
-        resourceCache.put(entity.getUid(), subject);
+	@Override
+	public Resource mapToRDF(Category entity, Model model, Map<String, EPOSDataModelEntity> entityMap,
+			Map<String, Resource> resourceCache) {
+		if (resourceCache.containsKey(entity.getUid())) {
+			return resourceCache.get(entity.getUid());
+		}
+		// Create resource
+		Resource subject = model.createResource(entity.getUid());
+		resourceCache.put(entity.getUid(), subject);
 
-        // Determine if this is a ConceptScheme or Concept
-        Resource rdfType =  RDFConstants.SKOS_CONCEPT;
+		// Add type
+		RDFHelper.addType(model, subject, RDFConstants.SKOS_CONCEPT);
 
-        // Check if already mapped to prevent recursion
-        if (model.contains(subject, RDFConstants.RDF_TYPE, rdfType)) {
-            return subject;
-        }
-
-        // Add type
-        RDFHelper.addType(model, subject, rdfType);
-
-		// Add Concept properties
-		RDFHelper.addStringLiteral(model, subject, RDFConstants.SKOS_PREF_LABEL, entity.getName());
+		// skos:definition, literal, 1..1
 		RDFHelper.addStringLiteral(model, subject, RDFConstants.SKOS_DEFINITION, entity.getDescription());
 
-		// Add inScheme
+		// skos:inScheme, skos:ConceptScheme, 1..1
 		if (entity.getInScheme() != null) {
-			EPOSDataModelEntity relatedEntity = entityMap.get(entity.getInScheme().getUid());
-			if (relatedEntity instanceof org.epos.eposdatamodel.CategoryScheme) {
-				CategorySchemeMapper categorySchemeMapper = new CategorySchemeMapper();
-				Resource schemeResource = categorySchemeMapper.mapToRDF((org.epos.eposdatamodel.CategoryScheme) relatedEntity, model, entityMap, resourceCache);
-				model.add(subject, RDFConstants.SKOS_IN_SCHEME, schemeResource);
-			}
+			model.add(subject, RDFConstants.SKOS_IN_SCHEME, model.createResource(entity.getInScheme().getUid()));
 		}
 
-		// Add broader
-		if (entity.getBroader() != null) {
-			for (LinkedEntity linkedEntity : entity.getBroader()) {
-				EPOSDataModelEntity relatedEntity = entityMap.get(linkedEntity.getUid());
-				if (relatedEntity instanceof Category) {
-					CategoryMapper categoryMapper = new CategoryMapper();
-					Resource broaderResource = categoryMapper.mapToRDF((Category) relatedEntity, model, entityMap, resourceCache);
-					model.add(subject, RDFConstants.SKOS_BROADER, broaderResource);
-				}
-			}
+		// skos:prefLabel, literal, 1..1
+		RDFHelper.addStringLiteral(model, subject, RDFConstants.SKOS_PREF_LABEL, entity.getName());
+
+		// skos:broader, skos:Concept, 0..1
+		// Note: v3 spec says 0..1, but entity has list. We take only the first value
+		if (entity.getBroader() != null && !entity.getBroader().isEmpty()) {
+			model.add(subject, RDFConstants.SKOS_BROADER, model.createResource(entity.getBroader().get(0).getUid()));
 		}
 
-		// Add narrower
-		if (entity.getNarrower() != null) {
-			for (LinkedEntity linkedEntity : entity.getNarrower()) {
-				EPOSDataModelEntity relatedEntity = entityMap.get(linkedEntity.getUid());
-				if (relatedEntity instanceof Category) {
-					CategoryMapper categoryMapper = new CategoryMapper();
-					Resource narrowerResource = categoryMapper.mapToRDF((Category) relatedEntity, model, entityMap, resourceCache);
-					model.add(subject, RDFConstants.SKOS_NARROWER, narrowerResource);
-				}
+		// skos:narrower, skos:Concept, 0..n
+		if (entity.getNarrower() != null && !entity.getNarrower().isEmpty()) {
+			for (LinkedEntity linked : entity.getNarrower()) {
+				model.add(subject, RDFConstants.SKOS_NARROWER, model.createResource(linked.getUid()));
 			}
-        }
+		}
+		return subject;
+	}
 
-        return subject;
-    }
-
-    @Override
-    public String getDCATClassURI() {
-        return RDFConstants.SKOS_NS + "Concept";
-    }
+	@Override
+	public String getDCATClassURI() {
+		return RDFConstants.SKOS_NS + "Concept";
+	}
 }

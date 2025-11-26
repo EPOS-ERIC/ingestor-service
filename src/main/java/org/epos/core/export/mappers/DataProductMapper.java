@@ -13,7 +13,7 @@ import java.util.Map;
 
 /**
  * Mapper for DataProduct entities to DCAT Dataset.
- * Most Complex - orchestrates everything.
+ * Follows EPOS-DCAT-AP v3 specification.
  */
 public class DataProductMapper implements EntityMapper<DataProduct> {
 
@@ -29,118 +29,25 @@ public class DataProductMapper implements EntityMapper<DataProduct> {
 		// Add type
 		RDFHelper.addType(model, subject, RDFConstants.DCAT_DATASET);
 
-		// Add title (multiple)
-		if (entity.getTitle() != null) {
-			for (String title : entity.getTitle()) {
-				RDFHelper.addLiteral(model, subject, RDFConstants.DCT_TITLE, title);
-			}
-		}
-
-		// Auto-add dct:identifier from UID
-		RDFHelper.addLiteral(model, subject, RDFConstants.DCT_IDENTIFIER, entity.getUid());
-
-		// Nested: Identifiers
-		if (entity.getIdentifier() != null) {
-			for (LinkedEntity linkedEntity : entity.getIdentifier()) {
-				EPOSDataModelEntity identifierEntity = entityMap.get(linkedEntity.getUid());
-				if (identifierEntity instanceof org.epos.eposdatamodel.Identifier) {
-					IdentifierMapper identifierMapper = new IdentifierMapper();
-					Resource identifierResource = identifierMapper .mapToRDF((org.epos.eposdatamodel.Identifier) identifierEntity, model, entityMap, resourceCache);
-					model.add(subject, RDFConstants.ADMS_IDENTIFIER, identifierResource);
-				}
-			}
-		}
-
-		// Add description (multiple)
-		if (entity.getDescription() != null) {
+		// dct:description, literal, 1..n
+		if (entity.getDescription() != null && !entity.getDescription().isEmpty()) {
 			for (String desc : entity.getDescription()) {
-				RDFHelper.addLiteral(model, subject, RDFConstants.DCT_DESCRIPTION, desc);
+				RDFHelper.addStringLiteral(model, subject, RDFConstants.DCT_DESCRIPTION, desc);
 			}
 		}
 
-		// Add accrualPeriodicity
-		if (entity.getAccrualPeriodicity() != null) {
-			RDFHelper.addURILiteral(model, subject, RDFConstants.DCT_ACCRUAL_PERIODICITY,entity.getAccrualPeriodicity());
-		}
+		// dct:identifier, literal, 1..1
+		RDFHelper.addStringLiteral(model, subject, RDFConstants.DCT_IDENTIFIER, entity.getUid());
 
- 		// Add created
- 		if (entity.getCreated() != null) {
- 			RDFHelper.addDateLiteral(model, subject, RDFConstants.DCT_CREATED, entity.getCreated().toLocalDate().toString());
- 		}
-
- 		// Add issued
- 		if (entity.getIssued() != null) {
- 			RDFHelper.addDateLiteral(model, subject, RDFConstants.DCT_ISSUED, entity.getIssued().toLocalDate().toString());
- 		}
-
- 		// Add modified
- 		if (entity.getModified() != null) {
- 			RDFHelper.addDateLiteral(model, subject, RDFConstants.DCT_MODIFIED, entity.getModified().toLocalDate().toString());
- 		}
-
-		// Add versionInfo
-		RDFHelper.addLiteral(model, subject, RDFConstants.OWL_VERSION_INFO, entity.getVersionInfo());
-
-		// Add type
-		RDFHelper.addURILiteral(model, subject, RDFConstants.DCT_TYPE, entity.getType());
-
-		// Add spatial
-		if (entity.getSpatialExtent() != null && !entity.getSpatialExtent().isEmpty()) {
-			// For now, take the first spatial extent and create inline location
-			LinkedEntity firstSpatial = entity.getSpatialExtent().get(0);
-			EPOSDataModelEntity locationEntity = entityMap.get(firstSpatial.getUid());
-			if (locationEntity instanceof org.epos.eposdatamodel.Location) {
-				org.epos.eposdatamodel.Location location = (org.epos.eposdatamodel.Location) locationEntity;
- 				Resource spatialResource = model.createResource();
- 				RDFHelper.addType(model, spatialResource, RDFConstants.DCT_LOCATION);
- 				if (location.getLocation() != null) {
- 					RDFHelper.addTypedLiteral(model, spatialResource, RDFConstants.LOCN_GEOMETRY, location.getLocation(), RDFConstants.GSP_WKT_LITERAL_DATATYPE);
- 				}
-				model.add(subject, RDFConstants.DCT_SPATIAL, spatialResource);
+		// dct:title, literal, 1..n
+		if (entity.getTitle() != null && !entity.getTitle().isEmpty()) {
+			for (String title : entity.getTitle()) {
+				RDFHelper.addStringLiteral(model, subject, RDFConstants.DCT_TITLE, title);
 			}
 		}
 
-		// Add temporal
-		if (entity.getTemporalExtent() != null && !entity.getTemporalExtent().isEmpty()) {
-			// For now, take the first temporal extent and create inline periodOfTime
-			LinkedEntity firstTemporal = entity.getTemporalExtent().get(0);
-			EPOSDataModelEntity temporalEntity = entityMap.get(firstTemporal.getUid());
-			if (temporalEntity instanceof org.epos.eposdatamodel.PeriodOfTime) {
-				org.epos.eposdatamodel.PeriodOfTime periodOfTime = (org.epos.eposdatamodel.PeriodOfTime) temporalEntity;
-				Resource temporalResource = model.createResource();
-				RDFHelper.addType(model, temporalResource, RDFConstants.DCT_PERIOD_OF_TIME);
-				if (periodOfTime.getStartDate() != null) {
-					model.add(temporalResource, RDFConstants.SCHEMA_START_DATE, model.createTypedLiteral(periodOfTime.getStartDate().toString(), XSDDatatype.XSDdateTime));
-				}
-				if (periodOfTime.getEndDate() != null) {
-					model.add(temporalResource, RDFConstants.SCHEMA_END_DATE, model.createTypedLiteral(periodOfTime.getEndDate().toString(), XSDDatatype.XSDdateTime));
-				}
-				model.add(subject, RDFConstants.DCT_TEMPORAL, temporalResource);
-			}
-		}
-
-		// Nested: Categories
-		if (entity.getCategory() != null) {
-			for (LinkedEntity linkedEntity : entity.getCategory()) {
-				EPOSDataModelEntity categoryEntity = entityMap.get(linkedEntity.getUid());
-				if (categoryEntity instanceof org.epos.eposdatamodel.Category) {
-					CategoryMapper categoryMapper = new CategoryMapper();
-					Resource categoryResource = categoryMapper.mapToRDF((org.epos.eposdatamodel.Category) categoryEntity, model, entityMap, resourceCache);
-					model.add(subject, RDFConstants.DCAT_THEME, categoryResource);
-				}
-			}
-		}
-
-		// Add keywords
-		if (entity.getKeywords() != null) {
-			String[] keywords = entity.getKeywords().split(",");
-			for (String keyword : keywords) {
-				RDFHelper.addLiteral(model, subject, RDFConstants.DCAT_KEYWORD, keyword.trim());
-			}
-		}
-
-		// Nested: ContactPoints
-		if (entity.getContactPoint() != null) {
+		// dcat:contactPoint, vcard:Kind or schema:ContactPoint, 0..n
+		if (entity.getContactPoint() != null && !entity.getContactPoint().isEmpty()) {
 			for (LinkedEntity linkedEntity : entity.getContactPoint()) {
 				EPOSDataModelEntity contactPointEntity = entityMap.get(linkedEntity.getUid());
 				if (contactPointEntity instanceof org.epos.eposdatamodel.ContactPoint) {
@@ -151,8 +58,8 @@ public class DataProductMapper implements EntityMapper<DataProduct> {
 			}
 		}
 
-		// Nested: Distributions
-		if (entity.getDistribution() != null) {
+		// dcat:distribution, dcat:Distribution, 0..n
+		if (entity.getDistribution() != null && !entity.getDistribution().isEmpty()) {
 			for (LinkedEntity linkedEntity : entity.getDistribution()) {
 				EPOSDataModelEntity distributionEntity = entityMap.get(linkedEntity.getUid());
 				if (distributionEntity instanceof org.epos.eposdatamodel.Distribution) {
@@ -163,8 +70,16 @@ public class DataProductMapper implements EntityMapper<DataProduct> {
 			}
 		}
 
-		// Nested: Publishers (Organizations)
-		if (entity.getPublisher() != null) {
+		// dcat:keyword, literal, 0..n
+		if (entity.getKeywords() != null && !entity.getKeywords().isEmpty()) {
+			String[] keywords = entity.getKeywords().split(",");
+			for (String keyword : keywords) {
+				RDFHelper.addStringLiteral(model, subject, RDFConstants.DCAT_KEYWORD, keyword.trim());
+			}
+		}
+
+		// dct:publisher, foaf:Agent or schema:Organization, 0..n
+		if (entity.getPublisher() != null && !entity.getPublisher().isEmpty()) {
 			for (LinkedEntity linkedEntity : entity.getPublisher()) {
 				EPOSDataModelEntity publisherEntity = entityMap.get(linkedEntity.getUid());
 				if (publisherEntity instanceof org.epos.eposdatamodel.Organization) {
@@ -175,13 +90,99 @@ public class DataProductMapper implements EntityMapper<DataProduct> {
 			}
 		}
 
-		// Add hasQualityAnnotation
-		if (entity.getQualityAssurance() != null) {
-			Resource qualityResource = model.createResource();
+		// dct:spatial, dct:Location, 0..n
+		if (entity.getSpatialExtent() != null && !entity.getSpatialExtent().isEmpty()) {
+			for (LinkedEntity linkedEntity : entity.getSpatialExtent()) {
+				EPOSDataModelEntity locationEntity = entityMap.get(linkedEntity.getUid());
+				if (locationEntity instanceof org.epos.eposdatamodel.Location) {
+					org.epos.eposdatamodel.Location location = (org.epos.eposdatamodel.Location) locationEntity;
+					Resource spatialResource = RDFHelper.createBlankNode(model);
+					RDFHelper.addType(model, spatialResource, RDFConstants.DCT_LOCATION);
+					if (location.getLocation() != null && !location.getLocation().isEmpty()) {
+						RDFHelper.addTypedLiteral(model, spatialResource, RDFConstants.DCAT_BBOX, location.getLocation(), RDFConstants.GSP_WKT_LITERAL_DATATYPE);
+					}
+					model.add(subject, RDFConstants.DCT_SPATIAL, spatialResource);
+				}
+			}
+		}
+
+		// dct:temporal, dct:PeriodOfTime, 0..n
+		if (entity.getTemporalExtent() != null && !entity.getTemporalExtent().isEmpty()) {
+			for (LinkedEntity linkedEntity : entity.getTemporalExtent()) {
+				EPOSDataModelEntity temporalEntity = entityMap.get(linkedEntity.getUid());
+				if (temporalEntity instanceof org.epos.eposdatamodel.PeriodOfTime) {
+					org.epos.eposdatamodel.PeriodOfTime periodOfTime = (org.epos.eposdatamodel.PeriodOfTime) temporalEntity;
+					Resource temporalResource = RDFHelper.createBlankNode(model);
+					RDFHelper.addType(model, temporalResource, RDFConstants.DCT_PERIOD_OF_TIME);
+					if (periodOfTime.getStartDate() != null) {
+						model.add(temporalResource, RDFConstants.DCAT_START_DATE, model .createTypedLiteral(periodOfTime.getStartDate().toString(), XSDDatatype.XSDdateTime));
+					}
+					if (periodOfTime.getEndDate() != null) {
+						model.add(temporalResource, RDFConstants.DCAT_END_DATE, model .createTypedLiteral(periodOfTime.getEndDate().toString(), XSDDatatype.XSDdateTime));
+					}
+					model.add(subject, RDFConstants.DCT_TEMPORAL, temporalResource);
+				}
+			}
+		}
+
+		// dcat:theme, skos:Concept, 0..n
+		if (entity.getCategory() != null && !entity.getCategory().isEmpty()) {
+			for (LinkedEntity linkedEntity : entity.getCategory()) {
+				EPOSDataModelEntity categoryEntity = entityMap.get(linkedEntity.getUid());
+				if (categoryEntity instanceof org.epos.eposdatamodel.Category) {
+					CategoryMapper categoryMapper = new CategoryMapper();
+					Resource categoryResource = categoryMapper.mapToRDF((org.epos.eposdatamodel.Category) categoryEntity, model, entityMap, resourceCache);
+					model.add(subject, RDFConstants.DCAT_THEME, categoryResource);
+				}
+			}
+		}
+
+		// dct:accrualPeriodicity, dct:Frequency, 0..1
+		RDFHelper.addURILiteral(model, subject, RDFConstants.DCT_ACCRUAL_PERIODICITY, entity.getAccrualPeriodicity());
+
+		// dct:created, literal typed as xsd:date or xsd:dateTime, 0..1
+		if (entity.getCreated() != null) {
+			RDFHelper.addDateLiteral(model, subject, RDFConstants.DCT_CREATED, entity.getCreated().toLocalDate().toString());
+		}
+
+		// dct:type, skos:Concept, 0..1
+		RDFHelper.addURILiteral(model, subject, RDFConstants.DCT_TYPE, entity.getType());
+
+		// dqv:hasQualityAnnotation, oa:Annotation, 0..n
+		if (entity.getQualityAssurance() != null && !entity.getQualityAssurance().isEmpty()) {
+			Resource qualityResource = RDFHelper.createBlankNode(model);
 			RDFHelper.addType(model, qualityResource, RDFConstants.OA_ANNOTATION);
 			RDFHelper.addURILiteral(model, qualityResource, RDFConstants.OA_HAS_BODY, entity.getQualityAssurance());
+			model.add(qualityResource, RDFConstants.OA_HAS_TARGET, subject);
 			model.add(subject, RDFConstants.DQV_HAS_QUALITY_ANNOTATION, qualityResource);
 		}
+
+		// adms:identifier, adms:Identifier, 0..n
+		if (entity.getIdentifier() != null && !entity.getIdentifier().isEmpty()) {
+			for (LinkedEntity linkedEntity : entity.getIdentifier()) {
+				EPOSDataModelEntity identifierEntity = entityMap.get(linkedEntity.getUid());
+				if (identifierEntity instanceof org.epos.eposdatamodel.Identifier) {
+					IdentifierMapper identifierMapper = new IdentifierMapper();
+					Resource identifierResource = identifierMapper.mapToRDF((org.epos.eposdatamodel.Identifier) identifierEntity, model, entityMap, resourceCache);
+					model.add(subject, RDFConstants.ADMS_IDENTIFIER, identifierResource);
+				}
+			}
+		}
+
+		// dct:issued, literal typed as xsd:date or xsd:dateTime, 0..1
+		if (entity.getIssued() != null) {
+			RDFHelper.addDateLiteral(model, subject, RDFConstants.DCT_ISSUED,
+					entity.getIssued().toLocalDate().toString());
+		}
+
+		// dct:modified, literal typed as xsd:date or xsd:dateTime, 0..1
+		if (entity.getModified() != null) {
+			RDFHelper.addDateLiteral(model, subject, RDFConstants.DCT_MODIFIED,
+					entity.getModified().toLocalDate().toString());
+		}
+
+		// dcat:version, literal, 0..1
+		RDFHelper.addStringLiteral(model, subject, RDFConstants.DCAT_VERSION, entity.getVersionInfo());
 
 		return subject;
 	}

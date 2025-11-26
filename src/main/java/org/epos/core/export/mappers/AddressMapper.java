@@ -5,37 +5,52 @@ import org.apache.jena.rdf.model.Resource;
 import org.epos.core.export.util.RDFConstants;
 import org.epos.core.export.util.RDFHelper;
 import org.epos.eposdatamodel.Address;
+import org.epos.eposdatamodel.EPOSDataModelEntity;
 
 import java.util.Map;
 
 /**
  * Mapper for Address entities to Schema.org PostalAddress.
+ * Follows EPOS-DCAT-AP v3 specification.
+ * Uses blank nodes (anonymous resources) as per v3 spec.
  */
 public class AddressMapper implements EntityMapper<Address> {
 
-    @Override
-    public Resource mapToRDF(Address entity, Model model, Map<String, org.epos.eposdatamodel.EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
-        if (resourceCache.containsKey(entity.getUid())) {
-            return resourceCache.get(entity.getUid());
-        }
-        // Create resource
-        Resource subject = model.createResource(entity.getUid());
-        resourceCache.put(entity.getUid(), subject);
+	@Override
+	public Resource mapToRDF(Address entity, Model model, Map<String, EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
+		// PostalAddress uses blank nodes in v3, so we don't use resource cache
 
-        // Add type
-        RDFHelper.addType(model, subject, RDFConstants.SCHEMA_POSTAL_ADDRESS);
+		// In v3, all 4 address properties are MANDATORY (1..1)
+		if (entity.getStreet() == null || entity.getStreet().trim().isEmpty() ||
+				entity.getLocality() == null || entity.getLocality().trim().isEmpty() ||
+				entity.getPostalCode() == null || entity.getPostalCode().trim().isEmpty() ||
+				entity.getCountry() == null || entity.getCountry().trim().isEmpty()) {
+			return null;
+		}
 
-        // Add properties
-        RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_STREET_ADDRESS, entity.getStreet());
-        RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_ADDRESS_LOCALITY, entity.getLocality());
-        RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_POSTAL_CODE, entity.getPostalCode());
-        RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_ADDRESS_COUNTRY, entity.getCountry());
+		// Create blank node for PostalAddress
+		Resource subject = RDFHelper.createBlankNode(model);
 
-        return subject;
-    }
+		// Add type
+		RDFHelper.addType(model, subject, RDFConstants.SCHEMA_POSTAL_ADDRESS);
 
-    @Override
-    public String getDCATClassURI() {
-        return RDFConstants.SCHEMA_POSTAL_ADDRESS + "Address";
-    }
+		// schema:streetAddress, literal, 1..1
+		RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_STREET_ADDRESS, entity.getStreet());
+
+		// schema:addressLocality, literal, 1..1
+		RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_ADDRESS_LOCALITY, entity.getLocality());
+
+		// schema:postalCode, literal, 1..1
+		RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_POSTAL_CODE, entity.getPostalCode());
+
+		// schema:addressCountry, literal, 1..1
+		RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_ADDRESS_COUNTRY, entity.getCountry());
+
+		return subject;
+	}
+
+	@Override
+	public String getDCATClassURI() {
+		return RDFConstants.SCHEMA_NS + "PostalAddress";
+	}
 }

@@ -1,5 +1,6 @@
 package org.epos.core.export.mappers;
 
+import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.epos.core.export.util.RDFConstants;
@@ -29,70 +30,94 @@ public class DistributionMapper implements EntityMapper<Distribution> {
         // Add type
         RDFHelper.addType(model, subject, RDFConstants.DCAT_DISTRIBUTION_CLASS);
 
-        // Auto-add dct:identifier from UID
+		// dcat:accessURL, resource, 1..n
+		if (entity.getAccessURL() == null || entity.getAccessURL().isEmpty()) {
+			//TODO: invalid, throw an exception maype? if so we need to handle it correctly upstream
+		} else {
+			for (var accessURL: entity.getAccessURL()) {
+				RDFHelper.addURILiteral(model, subject, RDFConstants.DCAT_ACCESS_URL, accessURL);
+			}
+		}
+
+		// identifier, literal, 1
         RDFHelper.addLiteral(model, subject, RDFConstants.DCT_IDENTIFIER, entity.getUid());
 
-        // Add title (multiple)
-        if (entity.getTitle() != null) {
-            for (String title : entity.getTitle()) {
-                RDFHelper.addLiteral(model, subject, RDFConstants.DCT_TITLE, title);
-            }
-        }
+		// dct:description, literal, 0..n
+		if (entity.getDescription() != null) {
+			for (var description: entity.getDescription()) {
+				if (!description.isEmpty()) {
+					RDFHelper.addStringLiteral(model, subject, RDFConstants.DCT_DESCRIPTION, description);
+				}
+			}
+		}
 
-        // Add description (multiple)
-        if (entity.getDescription() != null) {
-            for (String desc : entity.getDescription()) {
-                RDFHelper.addLiteral(model, subject, RDFConstants.DCT_DESCRIPTION, desc);
-            }
-        }
+		// dct:format, dct:MediaTypeOrExtent, 0..1
+		if (entity.getFormat() != null && !entity.getFormat().isEmpty()) {
+			RDFHelper.addURILiteral(model, subject, RDFConstants.DCT_FORMAT, entity.getFormat());
+		}
 
-        // Add issued
-        if (entity.getIssued() != null) {
-            String issuedDate = entity.getIssued().toLocalDate().format(DateTimeFormatter.ISO_LOCAL_DATE);
-            RDFHelper.addDateLiteral(model, subject, RDFConstants.DCT_ISSUED, issuedDate);
-        }
+		// dct:license, dct:LicenseDocument, 0..1
+		if (entity.getLicence() != null && !entity.getLicence().isEmpty()) {
+			RDFHelper.addURILiteral(model, subject, RDFConstants.DCT_LICENSE, entity.getLicence());
+		}
 
-        // Add modified
-        if (entity.getModified() != null) {
-            String modifiedDate = entity.getModified().toLocalDate().format(DateTimeFormatter.ISO_LOCAL_DATE);
-            RDFHelper.addDateLiteral(model, subject, RDFConstants.DCT_MODIFIED, modifiedDate);
-        }
+		// dcat:accessService, dcat:DataService, 0..n
+		if (entity.getAccessService() != null && !entity.getAccessService().isEmpty()) {
+			for (var linkedEntity : entity.getAccessService()) {
+				Resource accessServiceResource;
+				EPOSDataModelEntity accessServiceEntity = entityMap.get(linkedEntity.getUid());
+				if (accessServiceEntity instanceof org.epos.eposdatamodel.WebService) {
+					WebServiceMapper accessServiceMapper = new WebServiceMapper();
+					accessServiceResource = accessServiceMapper.mapToRDF((org.epos.eposdatamodel.WebService) accessServiceEntity, model, entityMap, resourceCache);
+				} else {
+					accessServiceResource = model.createResource(linkedEntity.getUid());
+				}
+				model.add(subject, RDFConstants.DCAT_ACCESS_SERVICE, accessServiceResource);
+			}
+		}
 
-        // Add type
-        RDFHelper.addURILiteral(model, subject, RDFConstants.DCT_TYPE, entity.getType());
+		// dcat:byteSize, xsd:nonNegativeInteger, 0..1
+		if (entity.getByteSize() != null && !entity.getByteSize().isEmpty()) {
+			try {
+				Integer byteSizeInt = Integer.parseInt(entity.getByteSize());
+				RDFHelper.addIntLiteral(model, subject, RDFConstants.DCAT_BYTE_SIZE, byteSizeInt);
+			} catch (NumberFormatException e) {
+				// skip invalid byteSize
+			}
+		}
 
-        // Add format
-        RDFHelper.addURILiteral(model, subject, RDFConstants.DCT_FORMAT, entity.getFormat());
+		// dcat:downloadURL, rdfs:Resource, 0..n
+		if (entity.getDownloadURL() != null && !entity.getDownloadURL().isEmpty()) {
+			for (var downloadURL : entity.getDownloadURL()) {
+				RDFHelper.addURILiteral(model, subject, RDFConstants.DCAT_DOWNLOAD_URL, downloadURL);
+			}
+		}
 
-        // Add license
-        RDFHelper.addURILiteral(model, subject, RDFConstants.DCT_LICENSE, entity.getLicence());
+		// dct:issued, (rdfs:Literal typed as xsd:date or xsd:dateTime), 0..1
+		if (entity.getIssued() != null) {
+			String issuedStr = entity.getIssued().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+			RDFHelper.addTypedLiteral(model, subject, RDFConstants.DCT_ISSUED, issuedStr, XSDDatatype.XSDdateTime);
+		}
 
-        // Add conformsTo
-        if (entity.getAccessService() != null && !entity.getAccessService().isEmpty()) {
-            for (LinkedEntity linkedEntity : entity.getAccessService()) {
-                RDFHelper.addURI(model, subject, RDFConstants.DCT_CONFORMS_TO, linkedEntity.getUid());
-            }
-        }
+		// dcat:mediaType, dct:MediaType, 0..1
+		if (entity.getMediaType() != null && !entity.getMediaType().isEmpty()) {
+			RDFHelper.addURILiteral(model, subject, RDFConstants.DCAT_MEDIA_TYPE, entity.getMediaType());
+		}
 
-        // Add accessURL
-        if (entity.getSupportedOperation() != null && !entity.getSupportedOperation().isEmpty()) {
-            for (LinkedEntity linkedEntity : entity.getSupportedOperation()) {
-                RDFHelper.addURI(model, subject, RDFConstants.DCAT_ACCESS_URL, linkedEntity.getUid());
-            }
-        } else {
-            if (entity.getAccessURL() != null) {
-                for (String url : entity.getAccessURL()) {
-                    RDFHelper.addURILiteral(model, subject, RDFConstants.DCAT_ACCESS_URL, url);
-                }
-            }
-        }
+		// dct:modified, (rdfs:Literal typed as xsd:date or xsd:dateTime), 0..1
+		if (entity.getModified() != null) {
+			String modifiedStr = entity.getModified().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+			RDFHelper.addTypedLiteral(model, subject, RDFConstants.DCT_MODIFIED, modifiedStr, XSDDatatype.XSDdateTime);
+		}
 
-        // Add downloadURL
-        if (entity.getDownloadURL() != null) {
-            for (String url : entity.getDownloadURL()) {
-                RDFHelper.addURILiteral(model, subject, RDFConstants.DCAT_DOWNLOAD_URL, url);
-            }
-        }
+		// dct:title, rdfs:Literal, 0..n
+		if (entity.getTitle() != null) {
+			for (var title : entity.getTitle()) {
+				if (!title.isEmpty()) {
+					RDFHelper.addStringLiteral(model, subject, RDFConstants.DCT_TITLE, title);
+				}
+			}
+		}
 
         return subject;
     }
