@@ -9,7 +9,8 @@ import org.epos.eposdatamodel.Location;
 import java.util.Map;
 
 /**
- * Mapper for Location entities to DCT Location.
+ * Mapper for Location entities to dct:Location.
+ * Follows EPOS-DCAT-AP v3 specification.
  */
 public class LocationMapper implements EntityMapper<Location> {
 
@@ -18,16 +19,17 @@ public class LocationMapper implements EntityMapper<Location> {
         if (resourceCache.containsKey(entity.getUid())) {
             return resourceCache.get(entity.getUid());
         }
-        // Create resource
-        Resource subject = model.createResource(entity.getUid());
+        // Create blank node for Location
+        Resource subject = RDFHelper.createBlankNode(model);
         resourceCache.put(entity.getUid(), subject);
 
         // Add type
         RDFHelper.addType(model, subject, RDFConstants.DCT_LOCATION);
 
-        // Add geometry
-        if (entity.getLocation() != null) {
-            RDFHelper.addLiteral(model, subject, RDFConstants.LOCN_GEOMETRY, entity.getLocation());
+        // dcat:bbox, gsp:wktLiteral, 0..1
+        // WKT literal representing the geographic bounding box
+        if (entity.getLocation() != null && !entity.getLocation().isEmpty()) {
+            RDFHelper.addTypedLiteral(model, subject, RDFConstants.DCAT_BBOX, entity.getLocation(), RDFConstants.GSP_WKT_LITERAL_DATATYPE);
         }
 
         return subject;

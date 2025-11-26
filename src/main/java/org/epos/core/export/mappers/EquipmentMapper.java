@@ -11,7 +11,8 @@ import org.epos.eposdatamodel.LinkedEntity;
 import java.util.Map;
 
 /**
- * Mapper for Equipment entities to Schema.org Device.
+ * Mapper for Equipment entities to epos:Equipment.
+ * Follows EPOS-DCAT-AP v3 specification.
  */
 public class EquipmentMapper implements EntityMapper<Equipment> {
 
@@ -27,18 +28,25 @@ public class EquipmentMapper implements EntityMapper<Equipment> {
         // Add type
         RDFHelper.addType(model, subject, RDFConstants.EPOS_EQUIPMENT);
 
-        // Add basic properties
+        // schema:name, literal, 0..1
         RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_NAME, entity.getName());
+
+        // schema:description, literal, 0..1
         RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_DESCRIPTION, entity.getDescription());
+
+        // dct:type, resource, 0..1
         RDFHelper.addURILiteral(model, subject, RDFConstants.DCT_TYPE, entity.getType());
-        RDFHelper.addLiteral(model, subject, RDFConstants.SCHEMA_IDENTIFIER, entity.getIdentifier());
+
+        // schema:identifier, literal, 0..1
+        RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_IDENTIFIER, entity.getIdentifier());
+
+        // schema:serialNumber, literal, 0..1
         RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_SERIAL_NUMBER, entity.getSerialNumber());
-        RDFHelper.addStringLiteral(model, subject, RDFConstants.EPOS_FILTER, entity.getFilter());
-        RDFHelper.addStringLiteral(model, subject, RDFConstants.EPOS_RESOLUTION, entity.getResolution());
-        RDFHelper.addStringLiteral(model, subject, RDFConstants.EPOS_ORIENTATION, entity.getOrientation());
+
+        // foaf:page, resource, 0..1
         RDFHelper.addURILiteral(model, subject, RDFConstants.FOAF_PAGE, entity.getPageURL());
 
-        // Add manufacturer (inline Organization)
+        // schema:manufacturer, schema:Organization, 0..1
         if (entity.getManufacturer() != null) {
             EPOSDataModelEntity manufacturerEntity = entityMap.get(entity.getManufacturer().getUid());
             if (manufacturerEntity instanceof org.epos.eposdatamodel.Organization) {
@@ -48,14 +56,14 @@ public class EquipmentMapper implements EntityMapper<Equipment> {
             }
         }
 
-        // Add isPartOf
-        if (entity.getIsPartOf() != null) {
+        // dct:isPartOf, resource, 0..n
+        if (entity.getIsPartOf() != null && !entity.getIsPartOf().isEmpty()) {
             for (LinkedEntity linked : entity.getIsPartOf()) {
                 model.add(subject, RDFConstants.DCT_IS_PART_OF, model.createResource(linked.getUid()));
             }
         }
 
-        // Add spatial extent (inline Location)
+        // dct:spatial, dct:Location, 0..n
         if (entity.getSpatialExtent() != null && !entity.getSpatialExtent().isEmpty()) {
             for (LinkedEntity linkedEntity : entity.getSpatialExtent()) {
                 EPOSDataModelEntity locationEntity = entityMap.get(linkedEntity.getUid());
@@ -67,7 +75,7 @@ public class EquipmentMapper implements EntityMapper<Equipment> {
             }
         }
 
-        // Add temporal extent (inline PeriodOfTime)
+        // dct:temporal, dct:PeriodOfTime, 0..n
         if (entity.getTemporalExtent() != null && !entity.getTemporalExtent().isEmpty()) {
             for (LinkedEntity linkedEntity : entity.getTemporalExtent()) {
                 EPOSDataModelEntity periodEntity = entityMap.get(linkedEntity.getUid());
@@ -79,8 +87,8 @@ public class EquipmentMapper implements EntityMapper<Equipment> {
             }
         }
 
-        // Add categories
-        if (entity.getCategory() != null) {
+        // dcat:theme, skos:Concept, 0..n
+        if (entity.getCategory() != null && !entity.getCategory().isEmpty()) {
             for (LinkedEntity linkedEntity : entity.getCategory()) {
                 EPOSDataModelEntity categoryEntity = entityMap.get(linkedEntity.getUid());
                 if (categoryEntity instanceof org.epos.eposdatamodel.Category) {
@@ -91,8 +99,8 @@ public class EquipmentMapper implements EntityMapper<Equipment> {
             }
         }
 
-        // Add contact points
-        if (entity.getContactPoint() != null) {
+        // dcat:contactPoint, vcard:Kind or schema:ContactPoint, 0..n
+        if (entity.getContactPoint() != null && !entity.getContactPoint().isEmpty()) {
             for (LinkedEntity linkedEntity : entity.getContactPoint()) {
                 EPOSDataModelEntity contactEntity = entityMap.get(linkedEntity.getUid());
                 if (contactEntity instanceof org.epos.eposdatamodel.ContactPoint) {
@@ -103,18 +111,23 @@ public class EquipmentMapper implements EntityMapper<Equipment> {
             }
         }
 
-        // Add dynamicRange
-        if (entity.getDynamicRange() != null) {
-            RDFHelper.addStringLiteral(model, subject, RDFConstants.EPOS_DYNAMIC_RANGE, entity.getDynamicRange());
-        }
+        // epos:dynamicRange, literal, 0..1
+        RDFHelper.addStringLiteral(model, subject, RDFConstants.EPOS_DYNAMIC_RANGE, entity.getDynamicRange());
 
-        // Add samplePeriod
-        if (entity.getSamplePeriod() != null) {
-            RDFHelper.addStringLiteral(model, subject, RDFConstants.EPOS_SAMPLE_PERIOD, entity.getSamplePeriod());
-        }
+        // epos:samplePeriod, literal, 0..1
+        RDFHelper.addStringLiteral(model, subject, RDFConstants.EPOS_SAMPLE_PERIOD, entity.getSamplePeriod());
 
-        // Add relation
-        if (entity.getRelation() != null) {
+        // epos:filter, literal, 0..1
+        RDFHelper.addStringLiteral(model, subject, RDFConstants.EPOS_FILTER, entity.getFilter());
+
+        // epos:resolution, literal, 0..1
+        RDFHelper.addStringLiteral(model, subject, RDFConstants.EPOS_RESOLUTION, entity.getResolution());
+
+        // epos:orientation, literal, 0..1
+        RDFHelper.addStringLiteral(model, subject, RDFConstants.EPOS_ORIENTATION, entity.getOrientation());
+
+        // dct:relation, resource, 0..n
+        if (entity.getRelation() != null && !entity.getRelation().isEmpty()) {
             for (LinkedEntity linked : entity.getRelation()) {
                 model.add(subject, RDFConstants.DCT_RELATION, model.createResource(linked.getUid()));
             }

@@ -11,7 +11,8 @@ import org.epos.eposdatamodel.LinkedEntity;
 import java.util.Map;
 
 /**
- * Mapper for Facility entities to Schema.org Place.
+ * Mapper for Facility entities to epos:Facility.
+ * Follows EPOS-DCAT-AP v3 specification.
  */
 public class FacilityMapper implements EntityMapper<Facility> {
 
@@ -27,37 +28,41 @@ public class FacilityMapper implements EntityMapper<Facility> {
         // Add type
         RDFHelper.addType(model, subject, RDFConstants.EPOS_FACILITY);
 
-        // Add basic properties
-        RDFHelper.addLiteral(model, subject, RDFConstants.SCHEMA_NAME, entity.getTitle());
-        RDFHelper.addLiteral(model, subject, RDFConstants.DCT_DESCRIPTION, entity.getDescription());
-        RDFHelper.addLiteral(model, subject, RDFConstants.DCT_TYPE, entity.getType());
-        RDFHelper.addLiteral(model, subject, RDFConstants.SCHEMA_IDENTIFIER, entity.getIdentifier());
+        // schema:name, literal, 0..1
+        RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_NAME, entity.getTitle());
 
-        // Add page URLs
-        if (entity.getPageURL() != null) {
+        // dct:description, literal, 0..1
+        RDFHelper.addStringLiteral(model, subject, RDFConstants.DCT_DESCRIPTION, entity.getDescription());
+
+        // dct:type, literal, 0..1
+        RDFHelper.addStringLiteral(model, subject, RDFConstants.DCT_TYPE, entity.getType());
+
+        // schema:identifier, literal, 0..1
+        RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_IDENTIFIER, entity.getIdentifier());
+
+        // foaf:page, resource, 0..n
+        if (entity.getPageURL() != null && !entity.getPageURL().isEmpty()) {
             for (String url : entity.getPageURL()) {
                 RDFHelper.addURILiteral(model, subject, RDFConstants.FOAF_PAGE, url);
             }
         }
 
-        // Add addresses (inline)
-        if (entity.getAddress() != null) {
+        // schema:address, schema:PostalAddress, 0..n
+        if (entity.getAddress() != null && !entity.getAddress().isEmpty()) {
             for (LinkedEntity linkedEntity : entity.getAddress()) {
                 EPOSDataModelEntity addressEntity = entityMap.get(linkedEntity.getUid());
                 if (addressEntity instanceof org.epos.eposdatamodel.Address) {
-                    Resource addressResource = model.createResource(); // blank node
-                    RDFHelper.addType(model, addressResource, RDFConstants.VCARD_ADDRESS);
-                    RDFHelper.addStringLiteral(model, addressResource, RDFConstants.VCARD_STREET_ADDRESS, ((org.epos.eposdatamodel.Address) addressEntity).getStreet());
-                    RDFHelper.addStringLiteral(model, addressResource, RDFConstants.VCARD_LOCALITY, ((org.epos.eposdatamodel.Address) addressEntity).getLocality());
-                    RDFHelper.addStringLiteral(model, addressResource, RDFConstants.VCARD_POSTAL_CODE, ((org.epos.eposdatamodel.Address) addressEntity).getPostalCode());
-                    RDFHelper.addStringLiteral(model, addressResource, RDFConstants.VCARD_COUNTRY_NAME, ((org.epos.eposdatamodel.Address) addressEntity).getCountry());
-                    model.add(subject, RDFConstants.VCARD_HAS_ADDRESS, addressResource);
+                    AddressMapper addressMapper = new AddressMapper();
+                    Resource addressResource = addressMapper.mapToRDF((org.epos.eposdatamodel.Address) addressEntity, model, entityMap, resourceCache);
+                    if (addressResource != null) {
+                        model.add(subject, RDFConstants.SCHEMA_ADDRESS, addressResource);
+                    }
                 }
             }
         }
 
-        // Add spatial extent (inline Location)
-        if (entity.getSpatialExtent() != null) {
+        // dct:spatial, dct:Location, 0..n
+        if (entity.getSpatialExtent() != null && !entity.getSpatialExtent().isEmpty()) {
             for (LinkedEntity linkedEntity : entity.getSpatialExtent()) {
                 EPOSDataModelEntity locationEntity = entityMap.get(linkedEntity.getUid());
                 if (locationEntity instanceof org.epos.eposdatamodel.Location) {
@@ -68,8 +73,8 @@ public class FacilityMapper implements EntityMapper<Facility> {
             }
         }
 
-        // Add categories
-        if (entity.getCategory() != null) {
+        // dcat:theme, skos:Concept, 0..n
+        if (entity.getCategory() != null && !entity.getCategory().isEmpty()) {
             for (LinkedEntity linkedEntity : entity.getCategory()) {
                 EPOSDataModelEntity categoryEntity = entityMap.get(linkedEntity.getUid());
                 if (categoryEntity instanceof org.epos.eposdatamodel.Category) {
@@ -80,8 +85,8 @@ public class FacilityMapper implements EntityMapper<Facility> {
             }
         }
 
-        // Add contact points
-        if (entity.getContactPoint() != null) {
+        // dcat:contactPoint, vcard:Kind or schema:ContactPoint, 0..n
+        if (entity.getContactPoint() != null && !entity.getContactPoint().isEmpty()) {
             for (LinkedEntity linkedEntity : entity.getContactPoint()) {
                 EPOSDataModelEntity contactEntity = entityMap.get(linkedEntity.getUid());
                 if (contactEntity instanceof org.epos.eposdatamodel.ContactPoint) {
@@ -92,8 +97,8 @@ public class FacilityMapper implements EntityMapper<Facility> {
             }
         }
 
-        // Add relation
-        if (entity.getRelation() != null) {
+        // dct:relation, resource, 0..n
+        if (entity.getRelation() != null && !entity.getRelation().isEmpty()) {
             for (LinkedEntity linked : entity.getRelation()) {
                 model.add(subject, RDFConstants.DCT_RELATION, model.createResource(linked.getUid()));
             }
