@@ -25,7 +25,7 @@ public class ContactPointMapper implements EntityMapper<ContactPoint> {
         resourceCache.put(entity.getUid(), subject);
 
         // Add type
-        RDFHelper.addType(model, subject, RDFConstants.DCAT_CONTACT_POINT_CLASS);
+        RDFHelper.addType(model, subject, RDFConstants.SCHEMA_CONTACT_POINT);
 
         // schema:contactType, literal, 0..1
         RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_CONTACT_TYPE, entity.getRole());

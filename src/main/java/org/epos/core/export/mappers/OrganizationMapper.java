@@ -26,6 +26,11 @@ public class OrganizationMapper implements EntityMapper<Organization> {
 		if (resourceCache.containsKey(entity.getUid())) {
 			return resourceCache.get(entity.getUid());
 		}
+		// Compliance check for v3 model required fields
+		if (entity.getIdentifier() == null || entity.getIdentifier().isEmpty()) {
+			LOGGER.warn("Entity {} not compliant with v3 model: missing required fields (identifier)", entity.getUid());
+			return null;
+		}
 		// Create resource
 		Resource subject = model.createResource(entity.getUid());
 		resourceCache.put(entity.getUid(), subject);

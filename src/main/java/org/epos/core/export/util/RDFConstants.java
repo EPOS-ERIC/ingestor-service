@@ -37,38 +37,30 @@ public class RDFConstants {
         public static final Resource DCAT_DATASET = ResourceFactory.createResource(DCAT_NS + "Dataset");
         public static final Resource DCAT_DISTRIBUTION_CLASS = ResourceFactory.createResource(DCAT_NS + "Distribution");
         public static final Resource DCAT_DATA_SERVICE = ResourceFactory.createResource(DCAT_NS + "DataService");
-        public static final Resource DCAT_CONTACT_POINT_CLASS = ResourceFactory
-                        .createResource(DCAT_NS + "ContactPoint");
+        public static final Resource DCAT_CONTACT_POINT_CLASS = ResourceFactory.createResource(DCAT_NS + "ContactPoint");
         public static final Resource FOAF_AGENT = ResourceFactory.createResource(FOAF_NS + "Agent");
         public static final Resource SCHEMA_ORGANIZATION = ResourceFactory.createResource(SCHEMA_NS + "Organization");
         public static final Resource SCHEMA_PERSON = ResourceFactory.createResource(SCHEMA_NS + "Person");
         public static final Property SCHEMA_CONTACT_POINT = ResourceFactory.createProperty(SCHEMA_NS, "ContactPoint");
         public static final Resource SCHEMA_DEVICE = ResourceFactory.createResource(SCHEMA_NS + "Device");
-        public static final Resource SCHEMA_SOFTWARE_APPLICATION = ResourceFactory
-                        .createResource(SCHEMA_NS + "SoftwareApplication");
-        public static final Resource SCHEMA_QUANTITATIVE_VALUE = ResourceFactory
-                        .createResource(SCHEMA_NS + "QuantitativeValue");
-        public static final Resource SCHEMA_SOFTWARE_SOURCE_CODE = ResourceFactory
-                        .createResource(SCHEMA_NS + "SoftwareSourceCode");
+        public static final Resource SCHEMA_SOFTWARE_APPLICATION = ResourceFactory.createResource(SCHEMA_NS + "SoftwareApplication");
+        public static final Resource SCHEMA_QUANTITATIVE_VALUE = ResourceFactory.createResource(SCHEMA_NS + "QuantitativeValue");
+        public static final Resource SCHEMA_SOFTWARE_SOURCE_CODE = ResourceFactory.createResource(SCHEMA_NS + "SoftwareSourceCode");
         public static final Resource SCHEMA_PLACE = ResourceFactory.createResource(SCHEMA_NS + "Place");
-        public static final Resource SCHEMA_POSTAL_ADDRESS = ResourceFactory
-                        .createResource(SCHEMA_NS + "PostalAddress");
-        public static final Resource SCHEMA_PROPERTY_VALUE = ResourceFactory
-                        .createResource(SCHEMA_NS + "PropertyValue");
+        public static final Resource SCHEMA_POSTAL_ADDRESS = ResourceFactory.createResource(SCHEMA_NS + "PostalAddress");
+        public static final Resource SCHEMA_PROPERTY_VALUE = ResourceFactory.createResource(SCHEMA_NS + "PropertyValue");
         public static final Resource SKOS_CONCEPT = ResourceFactory.createResource(SKOS_NS + "Concept");
         public static final Resource SKOS_CONCEPT_SCHEME = ResourceFactory.createResource(SKOS_NS + "ConceptScheme");
         public static final Resource ADMS_IDENTIFIER_CLASS = ResourceFactory.createResource(ADMS_NS + "Identifier");
         public static final Resource VCARD_ADDRESS = ResourceFactory.createResource(VCARD_NS + "Address");
         public static final Resource DCT_LOCATION = ResourceFactory.createResource(DCT_NS + "Location");
         public static final Resource DCT_PERIOD_OF_TIME = ResourceFactory.createResource(DCT_NS + "PeriodOfTime");
+        public static final Resource DCT_STANDARD = ResourceFactory.createResource(DCT_NS + "Standard");
         public static final Resource HYDRA_OPERATION = ResourceFactory.createResource(HYDRA_NS + "Operation");
         public static final Resource HYDRA_IRI_TEMPLATE = ResourceFactory.createResource(HYDRA_NS + "IriTemplate");
-        public static final Resource HYDRA_IRI_TEMPLATE_MAPPING = ResourceFactory
-                        .createResource(HYDRA_NS + "IriTemplateMapping");
-        public static final Resource HYDRA_API_DOCUMENTATION = ResourceFactory
-                        .createResource(HYDRA_NS + "ApiDocumentation");
-        public static final Property HYDRA_SUPPORTED_PROPERTY = ResourceFactory.createProperty(HYDRA_NS,
-                        "supportedProperty");
+        public static final Resource HYDRA_IRI_TEMPLATE_MAPPING = ResourceFactory.createResource(HYDRA_NS + "IriTemplateMapping");
+        public static final Resource HYDRA_API_DOCUMENTATION = ResourceFactory.createResource(HYDRA_NS + "ApiDocumentation");
+        public static final Property HYDRA_SUPPORTED_PROPERTY = ResourceFactory.createProperty(HYDRA_NS, "supportedProperty");
         public static final Resource HYDRA_CLASS = ResourceFactory.createResource(HYDRA_NS + "Class");
         public static final Resource OA_ANNOTATION = ResourceFactory.createResource(OA_NS + "Annotation");
         public static final Resource PROV_ATTRIBUTION = ResourceFactory.createResource(PROV_NS + "Attribution");
@@ -108,8 +100,7 @@ public class RDFConstants {
         public static final Property DCT_LICENSE = ResourceFactory.createProperty(DCT_NS, "license");
         public static final Property DCT_SPATIAL = ResourceFactory.createProperty(DCT_NS, "spatial");
         public static final Property DCT_TEMPORAL = ResourceFactory.createProperty(DCT_NS, "temporal");
-        public static final Property DCT_ACCRUAL_PERIODICITY = ResourceFactory.createProperty(DCT_NS,
-                        "accrualPeriodicity");
+        public static final Property DCT_ACCRUAL_PERIODICITY = ResourceFactory.createProperty(DCT_NS, "accrualPeriodicity");
         public static final Property DCT_CONFORMS_TO = ResourceFactory.createProperty(DCT_NS, "conformsTo");
         public static final Property DCT_IS_PART_OF = ResourceFactory.createProperty(DCT_NS, "isPartOf");
         public static final Property DCT_RELATION = ResourceFactory.createProperty(DCT_NS, "relation");
@@ -132,14 +123,12 @@ public class RDFConstants {
         public static final Property SCHEMA_LOGO = ResourceFactory.createProperty(SCHEMA_NS, "logo");
         public static final Property SCHEMA_URL = ResourceFactory.createProperty(SCHEMA_NS, "url");
         public static final Property SCHEMA_CONTACT_TYPE = ResourceFactory.createProperty(SCHEMA_NS, "contactType");
-        public static final Property SCHEMA_AVAILABLE_LANGUAGE = ResourceFactory.createProperty(SCHEMA_NS,
-                        "availableLanguage");
+        public static final Property SCHEMA_AVAILABLE_LANGUAGE = ResourceFactory.createProperty(SCHEMA_NS, "availableLanguage");
         public static final Property SCHEMA_START_DATE = ResourceFactory.createProperty(SCHEMA_NS, "startDate");
         public static final Property SCHEMA_END_DATE = ResourceFactory.createProperty(SCHEMA_NS, "endDate");
         public static final Property SCHEMA_DEFAULT_VALUE = ResourceFactory.createProperty(SCHEMA_NS, "defaultValue");
         public static final Property SCHEMA_VALUE_PATTERN = ResourceFactory.createProperty(SCHEMA_NS, "valuePattern");
-        public static final Property SCHEMA_MULTIPLE_VALUES = ResourceFactory.createProperty(SCHEMA_NS,
-                        "multipleValues");
+        public static final Property SCHEMA_MULTIPLE_VALUES = ResourceFactory.createProperty(SCHEMA_NS, "multipleValues");
         public static final Property SCHEMA_READONLY_VALUE = ResourceFactory.createProperty(SCHEMA_NS, "readonlyValue");
         public static final Property SCHEMA_IDENTIFIER = ResourceFactory.createProperty(SCHEMA_NS, "identifier");
         public static final Property SCHEMA_SERIAL_NUMBER = ResourceFactory.createProperty(SCHEMA_NS, "serialNumber");
@@ -152,19 +141,16 @@ public class RDFConstants {
         public static final Property SCHEMA_LEGAL_NAME = ResourceFactory.createProperty(SCHEMA_NS, "legalName");
         public static final Property SCHEMA_LEI_CODE = ResourceFactory.createProperty(SCHEMA_NS, "leiCode");
         public static final Property SCHEMA_STREET_ADDRESS = ResourceFactory.createProperty(SCHEMA_NS, "streetAddress");
-        public static final Property SCHEMA_ADDRESS_LOCALITY = ResourceFactory.createProperty(SCHEMA_NS,
-                        "addressLocality");
+        public static final Property SCHEMA_ADDRESS_LOCALITY = ResourceFactory.createProperty(SCHEMA_NS, "addressLocality");
         public static final Property SCHEMA_POSTAL_CODE = ResourceFactory.createProperty(SCHEMA_NS, "postalCode");
-        public static final Property SCHEMA_ADDRESS_COUNTRY = ResourceFactory.createProperty(SCHEMA_NS,
-                        "addressCountry");
+        public static final Property SCHEMA_ADDRESS_COUNTRY = ResourceFactory.createProperty(SCHEMA_NS, "addressCountry");
         public static final Property SCHEMA_PROPERTY_ID = ResourceFactory.createProperty(SCHEMA_NS, "propertyID");
         public static final Property SCHEMA_OWNS = ResourceFactory.createProperty(SCHEMA_NS, "owns");
         public static final Property SCHEMA_MEMBER_OF = ResourceFactory.createProperty(SCHEMA_NS, "memberOf");
         public static final Property SCHEMA_FAMILY_NAME = ResourceFactory.createProperty(SCHEMA_NS, "familyName");
         public static final Property SCHEMA_GIVEN_NAME = ResourceFactory.createProperty(SCHEMA_NS, "givenName");
         public static final Property SCHEMA_TELEPHONE = ResourceFactory.createProperty(SCHEMA_NS, "telephone");
-        public static final Property SCHEMA_QUALIFICATIONS = ResourceFactory.createProperty(SCHEMA_NS,
-                        "qualifications");
+        public static final Property SCHEMA_QUALIFICATIONS = ResourceFactory.createProperty(SCHEMA_NS, "qualifications");
         public static final Property SCHEMA_AFFILIATION = ResourceFactory.createProperty(SCHEMA_NS, "affiliation");
         public static final Property SCHEMA_KEYWORDS = ResourceFactory.createProperty(SCHEMA_NS, "keywords");
         public static final Property SCHEMA_DATE_PUBLISHED = ResourceFactory.createProperty(SCHEMA_NS, "datePublished");
@@ -195,8 +181,7 @@ public class RDFConstants {
         public static final Property VCARD_COUNTRY_NAME = ResourceFactory.createProperty(VCARD_NS, "country-name");
 
         // Hydra Properties
-        public static final Property HYDRA_SUPPORTED_OPERATION = ResourceFactory.createProperty(HYDRA_NS,
-                        "supportedOperation");
+        public static final Property HYDRA_SUPPORTED_OPERATION = ResourceFactory.createProperty(HYDRA_NS, "supportedOperation");
         public static final Property HYDRA_METHOD = ResourceFactory.createProperty(HYDRA_NS, "method");
         public static final Property HYDRA_RETURNS = ResourceFactory.createProperty(HYDRA_NS, "returns");
         public static final Property HYDRA_PROPERTY = ResourceFactory.createProperty(HYDRA_NS, "property");
@@ -231,28 +216,21 @@ public class RDFConstants {
         public static final Property PROV_HAD_ROLE = ResourceFactory.createProperty(PROV_NS, "hadRole");
 
         // DQV Properties
-        public static final Property DQV_HAS_QUALITY_ANNOTATION = ResourceFactory.createProperty(DQV_NS,
-                        "hasQualityAnnotation");
+        public static final Property DQV_HAS_QUALITY_ANNOTATION = ResourceFactory.createProperty(DQV_NS, "hasQualityAnnotation");
 
         // RDF Properties
         public static final Property RDF_TYPE = ResourceFactory.createProperty(RDF_NS, "type");
 
         // Additional Schema Properties
-        public static final Property SCHEMA_RUNTIME_PLATFORM = ResourceFactory.createProperty(SCHEMA_NS,
-                        "runtimePlatform");
-        public static final Property SCHEMA_SOFTWARE_VERSION = ResourceFactory.createProperty(SCHEMA_NS,
-                        "softwareVersion");
-        public static final Property SCHEMA_CODE_REPOSITORY = ResourceFactory.createProperty(SCHEMA_NS,
-                        "codeRepository");
-        public static final Property SCHEMA_PROGRAMMING_LANGUAGE = ResourceFactory.createProperty(SCHEMA_NS,
-                        "programmingLanguage");
-        public static final Property SCHEMA_MAIN_ENTITY_OF_PAGE = ResourceFactory.createProperty(SCHEMA_NS,
-                        "mainEntityOfPage");
+        public static final Property SCHEMA_RUNTIME_PLATFORM = ResourceFactory.createProperty(SCHEMA_NS, "runtimePlatform");
+        public static final Property SCHEMA_SOFTWARE_VERSION = ResourceFactory.createProperty(SCHEMA_NS, "softwareVersion");
+        public static final Property SCHEMA_CODE_REPOSITORY = ResourceFactory.createProperty(SCHEMA_NS, "codeRepository");
+        public static final Property SCHEMA_PROGRAMMING_LANGUAGE = ResourceFactory.createProperty(SCHEMA_NS, "programmingLanguage");
+        public static final Property SCHEMA_MAIN_ENTITY_OF_PAGE = ResourceFactory.createProperty(SCHEMA_NS, "mainEntityOfPage");
         public static final Property SCHEMA_INSTALL_URL = ResourceFactory.createProperty(SCHEMA_NS, "installUrl");
         public static final Property SCHEMA_TARGET_PRODUCT = ResourceFactory.createProperty(SCHEMA_NS, "targetProduct");
         public static final Property SCHEMA_LICENSE = ResourceFactory.createProperty(SCHEMA_NS, "license");
-        public static final Property SCHEMA_SOFTWARE_REQUIREMENTS = ResourceFactory.createProperty(SCHEMA_NS,
-                        "softwareRequirements");
+        public static final Property SCHEMA_SOFTWARE_REQUIREMENTS = ResourceFactory.createProperty(SCHEMA_NS, "softwareRequirements");
 
         // EPOS Properties
         public static final Property EPOS_FILTER = ResourceFactory.createProperty(EPOS_NS, "filter");
@@ -260,21 +238,18 @@ public class RDFConstants {
         public static final Property EPOS_SAMPLE_PERIOD = ResourceFactory.createProperty(EPOS_NS, "samplePeriod");
         public static final Property EPOS_RESOLUTION = ResourceFactory.createProperty(EPOS_NS, "resolution");
         public static final Property EPOS_ORIENTATION = ResourceFactory.createProperty(EPOS_NS, "orientation");
-        public static final Property EPOS_ASSOCIATED_PROJECT = ResourceFactory.createProperty(EPOS_NS,
-                        "associatedProject");
+        public static final Property EPOS_ASSOCIATED_PROJECT = ResourceFactory.createProperty(EPOS_NS, "associatedProject");
 
         // Additional Schema Properties
         public static final Property SCHEMA_COLOR = ResourceFactory.createProperty(SCHEMA_NS, "color");
-        public static final Property SCHEMA_ORDER_ITEM_NUMBER = ResourceFactory.createProperty(SCHEMA_NS,
-                        "orderItemNumber");
+        public static final Property SCHEMA_ORDER_ITEM_NUMBER = ResourceFactory.createProperty(SCHEMA_NS, "orderItemNumber");
 
         // XSD Datatypes
         public static final String XSD_DATE = XSD_NS + "date";
 
         // GeoSPARQL Datatypes
         public static final String GSP_WKT_LITERAL = GSP_NS + "wktLiteral";
-        public static final RDFDatatype GSP_WKT_LITERAL_DATATYPE = TypeMapper.getInstance()
-                        .getSafeTypeByName(GSP_WKT_LITERAL);
+        public static final RDFDatatype GSP_WKT_LITERAL_DATATYPE = TypeMapper.getInstance().getSafeTypeByName(GSP_WKT_LITERAL);
 
         private RDFConstants() {
                 // Utility class, no instantiation

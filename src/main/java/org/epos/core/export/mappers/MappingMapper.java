@@ -17,8 +17,7 @@ import java.util.Map;
 public class MappingMapper implements EntityMapper<Mapping> {
 
     @Override
-    public Resource mapToRDF(Mapping entity, Model model, Map<String, EPOSDataModelEntity> entityMap,
-            Map<String, Resource> resourceCache) {
+    public Resource mapToRDF(Mapping entity, Model model, Map<String, EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
         // IriTemplateMapping uses blank nodes, so we don't use resource cache
         // Create blank node for IriTemplateMapping
         Resource subject = RDFHelper.createBlankNode(model);

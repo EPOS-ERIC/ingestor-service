@@ -8,6 +8,8 @@ import org.epos.core.export.util.RDFHelper;
 import org.epos.eposdatamodel.Distribution;
 import org.epos.eposdatamodel.EPOSDataModelEntity;
 import org.epos.eposdatamodel.LinkedEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
@@ -18,10 +20,17 @@ import java.util.Map;
  */
 public class DistributionMapper implements EntityMapper<Distribution> {
 
+	private static final Logger LOGGER = LoggerFactory.getLogger(DistributionMapper.class);
+
 	@Override
 	public Resource mapToRDF(Distribution entity, Model model, Map<String, EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
 		if (resourceCache.containsKey(entity.getUid())) {
 			return resourceCache.get(entity.getUid());
+		}
+		// Compliance check for v3 model required fields
+		if (entity.getAccessURL() == null || entity.getAccessURL().isEmpty()) {
+			LOGGER.warn("Entity {} not compliant with v3 model: missing required fields (accessURL)", entity.getUid());
+			return null;
 		}
 		// Create resource
 		Resource subject = model.createResource(entity.getUid());
@@ -35,7 +44,11 @@ public class DistributionMapper implements EntityMapper<Distribution> {
 			for (var accessURL : entity.getAccessURL()) {
 				RDFHelper.addURILiteral(model, subject, RDFConstants.DCAT_ACCESS_URL, accessURL);
 			}
-		}
+		} 
+		// TODO: remove this
+		// else {
+		// 	RDFHelper.addURILiteral(model, subject, RDFConstants.DCAT_ACCESS_URL, "TODO access url");
+		// }
 
 		// dct:identifier, literal, 1..1
 		RDFHelper.addStringLiteral(model, subject, RDFConstants.DCT_IDENTIFIER, entity.getUid());

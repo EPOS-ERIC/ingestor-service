@@ -7,6 +7,8 @@ import org.epos.core.export.util.RDFHelper;
 import org.epos.eposdatamodel.EPOSDataModelEntity;
 import org.epos.eposdatamodel.LinkedEntity;
 import org.epos.eposdatamodel.SoftwareApplication;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
@@ -16,11 +18,18 @@ import java.util.Map;
  */
 public class SoftwareApplicationMapper implements EntityMapper<SoftwareApplication> {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(SoftwareApplicationMapper.class);
+
     @Override
     public Resource mapToRDF(SoftwareApplication entity, Model model, Map<String, EPOSDataModelEntity> entityMap,
             Map<String, Resource> resourceCache) {
         if (resourceCache.containsKey(entity.getUid())) {
             return resourceCache.get(entity.getUid());
+        }
+        // Compliance check for v3 model required fields
+        if (entity.getIdentifier() == null || entity.getIdentifier().isEmpty()) {
+            LOGGER.warn("Entity {} not compliant with v3 model: missing required fields (identifier)", entity.getUid());
+            return null;
         }
         // Create resource
         Resource subject = model.createResource(entity.getUid());
@@ -55,7 +64,11 @@ public class SoftwareApplicationMapper implements EntityMapper<SoftwareApplicati
                     ContactPointMapper contactMapper = new ContactPointMapper();
                     Resource contactResource = contactMapper.mapToRDF(
                             (org.epos.eposdatamodel.ContactPoint) contactEntity, model, entityMap, resourceCache);
-                    model.add(subject, RDFConstants.SCHEMA_CONTACT_POINT, contactResource);
+                    if (contactResource != null) {
+                        model.add(subject, RDFConstants.SCHEMA_CONTACT_POINT, contactResource);
+                    } else {
+                        LOGGER.warn("Skipping invalid contactPoint for SoftwareApplication {}", entity.getUid());
+                    }
                 }
             }
         }
@@ -102,7 +115,11 @@ public class SoftwareApplicationMapper implements EntityMapper<SoftwareApplicati
                     CategoryMapper categoryMapper = new CategoryMapper();
                     Resource categoryResource = categoryMapper.mapToRDF(
                             (org.epos.eposdatamodel.Category) categoryEntity, model, entityMap, resourceCache);
-                    model.add(subject, RDFConstants.DCAT_THEME, categoryResource);
+                    if (categoryResource != null) {
+                        model.add(subject, RDFConstants.DCAT_THEME, categoryResource);
+                    } else {
+                        LOGGER.warn("Skipping invalid category for SoftwareApplication {}", entity.getUid());
+                    }
                 }
             }
         }

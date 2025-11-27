@@ -128,6 +128,8 @@ public class MetadataExporter {
 				return "";
 			}
 
+			entities = entities.stream().filter(entity -> entity != null).collect(Collectors.toList());
+
 			// 2. Build entity map
 			if (entityType != null) {
 				entities = collectAllLinkedEntities(entities);
@@ -179,7 +181,6 @@ public class MetadataExporter {
 			Lang lang = getLangForFormat(format);
 			RDFDataMgr.write(writer, rdfModel, lang);
 			String content = writer.toString();
-			LOGGER.info("Serialized RDF model to {} characters of {} content", content.length(), format);
 
 			content = cleanupPrefixes(content);
 

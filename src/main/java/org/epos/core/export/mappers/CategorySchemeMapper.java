@@ -6,6 +6,8 @@ import org.epos.core.export.util.RDFConstants;
 import org.epos.core.export.util.RDFHelper;
 import org.epos.eposdatamodel.CategoryScheme;
 import org.epos.eposdatamodel.EPOSDataModelEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
@@ -15,11 +17,18 @@ import java.util.Map;
  */
 public class CategorySchemeMapper implements EntityMapper<CategoryScheme> {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(CategorySchemeMapper.class);
+
     @Override
     public Resource mapToRDF(CategoryScheme entity, Model model, Map<String, EPOSDataModelEntity> entityMap,
             Map<String, Resource> resourceCache) {
         if (resourceCache.containsKey(entity.getUid())) {
             return resourceCache.get(entity.getUid());
+        }
+        // Compliance check for v3 model required fields
+        if (entity.getTitle() == null || entity.getTitle().trim().isEmpty()) {
+            LOGGER.warn("Entity {} not compliant with v3 model: missing required fields (title)", entity.getUid());
+            return null;
         }
         // Create resource
         Resource subject = model.createResource(entity.getUid());

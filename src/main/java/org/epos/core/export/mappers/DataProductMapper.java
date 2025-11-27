@@ -8,6 +8,8 @@ import org.epos.core.export.util.RDFHelper;
 import org.epos.eposdatamodel.DataProduct;
 import org.epos.eposdatamodel.EPOSDataModelEntity;
 import org.epos.eposdatamodel.LinkedEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
@@ -17,10 +19,18 @@ import java.util.Map;
  */
 public class DataProductMapper implements EntityMapper<DataProduct> {
 
+	private static final Logger LOGGER = LoggerFactory.getLogger(DataProductMapper.class);
+
 	@Override
 	public Resource mapToRDF(DataProduct entity, Model model, Map<String, EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
 		if (resourceCache.containsKey(entity.getUid())) {
 			return resourceCache.get(entity.getUid());
+		}
+		// Compliance check for v3 model required fields
+		if (entity.getDescription() == null || entity.getDescription().isEmpty() ||
+				entity.getTitle() == null || entity.getTitle().isEmpty()) {
+			LOGGER.warn("Entity {} not compliant with v3 model: missing required fields (description or title)", entity.getUid());
+			return null;
 		}
 		// Create resource
 		Resource subject = model.createResource(entity.getUid());
@@ -53,7 +63,11 @@ public class DataProductMapper implements EntityMapper<DataProduct> {
 				if (contactPointEntity instanceof org.epos.eposdatamodel.ContactPoint) {
 					ContactPointMapper contactPointMapper = new ContactPointMapper();
 					Resource contactPointResource = contactPointMapper.mapToRDF((org.epos.eposdatamodel.ContactPoint) contactPointEntity, model, entityMap, resourceCache);
-					model.add(subject, RDFConstants.DCAT_CONTACT_POINT, contactPointResource);
+					if (contactPointResource != null) {
+						model.add(subject, RDFConstants.DCAT_CONTACT_POINT, contactPointResource);
+					} else {
+						LOGGER.warn("Skipping invalid contactPoint for DataProduct {}", entity.getUid());
+					}
 				}
 			}
 		}
@@ -65,7 +79,11 @@ public class DataProductMapper implements EntityMapper<DataProduct> {
 				if (distributionEntity instanceof org.epos.eposdatamodel.Distribution) {
 					DistributionMapper distributionMapper = new DistributionMapper();
 					Resource distributionResource = distributionMapper.mapToRDF((org.epos.eposdatamodel.Distribution) distributionEntity, model, entityMap, resourceCache);
-					model.add(subject, RDFConstants.DCAT_DISTRIBUTION, distributionResource);
+					if (distributionResource != null) {
+						model.add(subject, RDFConstants.DCAT_DISTRIBUTION, distributionResource);
+					} else {
+						LOGGER.warn("Skipping invalid distribution for DataProduct {}", entity.getUid());
+					}
 				}
 			}
 		}
@@ -85,7 +103,11 @@ public class DataProductMapper implements EntityMapper<DataProduct> {
 				if (publisherEntity instanceof org.epos.eposdatamodel.Organization) {
 					OrganizationMapper organizationMapper = new OrganizationMapper();
 					Resource organizationResource = organizationMapper.mapToRDF((org.epos.eposdatamodel.Organization) publisherEntity, model, entityMap, resourceCache);
-					model.add(subject, RDFConstants.DCT_PUBLISHER, organizationResource);
+					if (organizationResource != null) {
+						model.add(subject, RDFConstants.DCT_PUBLISHER, organizationResource);
+					} else {
+						LOGGER.warn("Skipping invalid publisher for DataProduct {}", entity.getUid());
+					}
 				}
 			}
 		}
@@ -132,7 +154,11 @@ public class DataProductMapper implements EntityMapper<DataProduct> {
 				if (categoryEntity instanceof org.epos.eposdatamodel.Category) {
 					CategoryMapper categoryMapper = new CategoryMapper();
 					Resource categoryResource = categoryMapper.mapToRDF((org.epos.eposdatamodel.Category) categoryEntity, model, entityMap, resourceCache);
-					model.add(subject, RDFConstants.DCAT_THEME, categoryResource);
+					if (categoryResource != null) {
+						model.add(subject, RDFConstants.DCAT_THEME, categoryResource);
+					} else {
+						LOGGER.warn("Skipping invalid category for DataProduct {}", entity.getUid());
+					}
 				}
 			}
 		}
@@ -164,7 +190,11 @@ public class DataProductMapper implements EntityMapper<DataProduct> {
 				if (identifierEntity instanceof org.epos.eposdatamodel.Identifier) {
 					IdentifierMapper identifierMapper = new IdentifierMapper();
 					Resource identifierResource = identifierMapper.mapToRDF((org.epos.eposdatamodel.Identifier) identifierEntity, model, entityMap, resourceCache);
-					model.add(subject, RDFConstants.ADMS_IDENTIFIER, identifierResource);
+					if (identifierResource != null) {
+						model.add(subject, RDFConstants.ADMS_IDENTIFIER, identifierResource);
+					} else {
+						LOGGER.warn("Skipping invalid identifier for DataProduct {}", entity.getUid());
+					}
 				}
 			}
 		}

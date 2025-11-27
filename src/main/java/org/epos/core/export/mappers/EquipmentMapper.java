@@ -7,6 +7,8 @@ import org.epos.core.export.util.RDFHelper;
 import org.epos.eposdatamodel.EPOSDataModelEntity;
 import org.epos.eposdatamodel.Equipment;
 import org.epos.eposdatamodel.LinkedEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
@@ -15,6 +17,8 @@ import java.util.Map;
  * Follows EPOS-DCAT-AP v3 specification.
  */
 public class EquipmentMapper implements EntityMapper<Equipment> {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(EquipmentMapper.class);
 
     @Override
     public Resource mapToRDF(Equipment entity, Model model, Map<String, EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
@@ -52,7 +56,11 @@ public class EquipmentMapper implements EntityMapper<Equipment> {
             if (manufacturerEntity instanceof org.epos.eposdatamodel.Organization) {
                 OrganizationMapper organizationMapper = new OrganizationMapper();
                 Resource manufacturerResource = organizationMapper.mapToRDF((org.epos.eposdatamodel.Organization) manufacturerEntity, model, entityMap, resourceCache);
-                model.add(subject, RDFConstants.SCHEMA_MANUFACTURER, manufacturerResource);
+                if (manufacturerResource != null) {
+                    model.add(subject, RDFConstants.SCHEMA_MANUFACTURER, manufacturerResource);
+                } else {
+                    LOGGER.warn("Skipping invalid manufacturer for Equipment {}", entity.getUid());
+                }
             }
         }
 
@@ -70,7 +78,11 @@ public class EquipmentMapper implements EntityMapper<Equipment> {
                 if (locationEntity instanceof org.epos.eposdatamodel.Location) {
                     LocationMapper locationMapper = new LocationMapper();
                     Resource locationResource = locationMapper.mapToRDF((org.epos.eposdatamodel.Location) locationEntity, model, entityMap, resourceCache);
-                    model.add(subject, RDFConstants.DCT_SPATIAL, locationResource);
+                    if (locationResource != null) {
+                        model.add(subject, RDFConstants.DCT_SPATIAL, locationResource);
+                    } else {
+                        LOGGER.warn("Skipping invalid spatial extent for Equipment {}", entity.getUid());
+                    }
                 }
             }
         }
@@ -82,7 +94,11 @@ public class EquipmentMapper implements EntityMapper<Equipment> {
                 if (periodEntity instanceof org.epos.eposdatamodel.PeriodOfTime) {
                     PeriodOfTimeMapper periodMapper = new PeriodOfTimeMapper();
                     Resource periodResource = periodMapper.mapToRDF((org.epos.eposdatamodel.PeriodOfTime) periodEntity, model, entityMap, resourceCache);
-                    model.add(subject, RDFConstants.DCT_TEMPORAL, periodResource);
+                    if (periodResource != null) {
+                        model.add(subject, RDFConstants.DCT_TEMPORAL, periodResource);
+                    } else {
+                        LOGGER.warn("Skipping invalid temporal extent for Equipment {}", entity.getUid());
+                    }
                 }
             }
         }
@@ -94,7 +110,11 @@ public class EquipmentMapper implements EntityMapper<Equipment> {
                 if (categoryEntity instanceof org.epos.eposdatamodel.Category) {
                     CategoryMapper categoryMapper = new CategoryMapper();
                     Resource categoryResource = categoryMapper.mapToRDF((org.epos.eposdatamodel.Category) categoryEntity, model, entityMap, resourceCache);
-                    model.add(subject, RDFConstants.DCAT_THEME, categoryResource);
+                    if (categoryResource != null) {
+                        model.add(subject, RDFConstants.DCAT_THEME, categoryResource);
+                    } else {
+                        LOGGER.warn("Skipping invalid category for Equipment {}", entity.getUid());
+                    }
                 }
             }
         }
@@ -106,7 +126,11 @@ public class EquipmentMapper implements EntityMapper<Equipment> {
                 if (contactEntity instanceof org.epos.eposdatamodel.ContactPoint) {
                     ContactPointMapper contactMapper = new ContactPointMapper();
                     Resource contactResource = contactMapper.mapToRDF((org.epos.eposdatamodel.ContactPoint) contactEntity, model, entityMap, resourceCache);
-                    model.add(subject, RDFConstants.DCAT_CONTACT_POINT, contactResource);
+                    if (contactResource != null) {
+                        model.add(subject, RDFConstants.DCAT_CONTACT_POINT, contactResource);
+                    } else {
+                        LOGGER.warn("Skipping invalid contactPoint for Equipment {}", entity.getUid());
+                    }
                 }
             }
         }
