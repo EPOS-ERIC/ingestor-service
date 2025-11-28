@@ -16,7 +16,32 @@ import java.util.Map;
 public class PeriodOfTimeMapper implements EntityMapper<PeriodOfTime> {
 
     @Override
-    public Resource mapToRDF(PeriodOfTime entity, Model model, Map<String, org.epos.eposdatamodel.EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
+    public Resource exportToV1(PeriodOfTime entity, Model model, Map<String, org.epos.eposdatamodel.EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
+        if (resourceCache.containsKey(entity.getUid())) {
+            return resourceCache.get(entity.getUid());
+        }
+        // Create blank node for PeriodOfTime
+        Resource subject = RDFHelper.createBlankNode(model);
+        resourceCache.put(entity.getUid(), subject);
+
+        // Add type
+        RDFHelper.addType(model, subject, RDFConstants.DCT_PERIOD_OF_TIME);
+
+        // schema:startDate, xsd:date or xsd:dateTime, 0..1
+        if (entity.getStartDate() != null) {
+            model.add(subject, RDFConstants.SCHEMA_START_DATE, model.createTypedLiteral(entity.getStartDate().toString(), XSDDatatype.XSDdateTime));
+        }
+
+        // schema:endDate, xsd:date or xsd:dateTime, 0..1
+        if (entity.getEndDate() != null) {
+            model.add(subject, RDFConstants.SCHEMA_END_DATE, model.createTypedLiteral(entity.getEndDate().toString(), XSDDatatype.XSDdateTime));
+        }
+
+        return subject;
+    }
+
+    @Override
+    public Resource exportToV3(PeriodOfTime entity, Model model, Map<String, org.epos.eposdatamodel.EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
         if (resourceCache.containsKey(entity.getUid())) {
             return resourceCache.get(entity.getUid());
         }

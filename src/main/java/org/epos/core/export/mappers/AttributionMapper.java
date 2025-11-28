@@ -15,7 +15,32 @@ import java.util.Map;
 public class AttributionMapper implements EntityMapper<Attribution> {
 
 	@Override
-	public Resource mapToRDF(Attribution entity, Model model, Map<String, EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
+	public Resource exportToV1(Attribution entity, Model model, Map<String, EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
+		if (resourceCache.containsKey(entity.getUid())) {
+			return resourceCache.get(entity.getUid());
+		}
+		// Create resource
+		Resource subject = model.createResource(entity.getUid());
+		resourceCache.put(entity.getUid(), subject);
+
+		// Add type
+		RDFHelper.addType(model, subject, RDFConstants.PROV_ATTRIBUTION);
+
+		// prov:agent, prov:Agent, 0..1
+		if (entity.getAgent() != null) {
+			RDFHelper.addURILiteral(model, subject, RDFConstants.PROV_AGENT, entity.getAgent().getUid());
+		}
+
+		// prov:hadRole, prov:Role, 0..1
+		if (entity.getRole() != null && !entity.getRole().isEmpty()) {
+			RDFHelper.addURILiteral(model, subject, RDFConstants.PROV_HAD_ROLE, entity.getRole().get(0));
+		}
+
+		return subject;
+	}
+
+	@Override
+	public Resource exportToV3(Attribution entity, Model model, Map<String, EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
         if (resourceCache.containsKey(entity.getUid())) {
             return resourceCache.get(entity.getUid());
         }

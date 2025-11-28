@@ -16,6 +16,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import metadataapis.EntityNames;
+import org.epos.core.export.EPOSVersion;
 
 @Validated
 public interface MetadataExportApi {
@@ -31,5 +32,6 @@ public interface MetadataExportApi {
 	ResponseEntity<String> metadataExport(
 			@Parameter(in = ParameterIn.QUERY, description = "entity type to export (optional - if not provided, exports all entity types)", required = false, schema = @Schema()) @RequestParam(value = "entityType", required = false) EntityNames entityType,
 			@Parameter(in = ParameterIn.QUERY, description = "output format (optional, default: turtle)", required = false, schema = @Schema(allowableValues = {"turtle", "json-ld"})) @RequestParam(value = "format", required = false, defaultValue = "turtle") String format,
-			@Parameter(in = ParameterIn.QUERY, description = "specific entity IDs to export (optional)", required = false, schema = @Schema()) @RequestParam(value = "ids", required = false) List<String> ids);
+			@Parameter(in = ParameterIn.QUERY, description = "specific entity IDs to export (optional)", required = false, schema = @Schema()) @RequestParam(value = "ids", required = false) List<String> ids,
+			@Parameter(in = ParameterIn.QUERY, description = "EPOS-DCAT-AP version (optional, default: V3)", required = false, schema = @Schema()) @RequestParam(value = "version", required = false, defaultValue = "V3") EPOSVersion version);
 }

@@ -16,8 +16,39 @@ import java.util.Map;
 public class OperationMapper implements EntityMapper<Operation> {
 
 	@Override
-	public Resource mapToRDF(Operation entity, Model model, Map<String, EPOSDataModelEntity> entityMap,
-			Map<String, Resource> resourceCache) {
+	public Resource exportToV1(Operation entity, Model model, Map<String, EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
+	if (resourceCache.containsKey(entity.getUid())) {
+			return resourceCache.get(entity.getUid());
+		}
+		// Create resource
+		Resource subject = model.createResource(entity.getUid());
+		resourceCache.put(entity.getUid(), subject);
+
+		// Add type
+		RDFHelper.addType(model, subject, RDFConstants.HYDRA_OPERATION);
+
+		// hydra:method, literal, 0..1
+		RDFHelper.addStringLiteral(model, subject, RDFConstants.HYDRA_METHOD, entity.getMethod());
+
+		// hydra:returns, literal, 0..n
+		if (entity.getReturns() != null) {
+			for (String ret : entity.getReturns()) {
+				RDFHelper.addStringLiteral(model, subject, RDFConstants.HYDRA_RETURNS, ret);
+			}
+		}
+
+		// hydra:property, hydra:IriTemplate, 0..1
+		if (entity.getIriTemplateObject() != null) {
+			IriTemplateMapper iriTemplateMapper = new IriTemplateMapper();
+			Resource iriTemplateResource = iriTemplateMapper.exportToV3(entity.getIriTemplateObject(), model, entityMap, resourceCache);
+			model.add(subject, RDFConstants.HYDRA_PROPERTY, iriTemplateResource);
+		}
+
+		return subject;	
+	}
+
+	@Override
+	public Resource exportToV3(Operation entity, Model model, Map<String, EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
 		if (resourceCache.containsKey(entity.getUid())) {
 			return resourceCache.get(entity.getUid());
 		}
@@ -41,7 +72,7 @@ public class OperationMapper implements EntityMapper<Operation> {
 		// hydra:property, hydra:IriTemplate, 0..1
 		if (entity.getIriTemplateObject() != null) {
 			IriTemplateMapper iriTemplateMapper = new IriTemplateMapper();
-			Resource iriTemplateResource = iriTemplateMapper.mapToRDF(entity.getIriTemplateObject(), model, entityMap, resourceCache);
+			Resource iriTemplateResource = iriTemplateMapper.exportToV3(entity.getIriTemplateObject(), model, entityMap, resourceCache);
 			model.add(subject, RDFConstants.HYDRA_PROPERTY, iriTemplateResource);
 		}
 

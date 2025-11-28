@@ -17,7 +17,47 @@ import java.util.Map;
 public class SoftwareSourceCodeMapper implements EntityMapper<SoftwareSourceCode> {
 
     @Override
-    public Resource mapToRDF(SoftwareSourceCode entity, Model model, Map<String, EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
+    public Resource exportToV1(SoftwareSourceCode entity, Model model, Map<String, EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
+        if (resourceCache.containsKey(entity.getUid())) {
+            return resourceCache.get(entity.getUid());
+        }
+        // Compliance check for v1 model required fields
+        if (entity.getIdentifier() == null || entity.getIdentifier().isEmpty()) {
+            return null;
+        }
+        // Create resource
+        Resource subject = model.createResource(entity.getUid());
+        resourceCache.put(entity.getUid(), subject);
+
+        // Add type
+        RDFHelper.addType(model, subject, RDFConstants.SCHEMA_SOFTWARE_SOURCE_CODE);
+
+        // schema:identifier, literal or schema:PropertyValue, 1..n
+        if (entity.getIdentifier() != null && !entity.getIdentifier().isEmpty()) {
+            for (LinkedEntity linkedEntity : entity.getIdentifier()) {
+                EPOSDataModelEntity identifierEntity = entityMap.get(linkedEntity.getUid());
+                if (identifierEntity instanceof org.epos.eposdatamodel.Identifier) {
+                    // Create blank node for PropertyValue
+                    Resource identifierResource = RDFHelper.createBlankNode(model);
+                    RDFHelper.addType(model, identifierResource, RDFConstants.SCHEMA_PROPERTY_VALUE);
+                    RDFHelper.addLiteral(model, identifierResource, RDFConstants.SCHEMA_PROPERTY_ID, ((org.epos.eposdatamodel.Identifier) identifierEntity).getType());
+                    RDFHelper.addLiteral(model, identifierResource, RDFConstants.SCHEMA_VALUE, ((org.epos.eposdatamodel.Identifier) identifierEntity).getIdentifier());
+                    model.add(subject, RDFConstants.SCHEMA_IDENTIFIER, identifierResource);
+                }
+            }
+        }
+
+		// schema:name, literal, 0..1
+		RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_NAME, entity.getName());
+
+		// schema:description, literal, 0..1
+		RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_DESCRIPTION, entity.getDescription());
+
+        return subject;
+    }
+
+    @Override
+    public Resource exportToV3(SoftwareSourceCode entity, Model model, Map<String, EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
         if (resourceCache.containsKey(entity.getUid())) {
             return resourceCache.get(entity.getUid());
         }
@@ -50,7 +90,7 @@ public class SoftwareSourceCodeMapper implements EntityMapper<SoftwareSourceCode
                 EPOSDataModelEntity contactEntity = entityMap.get(linkedEntity.getUid());
                 if (contactEntity instanceof org.epos.eposdatamodel.ContactPoint) {
                     ContactPointMapper contactMapper = new ContactPointMapper();
-                    Resource contactResource = contactMapper.mapToRDF(
+                    Resource contactResource = contactMapper.exportToV3(
                             (org.epos.eposdatamodel.ContactPoint) contactEntity, model, entityMap, resourceCache);
                     model.add(subject, RDFConstants.SCHEMA_CONTACT_POINT, contactResource);
                 }
@@ -101,7 +141,7 @@ public class SoftwareSourceCodeMapper implements EntityMapper<SoftwareSourceCode
                 EPOSDataModelEntity categoryEntity = entityMap.get(linkedEntity.getUid());
                 if (categoryEntity instanceof org.epos.eposdatamodel.Category) {
                     CategoryMapper categoryMapper = new CategoryMapper();
-                    Resource categoryResource = categoryMapper.mapToRDF(
+                    Resource categoryResource = categoryMapper.exportToV3(
                             (org.epos.eposdatamodel.Category) categoryEntity, model, entityMap, resourceCache);
                     model.add(subject, RDFConstants.DCAT_THEME, categoryResource);
                 }

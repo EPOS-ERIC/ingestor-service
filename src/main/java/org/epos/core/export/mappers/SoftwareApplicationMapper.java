@@ -21,7 +21,48 @@ public class SoftwareApplicationMapper implements EntityMapper<SoftwareApplicati
     private static final Logger LOGGER = LoggerFactory.getLogger(SoftwareApplicationMapper.class);
 
     @Override
-    public Resource mapToRDF(SoftwareApplication entity, Model model, Map<String, EPOSDataModelEntity> entityMap,
+    public Resource exportToV1(SoftwareApplication entity, Model model, Map<String, EPOSDataModelEntity> entityMap,
+            Map<String, Resource> resourceCache) {
+        if (resourceCache.containsKey(entity.getUid())) {
+            return resourceCache.get(entity.getUid());
+        }
+        // Compliance check for v1 model required fields
+        if (entity.getIdentifier() == null || entity.getIdentifier().isEmpty()) {
+            return null;
+        }
+        // Create resource
+        Resource subject = model.createResource(entity.getUid());
+        resourceCache.put(entity.getUid(), subject);
+
+        // Add type
+        RDFHelper.addType(model, subject, RDFConstants.SCHEMA_SOFTWARE_APPLICATION);
+
+        // schema:identifier, literal or schema:PropertyValue, 1..n
+        if (entity.getIdentifier() != null && !entity.getIdentifier().isEmpty()) {
+            for (LinkedEntity linkedEntity : entity.getIdentifier()) {
+                EPOSDataModelEntity identifierEntity = entityMap.get(linkedEntity.getUid());
+                if (identifierEntity instanceof org.epos.eposdatamodel.Identifier) {
+                    // Create blank node for PropertyValue
+                    Resource identifierResource = RDFHelper.createBlankNode(model);
+                    RDFHelper.addType(model, identifierResource, RDFConstants.SCHEMA_PROPERTY_VALUE);
+                    RDFHelper.addLiteral(model, identifierResource, RDFConstants.SCHEMA_PROPERTY_ID, ((org.epos.eposdatamodel.Identifier) identifierEntity).getType());
+                    RDFHelper.addLiteral(model, identifierResource, RDFConstants.SCHEMA_VALUE, ((org.epos.eposdatamodel.Identifier) identifierEntity).getIdentifier());
+                    model.add(subject, RDFConstants.SCHEMA_IDENTIFIER, identifierResource);
+                }
+            }
+        }
+
+		// schema:name, literal, 0..1
+		RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_NAME, entity.getName());
+
+		// schema:description, literal, 0..1
+		RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_DESCRIPTION, entity.getDescription());
+
+        return subject;
+    }
+
+    @Override
+    public Resource exportToV3(SoftwareApplication entity, Model model, Map<String, EPOSDataModelEntity> entityMap,
             Map<String, Resource> resourceCache) {
         if (resourceCache.containsKey(entity.getUid())) {
             return resourceCache.get(entity.getUid());
@@ -62,7 +103,7 @@ public class SoftwareApplicationMapper implements EntityMapper<SoftwareApplicati
                 EPOSDataModelEntity contactEntity = entityMap.get(linkedEntity.getUid());
                 if (contactEntity instanceof org.epos.eposdatamodel.ContactPoint) {
                     ContactPointMapper contactMapper = new ContactPointMapper();
-                    Resource contactResource = contactMapper.mapToRDF(
+                    Resource contactResource = contactMapper.exportToV3(
                             (org.epos.eposdatamodel.ContactPoint) contactEntity, model, entityMap, resourceCache);
                     if (contactResource != null) {
                         model.add(subject, RDFConstants.SCHEMA_CONTACT_POINT, contactResource);
@@ -113,7 +154,7 @@ public class SoftwareApplicationMapper implements EntityMapper<SoftwareApplicati
                 EPOSDataModelEntity categoryEntity = entityMap.get(linkedEntity.getUid());
                 if (categoryEntity instanceof org.epos.eposdatamodel.Category) {
                     CategoryMapper categoryMapper = new CategoryMapper();
-                    Resource categoryResource = categoryMapper.mapToRDF(
+                    Resource categoryResource = categoryMapper.exportToV3(
                             (org.epos.eposdatamodel.Category) categoryEntity, model, entityMap, resourceCache);
                     if (categoryResource != null) {
                         model.add(subject, RDFConstants.DCAT_THEME, categoryResource);

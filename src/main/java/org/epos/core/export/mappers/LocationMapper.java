@@ -15,7 +15,27 @@ import java.util.Map;
 public class LocationMapper implements EntityMapper<Location> {
 
     @Override
-    public Resource mapToRDF(Location entity, Model model, Map<String, org.epos.eposdatamodel.EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
+    public Resource exportToV1(Location entity, Model model, Map<String, org.epos.eposdatamodel.EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
+        if (resourceCache.containsKey(entity.getUid())) {
+            return resourceCache.get(entity.getUid());
+        }
+        // Create blank node for Location
+        Resource subject = RDFHelper.createBlankNode(model);
+        resourceCache.put(entity.getUid(), subject);
+
+        // Add type
+        RDFHelper.addType(model, subject, RDFConstants.DCT_LOCATION);
+
+        // locn:geometry, rdfs:Literal, 1..n
+        if (entity.getLocation() != null && !entity.getLocation().isEmpty()) {
+            RDFHelper.addTypedLiteral(model, subject, RDFConstants.LOCN_GEOMETRY, entity.getLocation(), RDFConstants.GSP_WKT_LITERAL_DATATYPE);
+        }
+
+        return subject;
+    }
+
+    @Override
+    public Resource exportToV3(Location entity, Model model, Map<String, org.epos.eposdatamodel.EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
         if (resourceCache.containsKey(entity.getUid())) {
             return resourceCache.get(entity.getUid());
         }

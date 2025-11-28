@@ -43,6 +43,7 @@ import org.epos.core.export.mappers.QuantitativeValueMapper;
 import org.epos.core.export.mappers.SoftwareApplicationMapper;
 import org.epos.core.export.mappers.SoftwareSourceCodeMapper;
 import org.epos.core.export.mappers.WebServiceMapper;
+import org.epos.core.export.EPOSVersion;
 import org.epos.eposdatamodel.EPOSDataModelEntity;
 import org.epos.eposdatamodel.LinkedEntity;
 import org.slf4j.Logger;
@@ -90,12 +91,14 @@ public class MetadataExporter {
 	 * @param entityType The type of entities to export (null for all types)
 	 * @param format     The output format ("turtle" or "json-ld")
 	 * @param ids        Specific entity IDs to export (null for all)
+	 * @param version    The EPOS-DCAT-AP version (default V3)
 	 * @return RDF content as string
 	 */
 	public static String exportToRDF(
 			EntityNames entityType,
 			String format,
-			List<String> ids) {
+			List<String> ids,
+			EPOSVersion version) {
 
 		if (format == null || format.trim().isEmpty()) {
 			format = "turtle";
@@ -105,13 +108,17 @@ public class MetadataExporter {
 			throw new IllegalArgumentException("Format must be one of: turtle, json-ld");
 		}
 
+		if (version == null) {
+			version = EPOSVersion.V3;
+		}
+
 		if (ids != null && !ids.isEmpty() && entityType == null) {
 			throw new IllegalArgumentException("Entity type must be specified when providing specific IDs");
 		}
 
 		try {
-			LOGGER.info("Starting new export for entity type '{}' in format '{}'",
-					entityType != null ? entityType : "all types", format);
+			LOGGER.info("Starting new export for entity type '{}' in format '{}' and version '{}'",
+					entityType != null ? entityType : "all types", format, version);
 
 			// 1. Retrieve entities from database
 			List<EPOSDataModelEntity> entities;
@@ -142,6 +149,7 @@ public class MetadataExporter {
 			// 3. Create RDF model
 			Model rdfModel = ModelFactory.createDefaultModel();
 			setNamespacePrefixes(rdfModel);
+			rdfModel.removeNsPrefix("rdf");
 
 			// 4. Initialize resource cache
 			Map<String, Resource> resourceCache = new HashMap<>();
@@ -168,7 +176,14 @@ public class MetadataExporter {
 				EntityMapper<EPOSDataModelEntity> mapper = (EntityMapper<EPOSDataModelEntity>) MAPPERS
 						.get(entity.getClass());
 				if (mapper != null) {
-					mapper.mapToRDF(entity, rdfModel, entityMap, resourceCache);
+					switch (version) {
+						case V1:
+							mapper.exportToV1(entity, rdfModel, entityMap, resourceCache);
+							break;
+						case V3:
+							mapper.exportToV3(entity, rdfModel, entityMap, resourceCache);
+							break;
+					}
 				} else {
 					LOGGER.warn("No mapper found for entity type: {}", entity.getClass().getSimpleName());
 				}

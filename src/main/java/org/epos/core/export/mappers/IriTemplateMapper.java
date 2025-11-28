@@ -16,7 +16,25 @@ import java.util.Map;
 public class IriTemplateMapper implements EntityMapper<org.epos.eposdatamodel.IriTemplate> {
 
     @Override
-    public Resource mapToRDF(org.epos.eposdatamodel.IriTemplate entity, Model model, Map<String, EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
+    public Resource exportToV1(org.epos.eposdatamodel.IriTemplate entity, Model model, Map<String, EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
+        if (resourceCache.containsKey(entity.getUid())) {
+            return resourceCache.get(entity.getUid());
+        }
+        // Create resource
+        Resource subject = model.createResource(entity.getUid());
+        resourceCache.put(entity.getUid(), subject);
+
+		// Add type
+		RDFHelper.addType(model, subject, RDFConstants.HYDRA_IRI_TEMPLATE);
+
+		// hydra:template, literal, 0..1
+		RDFHelper.addStringLiteral(model, subject, RDFConstants.HYDRA_TEMPLATE, entity.getTemplate());
+
+        return subject;
+    }
+
+    @Override
+    public Resource exportToV3(org.epos.eposdatamodel.IriTemplate entity, Model model, Map<String, EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
         // IriTemplate uses blank nodes, so we don't use resource cache
         // Create blank node for IriTemplate
         Resource subject = RDFHelper.createBlankNode(model);
@@ -34,7 +52,7 @@ public class IriTemplateMapper implements EntityMapper<org.epos.eposdatamodel.Ir
                 EPOSDataModelEntity mappingEntity = entityMap.get(mappingLinked.getUid());
                 if (mappingEntity instanceof org.epos.eposdatamodel.Mapping) {
                     org.epos.eposdatamodel.Mapping mapping = (org.epos.eposdatamodel.Mapping) mappingEntity;
-                    Resource mappingResource = mappingMapper.mapToRDF(mapping, model, entityMap, resourceCache);
+                    Resource mappingResource = mappingMapper.exportToV3(mapping, model, entityMap, resourceCache);
                     model.add(subject, RDFConstants.HYDRA_MAPPING, mappingResource);
                 }
             }

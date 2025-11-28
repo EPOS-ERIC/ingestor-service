@@ -1,5 +1,6 @@
 package org.epos.core.export.mappers;
 
+import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.epos.core.export.util.RDFConstants;
@@ -15,7 +16,31 @@ import java.util.Map;
 public class DocumentationMapper implements EntityMapper<Documentation> {
 
     @Override
-    public Resource mapToRDF(Documentation entity, Model model, Map<String, org.epos.eposdatamodel.EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
+    public Resource exportToV1(Documentation entity, Model model, Map<String, org.epos.eposdatamodel.EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
+        if (resourceCache.containsKey(entity.getUid())) {
+            return resourceCache.get(entity.getUid());
+        }
+        // Create resource
+        Resource subject = model.createResource(entity.getUid());
+        resourceCache.put(entity.getUid(), subject);
+
+        // Add type
+        RDFHelper.addType(model, subject, RDFConstants.HYDRA_API_DOCUMENTATION);
+
+		// hydra:description, literal, 1..1
+		RDFHelper.addStringLiteral(model, subject, RDFConstants.HYDRA_DESCRIPTION, entity.getDescription());
+
+		// hydra:title, literal, 1..1
+		RDFHelper.addStringLiteral(model, subject, RDFConstants.HYDRA_TITLE, entity.getTitle());
+
+		// hydra:entrypoint, literal, 1..1
+		RDFHelper.addURILiteral(model, subject, RDFConstants.HYDRA_ENTRYPOINT, entity.getUri());
+
+        return subject;
+    }
+
+    @Override
+    public Resource exportToV3(Documentation entity, Model model, Map<String, org.epos.eposdatamodel.EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
         if (resourceCache.containsKey(entity.getUid())) {
             return resourceCache.get(entity.getUid());
         }

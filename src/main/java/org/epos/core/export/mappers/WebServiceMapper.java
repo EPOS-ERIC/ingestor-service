@@ -25,7 +25,182 @@ public class WebServiceMapper implements EntityMapper<WebService> {
     private static final Logger LOGGER = LoggerFactory.getLogger(WebServiceMapper.class);
 
     @Override
-    public Resource mapToRDF(WebService entity, Model model, Map<String, EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
+    public Resource exportToV1(WebService entity, Model model, Map<String, EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
+        if (resourceCache.containsKey(entity.getUid())) {
+            return resourceCache.get(entity.getUid());
+        }
+        // Compliance check for v1 model required fields
+        if ((entity.getIdentifier() == null || entity.getIdentifier().isEmpty()) && (entity.getUid() == null || entity.getUid().isEmpty())) {
+            LOGGER.warn("Entity {} not compliant with v1 model: missing required fields (identifier)", entity.getUid());
+            return null;
+        }
+        // Create resource
+        Resource subject = model.createResource(entity.getUid());
+        resourceCache.put(entity.getUid(), subject);
+
+        // Add type
+        RDFHelper.addType(model, subject, RDFConstants.EPOS_WEBSERVICE);
+
+        // schema:identifier, literal or schema:PropertyValue, 1..n
+        if (entity.getIdentifier() != null && !entity.getIdentifier().isEmpty()) {
+            for (LinkedEntity linkedEntity : entity.getIdentifier()) {
+                EPOSDataModelEntity identifierEntity = entityMap.get(linkedEntity.getUid());
+                if (identifierEntity instanceof org.epos.eposdatamodel.Identifier) {
+                    // Create blank node for PropertyValue
+                    Resource identifierResource = RDFHelper.createBlankNode(model);
+                    RDFHelper.addType(model, identifierResource, RDFConstants.SCHEMA_PROPERTY_VALUE);
+                    RDFHelper.addLiteral(model, identifierResource, RDFConstants.SCHEMA_PROPERTY_ID, ((org.epos.eposdatamodel.Identifier) identifierEntity).getType());
+                    RDFHelper.addLiteral(model, identifierResource, RDFConstants.SCHEMA_VALUE, ((org.epos.eposdatamodel.Identifier) identifierEntity).getIdentifier());
+                    model.add(subject, RDFConstants.SCHEMA_IDENTIFIER, identifierResource);
+                }
+            }
+        } else {
+			RDFHelper.addURILiteral(model, subject, RDFConstants.SCHEMA_IDENTIFIER, entity.getUid());
+		}
+
+        // dcat:contactPoint or schema:contactPoint, schema:ContactPoint, 0..n
+        if (entity.getContactPoint() != null && !entity.getContactPoint().isEmpty()) {
+            for (LinkedEntity linkedEntity : entity.getContactPoint()) {
+                EPOSDataModelEntity contactEntity = entityMap.get(linkedEntity.getUid());
+                if (contactEntity instanceof org.epos.eposdatamodel.ContactPoint) {
+                    ContactPointMapper contactMapper = new ContactPointMapper();
+                    Resource contactResource = contactMapper.exportToV1((org.epos.eposdatamodel.ContactPoint) contactEntity, model, entityMap, resourceCache);
+                    if (contactResource != null) {
+                        model.add(subject, RDFConstants.DCAT_CONTACT_POINT, contactResource);
+                    } else {
+                        LOGGER.warn("Skipping invalid contactPoint for WebService {}", entity.getUid());
+                    }
+                }
+            }
+        }
+
+        // dcat:theme, skos:Concept, 0..n
+        if (entity.getCategory() != null && !entity.getCategory().isEmpty()) {
+            for (LinkedEntity linkedEntity : entity.getCategory()) {
+                EPOSDataModelEntity categoryEntity = entityMap.get(linkedEntity.getUid());
+                if (categoryEntity instanceof org.epos.eposdatamodel.Category) {
+                    CategoryMapper categoryMapper = new CategoryMapper();
+                    Resource categoryResource = categoryMapper.exportToV1((org.epos.eposdatamodel.Category) categoryEntity, model, entityMap, resourceCache);
+                    if (categoryResource != null) {
+                        model.add(subject, RDFConstants.DCAT_THEME, categoryResource);
+                    } else {
+                        LOGGER.warn("Skipping invalid category for WebService {}", entity.getUid());
+                    }
+                }
+            }
+        }
+
+        // hydra:entrypoint, rdfs:Literal typed with URI, 0..1
+        RDFHelper.addURILiteral(model, subject, RDFConstants.HYDRA_ENTRYPOINT, entity.getEntryPoint());
+
+        // schema:dateModified, literal typed as xsd:date or xsd:date, 0..1
+        if (entity.getDateModified() != null) {
+            String dateString = entity.getDateModified().format(DateTimeFormatter.ISO_DATE);
+            RDFHelper.addTypedLiteral(model, subject, RDFConstants.SCHEMA_DATE_MODIFIED, dateString, XSDDatatype.XSDdate);
+        }
+
+        // schema:datePublished, literal typed as xsd:date or xsd:date, 0..1
+        if (entity.getDatePublished() != null) {
+            String dateString = entity.getDatePublished().format(DateTimeFormatter.ISO_DATE);
+            RDFHelper.addTypedLiteral(model, subject, RDFConstants.SCHEMA_DATE_PUBLISHED, dateString, XSDDatatype.XSDdate);
+        }
+
+        // schema:description, literal, 0..1
+        RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_DESCRIPTION, entity.getDescription());
+
+        // schema:name, literal, 0..1
+        RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_NAME, entity.getName());
+
+        // schema:provider, schema:Organization, 0..1
+        if (entity.getProvider() != null) {
+            EPOSDataModelEntity providerEntity = entityMap.get(entity.getProvider().getUid());
+            if (providerEntity instanceof org.epos.eposdatamodel.Organization) {
+                OrganizationMapper organizationMapper = new OrganizationMapper();
+                Resource providerResource = organizationMapper.exportToV1((org.epos.eposdatamodel.Organization) providerEntity, model, entityMap, resourceCache);
+                if (providerResource != null) {
+                    model.add(subject, RDFConstants.SCHEMA_PROVIDER, providerResource);
+                } else {
+                    LOGGER.warn("Skipping invalid provider for WebService {}", entity.getUid());
+                }
+            }
+        }
+
+        // dct:conformsTo, hydra:ApiDocumentation, 0..n
+        if (entity.getDocumentation() != null && !entity.getDocumentation().isEmpty()) {
+            for (LinkedEntity linkedEntity : entity.getDocumentation()) {
+                EPOSDataModelEntity docEntity = entityMap.get(linkedEntity.getUid());
+                if (docEntity instanceof org.epos.eposdatamodel.Documentation) {
+                    DocumentationMapper docMapper = new DocumentationMapper();
+                    Resource docResource = docMapper.exportToV1((org.epos.eposdatamodel.Documentation) docEntity, model, entityMap, resourceCache);
+                    if (docResource != null) {
+                        model.add(subject, RDFConstants.DCT_CONFORMS_TO, docResource);
+                    } else {
+                        LOGGER.warn("Skipping invalid documentation for WebService {}", entity.getUid());
+                    }
+                }
+            }
+        }
+
+        // dct:license, dct:LicenseDocument, 0..1
+        RDFHelper.addURILiteral(model, subject, RDFConstants.DCT_LICENSE, entity.getLicense());
+
+        // dct:spatial, dct:Location, 0..n
+        if (entity.getSpatialExtent() != null && !entity.getSpatialExtent().isEmpty()) {
+            for (LinkedEntity linkedEntity : entity.getSpatialExtent()) {
+                EPOSDataModelEntity locationEntity = entityMap.get(linkedEntity.getUid());
+                if (locationEntity instanceof org.epos.eposdatamodel.Location) {
+                    LocationMapper locationMapper = new LocationMapper();
+                    Resource spatialResource = locationMapper.exportToV1((org.epos.eposdatamodel.Location) locationEntity, model, entityMap, resourceCache);
+                    if (spatialResource != null) {
+                        model.add(subject, RDFConstants.DCT_SPATIAL, spatialResource);
+                    }
+                }
+            }
+        }
+
+        // dct:temporal, dct:PeriodOfTime, 0..n
+        if (entity.getTemporalExtent() != null && !entity.getTemporalExtent().isEmpty()) {
+            for (LinkedEntity linkedEntity : entity.getTemporalExtent()) {
+                EPOSDataModelEntity periodEntity = entityMap.get(linkedEntity.getUid());
+                if (periodEntity instanceof org.epos.eposdatamodel.PeriodOfTime) {
+                    PeriodOfTimeMapper periodMapper = new PeriodOfTimeMapper();
+                    Resource temporalResource = periodMapper.exportToV1((org.epos.eposdatamodel.PeriodOfTime) periodEntity, model, entityMap, resourceCache);
+                    if (temporalResource != null) {
+                        model.add(subject, RDFConstants.DCT_TEMPORAL, temporalResource);
+                    }
+                }
+            }
+        }
+
+        // hydra:supportedOperation, hydra:Operation, 0..n
+        if (entity.getSupportedOperation() != null && !entity.getSupportedOperation().isEmpty()) {
+            for (LinkedEntity linkedEntity : entity.getSupportedOperation()) {
+                EPOSDataModelEntity operationEntity = entityMap.get(linkedEntity.getUid());
+                if (operationEntity instanceof org.epos.eposdatamodel.Operation) {
+                    OperationMapper operationMapper = new OperationMapper();
+                    Resource operationResource = operationMapper.exportToV1((org.epos.eposdatamodel.Operation) operationEntity, model, entityMap, resourceCache);
+                    if (operationResource != null) {
+                        model.add(subject, RDFConstants.HYDRA_SUPPORTED_OPERATION, operationResource);
+                    } else {
+                        LOGGER.warn("Skipping invalid supportedOperation for WebService {}", entity.getUid());
+                    }
+                }
+            }
+        }
+
+        // schema:keywords, literal, 0..n
+        if (entity.getKeywords() != null && !entity.getKeywords().isEmpty()) {
+            String[] keywords = entity.getKeywords().split(",");
+            for (String keyword : keywords) {
+                RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_KEYWORDS, keyword.trim());
+            }
+        }
+
+        return subject;
+    }
+
+    @Override
+    public Resource exportToV3(WebService entity, Model model, Map<String, EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
         if (resourceCache.containsKey(entity.getUid())) {
             return resourceCache.get(entity.getUid());
         }
@@ -57,7 +232,7 @@ public class WebServiceMapper implements EntityMapper<WebService> {
                 EPOSDataModelEntity docEntity = entityMap.get(linkedEntity.getUid());
                 if (docEntity instanceof org.epos.eposdatamodel.Documentation) {
                     DocumentationMapper docMapper = new DocumentationMapper();
-                    Resource docResource = docMapper.mapToRDF((org.epos.eposdatamodel.Documentation) docEntity, model, entityMap, resourceCache);
+                    Resource docResource = docMapper.exportToV3((org.epos.eposdatamodel.Documentation) docEntity, model, entityMap, resourceCache);
                     if (docResource != null) {
                         model.add(subject, RDFConstants.DCT_CONFORMS_TO, docResource);
                     } else {
@@ -73,7 +248,7 @@ public class WebServiceMapper implements EntityMapper<WebService> {
                 EPOSDataModelEntity contactEntity = entityMap.get(linkedEntity.getUid());
                 if (contactEntity instanceof org.epos.eposdatamodel.ContactPoint) {
                     ContactPointMapper contactMapper = new ContactPointMapper();
-                    Resource contactResource = contactMapper.mapToRDF((org.epos.eposdatamodel.ContactPoint) contactEntity, model, entityMap, resourceCache);
+                    Resource contactResource = contactMapper.exportToV3((org.epos.eposdatamodel.ContactPoint) contactEntity, model, entityMap, resourceCache);
                     if (contactResource != null) {
                         model.add(subject, RDFConstants.DCAT_CONTACT_POINT, contactResource);
                     } else {
@@ -92,7 +267,7 @@ public class WebServiceMapper implements EntityMapper<WebService> {
                 EPOSDataModelEntity operationEntity = entityMap.get(linkedEntity.getUid());
                 if (operationEntity instanceof org.epos.eposdatamodel.Operation) {
                     OperationMapper operationMapper = new OperationMapper();
-                    Resource operationResource = operationMapper.mapToRDF((org.epos.eposdatamodel.Operation) operationEntity, model, entityMap, resourceCache);
+                    Resource operationResource = operationMapper.exportToV3((org.epos.eposdatamodel.Operation) operationEntity, model, entityMap, resourceCache);
                     if (operationResource != null) {
                         model.add(subject, RDFConstants.DCAT_ENDPOINT_DESCRIPTION, operationResource);
                     } else {
@@ -127,7 +302,7 @@ public class WebServiceMapper implements EntityMapper<WebService> {
             EPOSDataModelEntity providerEntity = entityMap.get(entity.getProvider().getUid());
             if (providerEntity instanceof org.epos.eposdatamodel.Organization) {
                 OrganizationMapper organizationMapper = new OrganizationMapper();
-                Resource providerResource = organizationMapper.mapToRDF((org.epos.eposdatamodel.Organization) providerEntity, model, entityMap, resourceCache);
+                Resource providerResource = organizationMapper.exportToV3((org.epos.eposdatamodel.Organization) providerEntity, model, entityMap, resourceCache);
                 if (providerResource != null) {
                     model.add(subject, RDFConstants.DCT_PUBLISHER, providerResource);
                 } else {
@@ -142,7 +317,7 @@ public class WebServiceMapper implements EntityMapper<WebService> {
                 EPOSDataModelEntity categoryEntity = entityMap.get(linkedEntity.getUid());
                 if (categoryEntity instanceof org.epos.eposdatamodel.Category) {
                     CategoryMapper categoryMapper = new CategoryMapper();
-                    Resource categoryResource = categoryMapper.mapToRDF((org.epos.eposdatamodel.Category) categoryEntity, model, entityMap, resourceCache);
+                    Resource categoryResource = categoryMapper.exportToV3((org.epos.eposdatamodel.Category) categoryEntity, model, entityMap, resourceCache);
                     if (categoryResource != null) {
                         model.add(subject, RDFConstants.DCAT_THEME, categoryResource);
                     } else {

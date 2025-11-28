@@ -2,6 +2,7 @@ package org.epos.api;
 
 import java.util.List;
 
+import org.epos.core.export.EPOSVersion;
 import org.epos.core.export.MetadataExporter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +33,8 @@ public class MetadataExportApiController implements MetadataExportApi {
 			@Parameter(in = ParameterIn.QUERY, description = "output format (optional, default: turtle)", required = false, schema = @Schema(allowableValues = {
 					"turtle",
 					"json-ld" })) @RequestParam(value = "format", required = false, defaultValue = "turtle") String format,
-			@Parameter(in = ParameterIn.QUERY, description = "specific entity IDs to export (optional)", required = false, schema = @Schema()) @RequestParam(value = "ids", required = false) List<String> ids) {
+			@Parameter(in = ParameterIn.QUERY, description = "specific entity IDs to export (optional)", required = false, schema = @Schema()) @RequestParam(value = "ids", required = false) List<String> ids,
+			@Parameter(in = ParameterIn.QUERY, description = "EPOS-DCAT-AP version (optional, default: V3)", required = false, schema = @Schema()) @RequestParam(value = "version", required = false, defaultValue = "V3") EPOSVersion version) {
 
 		// Validation
 		if (format != null && !format.matches("(?i)(turtle|json-ld)")) {
@@ -43,9 +45,9 @@ public class MetadataExportApiController implements MetadataExportApi {
 
 		try {
 			LOGGER.info(
-					"[Export initialized] Exporting {} entities in format: {}, IDs: {}",
-					entityType != null ? entityType : "all types", format, ids != null ? ids : "all");
-			String rdfOutput = MetadataExporter.exportToRDF(entityType, format, ids);
+					"[Export initialized] Exporting {} entities in format: {}, version: {}, IDs: {}",
+					entityType != null ? entityType : "all types", format, version, ids != null ? ids : "all");
+			String rdfOutput = MetadataExporter.exportToRDF(entityType, format, ids, version);
 			LOGGER.info("[Export finished] Successfully exported entities to {} characters of {} content",
 					rdfOutput != null ? rdfOutput.length() : 0, format);
 

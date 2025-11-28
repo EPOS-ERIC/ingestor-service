@@ -1,5 +1,6 @@
 package org.epos.core.export.mappers;
 
+import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.epos.core.export.util.RDFConstants;
@@ -17,7 +18,25 @@ import java.util.Map;
 public class MappingMapper implements EntityMapper<Mapping> {
 
     @Override
-    public Resource mapToRDF(Mapping entity, Model model, Map<String, EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
+    public Resource exportToV1(Mapping entity, Model model, Map<String, EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
+        if (resourceCache.containsKey(entity.getUid())) {
+            return resourceCache.get(entity.getUid());
+        }
+        // Create resource
+        Resource subject = model.createResource(entity.getUid());
+        resourceCache.put(entity.getUid(), subject);
+
+		// Add type
+		RDFHelper.addType(model, subject, RDFConstants.HYDRA_IRI_TEMPLATE_MAPPING);
+
+		// hydra:variable, literal, 0..1
+		RDFHelper.addStringLiteral(model, subject, RDFConstants.HYDRA_VARIABLE, entity.getVariable());
+
+        return subject;
+    }
+
+    @Override
+    public Resource exportToV3(Mapping entity, Model model, Map<String, EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
         // IriTemplateMapping uses blank nodes, so we don't use resource cache
         // Create blank node for IriTemplateMapping
         Resource subject = RDFHelper.createBlankNode(model);

@@ -17,7 +17,40 @@ import java.util.Map;
 public class AddressMapper implements EntityMapper<Address> {
 
 	@Override
-	public Resource mapToRDF(Address entity, Model model, Map<String, EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
+	public Resource exportToV1(Address entity, Model model, Map<String, EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
+		// Address uses blank nodes in v1, so we don't use resource cache
+
+		// In v1, all 4 address properties are MANDATORY (1..1)
+		if (entity.getStreet() == null || entity.getStreet().trim().isEmpty() ||
+				entity.getLocality() == null || entity.getLocality().trim().isEmpty() ||
+				entity.getPostalCode() == null || entity.getPostalCode().trim().isEmpty() ||
+				entity.getCountry() == null || entity.getCountry().trim().isEmpty()) {
+			return null;
+		}
+
+		// Create blank node for Address
+		Resource subject = RDFHelper.createBlankNode(model);
+
+		// Add type
+		RDFHelper.addType(model, subject, RDFConstants.VCARD_ADDRESS);
+
+		// vcard:street-address, literal, 1..1
+		RDFHelper.addStringLiteral(model, subject, RDFConstants.VCARD_STREET_ADDRESS, entity.getStreet());
+
+		// vcard:locality, literal, 1..1
+		RDFHelper.addStringLiteral(model, subject, RDFConstants.VCARD_LOCALITY, entity.getLocality());
+
+		// vcard:postal-code, literal, 1..1
+		RDFHelper.addStringLiteral(model, subject, RDFConstants.VCARD_POSTAL_CODE, entity.getPostalCode());
+
+		// vcard:country-name, literal, 1..1
+		RDFHelper.addStringLiteral(model, subject, RDFConstants.VCARD_COUNTRY_NAME, entity.getCountry());
+
+		return subject;
+	}
+
+	@Override
+	public Resource exportToV3(Address entity, Model model, Map<String, EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
 		// PostalAddress uses blank nodes in v3, so we don't use resource cache
 
 		// In v3, all 4 address properties are MANDATORY (1..1)

@@ -102,6 +102,7 @@ public class RDFConstants {
         public static final Property DCT_TEMPORAL = ResourceFactory.createProperty(DCT_NS, "temporal");
         public static final Property DCT_ACCRUAL_PERIODICITY = ResourceFactory.createProperty(DCT_NS, "accrualPeriodicity");
         public static final Property DCT_CONFORMS_TO = ResourceFactory.createProperty(DCT_NS, "conformsTo");
+        public static final Property DCT_HAS_PART = ResourceFactory.createProperty(DCT_NS, "hasPart");
         public static final Property DCT_IS_PART_OF = ResourceFactory.createProperty(DCT_NS, "isPartOf");
         public static final Property DCT_RELATION = ResourceFactory.createProperty(DCT_NS, "relation");
 
@@ -136,6 +137,7 @@ public class RDFConstants {
         public static final Property SCHEMA_DOWNLOAD_URL = ResourceFactory.createProperty(SCHEMA_NS, "downloadUrl");
         public static final Property SCHEMA_VALUE = ResourceFactory.createProperty(SCHEMA_NS, "value");
         public static final Property SCHEMA_UNIT_TEXT = ResourceFactory.createProperty(SCHEMA_NS, "unitText");
+        public static final Property SCHEMA_UNIT_CODE = ResourceFactory.createProperty(SCHEMA_NS, "unitCode");
         public static final Property SCHEMA_MIN_VALUE = ResourceFactory.createProperty(SCHEMA_NS, "minValue");
         public static final Property SCHEMA_MAX_VALUE = ResourceFactory.createProperty(SCHEMA_NS, "maxValue");
         public static final Property SCHEMA_LEGAL_NAME = ResourceFactory.createProperty(SCHEMA_NS, "legalName");
@@ -220,6 +222,7 @@ public class RDFConstants {
 
         // RDF Properties
         public static final Property RDF_TYPE = ResourceFactory.createProperty(RDF_NS, "type");
+        public static final Property RDF_LABEL = ResourceFactory.createProperty(RDF_NS, "label");
 
         // Additional Schema Properties
         public static final Property SCHEMA_RUNTIME_PLATFORM = ResourceFactory.createProperty(SCHEMA_NS, "runtimePlatform");
@@ -239,6 +242,7 @@ public class RDFConstants {
         public static final Property EPOS_RESOLUTION = ResourceFactory.createProperty(EPOS_NS, "resolution");
         public static final Property EPOS_ORIENTATION = ResourceFactory.createProperty(EPOS_NS, "orientation");
         public static final Property EPOS_ASSOCIATED_PROJECT = ResourceFactory.createProperty(EPOS_NS, "associatedProject");
+        public static final Property EPOS_ANNOTATION = ResourceFactory.createProperty(EPOS_NS, "annotation");
 
         // Additional Schema Properties
         public static final Property SCHEMA_COLOR = ResourceFactory.createProperty(SCHEMA_NS, "color");

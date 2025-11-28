@@ -15,7 +15,26 @@ import java.util.Map;
 public class IdentifierMapper implements EntityMapper<Identifier> {
 
     @Override
-    public Resource mapToRDF(Identifier entity, Model model, Map<String, org.epos.eposdatamodel.EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
+    public Resource exportToV1(Identifier entity, Model model, Map<String, org.epos.eposdatamodel.EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
+        if (resourceCache.containsKey(entity.getUid())) {
+            return resourceCache.get(entity.getUid());
+        }
+        // Create resource
+        Resource subject = model.createResource();
+        resourceCache.put(entity.getUid(), subject);
+
+        // Add type
+        RDFHelper.addType(model, subject, RDFConstants.ADMS_IDENTIFIER_CLASS);
+
+        // Add properties
+        RDFHelper.addLiteral(model, subject, RDFConstants.ADMS_SCHEME_AGENCY, entity.getType());
+        RDFHelper.addLiteral(model, subject, RDFConstants.SKOS_NOTATION, entity.getIdentifier());
+
+        return subject;
+    }
+
+    @Override
+    public Resource exportToV3(Identifier entity, Model model, Map<String, org.epos.eposdatamodel.EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
         if (resourceCache.containsKey(entity.getUid())) {
             return resourceCache.get(entity.getUid());
         }

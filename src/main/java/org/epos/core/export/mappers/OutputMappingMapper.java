@@ -14,7 +14,22 @@ import java.util.Map;
 public class OutputMappingMapper implements EntityMapper<OutputMapping> {
 
     @Override
-    public Resource mapToRDF(OutputMapping entity, Model model, Map<String, org.epos.eposdatamodel.EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
+    public Resource exportToV1(OutputMapping entity, Model model, Map<String, org.epos.eposdatamodel.EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
+        if (resourceCache.containsKey(entity.getUid())) {
+            return resourceCache.get(entity.getUid());
+        }
+        // Create resource
+        Resource subject = model.createResource(entity.getUid());
+        resourceCache.put(entity.getUid(), subject);
+
+		// Add type
+		RDFHelper.addType(model, subject, RDFConstants.SCHEMA_PROPERTY_VALUE);
+
+        return subject;
+    }
+
+    @Override
+    public Resource exportToV3(OutputMapping entity, Model model, Map<String, org.epos.eposdatamodel.EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
         if (resourceCache.containsKey(entity.getUid())) {
             return resourceCache.get(entity.getUid());
         }
