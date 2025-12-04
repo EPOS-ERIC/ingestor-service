@@ -10,10 +10,8 @@ RUN apk upgrade --no-cache \
     && addgroup -g 1001 -S appgroup \
     && adduser -u 1001 -S appuser -G appgroup
 
-WORKDIR /app
-
 # Create logs directory with proper ownership
-RUN mkdir -p /app/logs && chown 1001:1001 /app/logs
+RUN mkdir -p /logs && chown 1001:1001 /logs
 
 COPY --chown=1001:1001 target/*.jar app.jar
 
@@ -24,4 +22,4 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:8080/actuator/health || exit 1
 
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+ENTRYPOINT ["java", "-jar", "/app.jar"]
