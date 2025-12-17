@@ -207,9 +207,9 @@ public class MetadataPopulator {
 
 		/** PREPARE PROPERTIES **/
 		exploreGraphAndCreateBeans(modelmapping, beansCreation, graph, null, classes, uidDone, selectedGroup);
-		// for(EPOSDataModelEntity eposDataModelEntity : classes){
-		// System.out.println("PREVIEW "+eposDataModelEntity);
-		// }
+		 for(EPOSDataModelEntity eposDataModelEntity : classes){
+		 System.out.println("PREVIEW "+eposDataModelEntity);
+		 }
 
 		List<IriTemplate> templates = new ArrayList<>();
 		for (EPOSDataModelEntity eposDataModelEntity : classes) {

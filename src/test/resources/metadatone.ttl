@@ -1,0 +1,1108 @@
+@prefix adms: <http://www.w3.org/ns/adms#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix epos: <https://www.epos-eu.org/epos-dcat-ap#> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
+@prefix hydra: <http://www.w3.org/ns/hydra/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix schema: <http://schema.org/> .
+@prefix dcat: <http://www.w3.org/ns/dcat#> .
+@prefix cnt: <http://www.w3.org/2011/content#> .
+@prefix locn: <http://www.w3.org/ns/locn#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix http: <http://www.w3.org/2006/http#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix gsp: <http://www.opengis.net/ont/geosparql#> .
+@prefix dqv: <http://www.w3.org/ns/dqv#> .
+@prefix oa: <http://www.w3.org/ns/oa#> .
+@prefix foaf: <http://xmlns.com/foaf/spec/#term_> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+
+
+
+# Top Concept Scheme
+<category:facets/dataset-theme> a skos:Concept ;
+                                skos:definition  "Dataset" ;
+                                skos:prefLabel   "Dataset"
+.
+
+<category:facets/facility-theme> a skos:Concept ;
+                                 skos:definition  "Facility" ;
+                                 skos:prefLabel   "Facility"
+.
+
+<category:facets/software-theme> a skos:Concept ;
+                                 skos:definition  "Software" ;
+                                 skos:prefLabel   "Software"
+.
+
+#----------------------------
+<category:seismology> a skos:ConceptScheme;
+                      skos:prefLabel "SEI" ; #SEISMO
+                      dct:title "Seismology" ;
+                      dct:description "TCS Domain" ;
+                      foaf:logo "assets/img/logo/SEISM_logo.png" ;
+                      foaf:homepage "https://www.epos-eu.org/tcs/seismology" ;
+                      schema:color "#476f57";
+                      schema:orderItemNumber "1";
+                      skos:hasTopConcept <category:facets/dataset-theme>;
+.
+
+<category:seismologicalproductsservices> a skos:Concept;
+                                         skos:prefLabel "Seismological products services";
+                                         skos:definition "TCS Subdomain";
+                                         skos:inScheme <category:seismology>;
+                                         skos:narrower <category:earthquakeparameters>;
+                                         #skos:narrower <category:macroseismicdata>,<category:earthquakesourcedata>;
+                                         skos:notation "WP08-DDSS-026"; #non serve
+                                         skos:notation "WP08-DDSS-018";
+                                         skos:notation "WP08-DDSS-020";
+.
+
+<category:earthquakeparameters> a skos:Concept;
+                                skos:prefLabel "Earthquake parameters";
+                                skos:definition "TCS Subdomain";
+                                skos:inScheme <category:seismology>;
+                                skos:broader <category:seismologicalproductsservices>;
+                                skos:notation "WP08-DDSS-017"; #non serve
+                                skos:notation "WP08-DDSS-019";
+                                skos:notation "WP08-DDSS-024";
+                                skos:notation "WP08-DDSS-025";
+                                skos:notation "WP08-DDSS-050";
+.
+
+
+<category:tsunami> a skos:ConceptScheme;
+                   skos:prefLabel "TSU" ;
+                   dct:title "Tsunami" ;
+                   dct:description "TCS Domain" ;
+                   foaf:logo "assets/img/logo/TSU_logo.png" ;
+                   foaf:homepage "https://www.epos-eu.org/tcs/tsunami" ;
+                   schema:color "#6f9ea8";
+                   schema:orderItemNumber "2";
+                   skos:hasTopConcept <category:facets/dataset-theme>;
+.
+
+<category:tsuwavefmpeakmotiservices> a skos:Concept;
+                                     skos:prefLabel "Waveform and peak-motion services";
+                                     skos:definition "TCS Subdomain";
+                                     skos:inScheme <category:tsunami>;
+                                     skos:narrower <category:tsustrgmotiparameters>;
+#skos:narrower <category:wavefmpeakmotidata>,<category:wavefmmetrics>,<category:wavefmmetadata>,,<category:wavefmparameters>;
+.
+
+<category:tsustrgmotiparameters> a skos:Concept;
+                                 skos:prefLabel "Strong motion parameters";
+                                 skos:definition "TCS Subdomain";
+                                 skos:inScheme <category:tsunami>;
+                                 skos:broader <category:tsuwavefmpeakmotiservices>;
+                                 skos:narrower <category:tsuteststrgmotiparameters>;
+                                 skos:notation "WP08-DDSS-009"; #non serve
+                                 skos:notation "WP08-DDSS-010";
+                                 skos:notation "WP08-DDSS-053";
+.
+
+<category:tsuteststrgmotiparameters> a skos:Concept;
+                                     skos:prefLabel "TEST Strong motion parameters";
+                                     skos:definition "TCS Subdomain";
+                                     skos:inScheme <category:tsunami>;
+                                     skos:broader <category:tsustrgmotiparameters>;
+                                     skos:notation "WP08-DDSS-009";
+                                     skos:notation "WP08-DDSS-010";
+                                     skos:notation "WP08-DDSS-053";
+.
+
+#####facility
+<category:Volcanology> a skos:ConceptScheme ;
+                       skos:prefLabel "VOfacilities" ;
+                       dct:title "Volcano Observations" ;
+                       dct:description "Facility Domain" ;
+                       foaf:logo "assets/img/logo/VOLCANO_logo.png" ;
+                       #foaf:homepage "" ;
+                       schema:color "#e70802";
+                       schema:orderItemNumber "1";
+                       skos:hasTopConcept <category:facets/facility-theme> ;
+.
+
+<category:Volcanology_conc> a skos:Concept ;
+                            skos:inScheme    <category:Volcanology> ;
+                            skos:definition  "Volcanology" ;
+                            skos:prefLabel   "Volcanology";
+.
+
+#####software
+<category:software_jup> a skos:ConceptScheme ;
+                        skos:prefLabel "Jupyter Notebooks" ;
+                        dct:title "Jupyter Notebooks" ;
+                        dct:description "Jupyter Notebook Domain" ;
+                        foaf:logo "https://raw.githubusercontent.com/epos-eu/platform-gui-icons/3c13924d1f3483a9e1f1941ba094f0937602d0a9/jupyter-svgrepo-com.svg" ;
+                        #foaf:homepage "" ;
+                        schema:color "#F37726";
+                        schema:orderItemNumber "1";
+                        skos:hasTopConcept <category:facets/software-theme> ;
+.
+
+<category:software_jup_conc_multi> a skos:Concept ;
+                                   skos:inScheme    <category:software_jup> ;
+                                   skos:definition  "Multidisciplinary software" ;
+                                   skos:prefLabel   "Multidisciplinary software"
+.
+
+<category:software_appl> a skos:ConceptScheme ;
+                         skos:prefLabel "Software Appl" ;
+                         dct:title "Software Appl" ;
+                         dct:description "Software Appl Domain" ;
+                         foaf:logo "https://raw.githubusercontent.com/epos-eu/platform-gui-icons/3c13924d1f3483a9e1f1941ba094f0937602d0a9/jupyter-svgrepo-com.svg" ;
+                         #foaf:homepage "" ;
+                         schema:color "#F80022";
+                         schema:orderItemNumber "2";
+                         skos:hasTopConcept <category:facets/software-theme> ;
+.
+
+<category:software_appl_conc_multi> a skos:Concept ;
+                                    skos:inScheme    <category:software_appl> ;
+                                    skos:definition  "Multidisciplinary software" ;
+                                    skos:prefLabel   "Multidisciplinary software"
+.
+
+
+#---------------------------------------------------------
+<http://orcid.org/0000-0001-6147-9981> a schema:Person;
+                                       schema:identifier [ a schema:PropertyValue;
+                                                           schema:propertyID "orcid";
+                                                           schema:value "http://orcid.org/0000-0001-6147-9981";
+                                         ];
+                                       schema:familyName "Rovida";
+                                       schema:givenName "Andrea";
+                                       schema:address [ a schema:PostalAddress;
+                                                        schema:streetAddress "via Alfonso Corti 12";
+                                                        schema:addressLocality "Milano";
+                                                        schema:postalCode "20133";
+                                                        schema:addressCountry "ITALY";
+                                         ];
+                                       schema:email "andrea.rovida@ingv.it";
+                                       schema:telephone "+390223699257";
+                                       schema:qualifications "Technologist";
+                                       schema:affiliation <PIC:999472675>;
+                                       schema:contactPoint <https://www.epos-eu.org/epos-dcat-ap/Seismology/Facility/AHEAD/scientificContact>;
+.
+
+<https://www.epos-eu.org/epos-dcat-ap/Seismology/Facility/AHEAD/scientificContact> a schema:ContactPoint;
+                                                                                   schema:email "andrea.rovida@ingv.it";
+                                                                                   schema:availableLanguage "en";
+                                                                                   schema:contactType "scientificContact";
+.
+
+<http://orcid.org/0000-0003-2185-3267> a schema:Person;
+                                       schema:identifier [ a schema:PropertyValue;
+                                                           schema:propertyID "orcid";
+                                                           schema:value "http://orcid.org/0000-0003-2185-3267";
+                                         ];
+                                       schema:familyName "Locati";
+                                       schema:givenName "Mario";
+                                       schema:address [ a schema:PostalAddress;
+                                                        schema:streetAddress "via Alfonso Corti 12";
+                                                        schema:addressLocality "Milano";
+                                                        schema:postalCode "20133";
+                                                        schema:addressCountry "ITALY";
+                                         ];
+                                       schema:email "mario.locati@ingv.it";
+                                       schema:telephone "+390223699451";
+                                       schema:qualifications "Technologist";
+                                       schema:affiliation <PIC:999472675>;
+                                       schema:contactPoint <https://www.epos-eu.org/epos-dcat-ap/Seismology/Facility/AHEAD/contactPoint>;
+.
+
+<https://www.epos-eu.org/epos-dcat-ap/Seismology/Facility/AHEAD/contactPoint> a schema:ContactPoint;
+                                                                              schema:email "mario.locati@ingv.it";
+                                                                              schema:availableLanguage "en";
+                                                                              schema:contactType "manager";
+.
+
+
+<http://orcid.org/0000-0001-7947-4281/scientificContact> a schema:ContactPoint;
+                                                         schema:email "giovanni.lanzano@ingv.it";
+                                                         schema:availableLanguage "en" ;
+                                                         schema:contactType "scientificContact" ;
+.
+
+
+#---------------------------------------------------------
+
+<PIC:999472675> a schema:Organization;
+                schema:identifier [ a schema:PropertyValue;
+                                    schema:propertyID "pic";
+                                    schema:value "999472675";
+                  ];
+                schema:legalName "INGV - Istituto Nazionale di Geofisica e Vulcanologia";
+                schema:leiCode "Legal Entity Identifier Search: http://www.lei-lookup.com/#!search" ;
+                schema:address [ a schema:PostalAddress;
+                                 schema:streetAddress "Via di Vigna Murata 605";
+                                 schema:addressLocality "Rome";
+                                 schema:postalCode "00143";
+                                 schema:addressCountry "IT";
+                  ];
+                schema:logo "https://www.ingv.it/templates/g5_helium/custom/images/INGV_logo_colore3.png"^^xsd:anyURI;
+                schema:url "http://www.ingv.it"^^xsd:anyURI;
+                schema:email "ufficiostampa@ingv.it";
+                schema:memberOf <MOID:https://gnss-metadata.eu/MOID/datasupplier.641dd8c7e06540da270881d8> ;
+.
+
+<MOID:https://gnss-metadata.eu/MOID/datasupplier.641dd8c7e06540da270881d8> a schema:Organization ;
+                                                                           schema:identifier [ a schema:PropertyValue;
+                                                                                               schema:propertyID "MOID";
+                                                                                               schema:value "https://gnss-metadata.eu/MOID/datasupplier.641dd8c7e06540da270881d8";
+                                                                             ];
+                                                                           schema:legalName "EPOS-GNSS Data Suppliers"^^xsd:string;
+                                                                           schema:leiCode "Legal Entity Identifier Search: http://www.lei-lookup.com/#!search" ;
+.
+
+
+<ROR:https://ror.org/00bas1c41> a schema:Organization ;
+                                schema:identifier [ a schema:PropertyValue;
+                                                    schema:propertyID "ROR";
+                                                    schema:value "https://ror.org/00bas1c41";
+                                  ];
+                                schema:legalName "AGH University of Science and Technology (AGH-UST) - POL"^^xsd:string;
+                                schema:leiCode "Legal Entity Identifier Search: http://www.lei-lookup.com/#!search" ;
+                                schema:address [ a schema:PostalAddress ;
+                                                 schema:streetAddress "Mickiewicz Avenue 30" ;
+                                                 schema:addressLocality "Krakow" ;
+                                                 schema:postalCode "30-059" ;
+                                                 schema:addressCountry "PL" ;
+                                  ];
+                                schema:memberOf <MOID:https://gnss-metadata.eu/MOID/datasupplier.641dd8c7e06540da270881d8> ;
+.
+
+
+<https://doi.org/10.7914/SN/IT> a schema:Organization ;
+                                schema:identifier [ a schema:PropertyValue ;
+                                                    schema:propertyID  "DOI" ;
+                                                    schema:value   "https://doi.org/10.7914/SN/IT" ;
+                                  ];
+                                schema:legalName "Italian Strong Motion Network, IT, https://doi.org/10.7914/SN/IT" ;
+                                schema:leiCode "Legal Entity Identifier Search: http://www.lei-lookup.com/#!search" ;
+                                schema:address [ a schema:PostalAddress ;
+                                                 schema:streetAddress "Via Roma 30" ;
+                                                 schema:addressLocality "Roma" ;
+                                                 schema:postalCode "00143" ;
+                                                 schema:addressCountry "IT" ;
+                                  ];
+                                schema:url "https://doi.org/10.7914/SN/IT"^^xsd:anyURI ;
+.
+
+
+#---------------------------------------------------------
+
+<https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events> a dcat:Dataset;
+                                                                       dct:title "TEST1 - Historical earthquakes 1000-1899";
+                                                                       dct:description "Event data (e.g. epicentre, magnitude) for earthquakes archived in AHEAD";
+                                                                       dct:identifier "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events";
+                                                                       adms:identifier [ a adms:Identifier;
+                                                                                         adms:schemeAgency "DOI";
+                                                                                         skos:notation "10.6092/INGV.IT-AHEAD";
+                                                                         ];
+                                                                       adms:identifier [ a adms:Identifier;
+                                                                                         adms:schemeAgency "DDSS-ID";
+                                                                                         skos:notation "WP08-DDSS-024";
+                                                                         ];
+                                                                       dct:type "http://purl.org/dc/dcmitype/Dataset"^^xsd:anyURI;
+                                                                       dct:accrualPeriodicity "http://purl.org/cld/freq/irregular"^^xsd:anyURI;
+                                                                       dct:created "2010-06-01"^^xsd:date;
+                                                                       dct:modified "2018-09-10"^^xsd:date;
+                                                                       dct:temporal [ a dct:PeriodOfTime;
+                                                                                      schema:startDate "1000-01-01T00:00:00Z"^^xsd:dateTime;
+                                                                                      schema:endDate "1899-12-31T23:59:59Z"^^xsd:dateTime;
+                                                                         ];
+                                                                       dct:spatial [ a dct:Location;
+                                                                                     locn:geometry "POLYGON((-34 74,45 74,45 33,-34 33,-34 74))"^^gsp:wktLiteral;
+                                                                         ];
+                                                                       dcat:theme <category:earthquakeparameters>;
+                                                                       dcat:keyword "event", "earthquake", "seismicity", "catalogue", "magnitude";
+                                                                       schema:variableMeasured "https://vocab.nerc.ac.uk/collection/EXV/current/EXV017/","https://vocab.nerc.ac.uk/collection/EXV/current/EXV018/","https://vocab.nerc.ac.uk/collection/R03/current/TEMP/";  #EXV(s) usata solo in ENVRI - stringa - cardinalità n - optional
+                                                                       dqv:hasQualityAnnotation [ a oa:Annotation ;
+                                                                                                  oa:hasBody "https://www.emidius.eu/AHEAD/data_quality_assurance.php"^^xsd:anyURI  ;
+                                                                         ];
+                                                                       dcat:contactPoint <https://www.epos-eu.org/epos-dcat-ap/Seismology/Facility/AHEAD/scientificContact>;
+                                                                       dcat:contactPoint <https://www.epos-eu.org/epos-dcat-ap/Seismology/Facility/AHEAD/contactPoint>;
+                                                                       dct:publisher <PIC:999472675>;
+                                                                       prov:qualifiedAttribution <PIC:999472675/test> ;
+                                                                       dcat:distribution <https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful>;
+.
+
+<PIC:999472675/test> a prov:Attribution ;
+                     dcat:hadRole "test" ; # role
+                     prov:agent <PIC:999472675> . # Organization
+
+
+<https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful> a dcat:Distribution;
+                                                                                            dct:title "TEST1 - Parameters of historical earthquakes (1000-1899) - FDSN event";
+                                                                                            dct:description "The distribution of event parameters via the FDSN-event web service is the main and preferred way to access historical earthquake data archived in AHEAD.";
+                                                                                            dct:identifier "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful";
+                                                                                            dct:issued "2017-10-25"^^xsd:date;
+                                                                                            dct:modified "2017-10-25"^^xsd:date;
+                                                                                            dct:type "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"^^xsd:anyURI;
+                                                                                            dct:conformsTo <https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event>;
+                                                                                            dcat:accessURL <https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event/Operation>;
+                                                                                            dct:license "https://creativecommons.org/licenses/by/4.0/"^^xsd:anyURI;
+                                                                                            dct:format "http://publications.europa.eu/resource/authority/file-type/XML"^^xsd:anyURI;
+.
+
+<https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event> a epos:WebService;
+                                                                                        schema:identifier "https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event";
+                                                                                        schema:description "FDSN-event web service providing event parameters for historical earthquakes from AHEAD, the European Archive of Historical Earthquake Data";
+                                                                                        schema:name "TEST1- Historical earthquakes 1000-1899 (FDSN-event)";
+                                                                                        hydra:entrypoint "https://www.emidius.eu/fdsnws/event/1/application.wadl"^^xsd:anyURI;
+                                                                                        schema:provider <PIC:999472675>;
+                                                                                        schema:datePublished "2012-12-01"^^xsd:date;
+                                                                                        schema:dateModified "2018-09-10"^^xsd:date;
+                                                                                        dct:spatial [ a dct:Location;
+                                                                                                      locn:geometry "POLYGON((-33.5 73.5,34.0 73.5,34.0 33.5,-33.5 33.5,-33.5 73.5))"^^gsp:wktLiteral;
+                                                                                          ];
+                                                                                        hydra:supportedOperation <https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event/Operation>;
+                                                                                        schema:keywords "seismology", "seismicity", "catalogue", "earthquake", "magnitude";
+                                                                                        dct:license "https://creativecommons.org/licenses/by/4.0/"^^xsd:anyURI;
+                                                                                        dct:temporal [ a dct:PeriodOfTime;
+                                                                                                       schema:startDate "1000-01-01T00:00:00Z"^^xsd:dateTime;
+                                                                                                       schema:endDate "1899-12-31T23:59:59Z"^^xsd:dateTime;
+                                                                                          ];
+                                                                                        dcat:contactPoint <https://www.epos-eu.org/epos-dcat-ap/Seismology/Facility/AHEAD/contactPoint>;
+                                                                                        dcat:contactPoint <https://www.epos-eu.org/epos-dcat-ap/Seismology/Facility/AHEAD/scientificContact>;
+                                                                                        dct:conformsTo <https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/APIDocumentation/fdsnws-event>;
+.
+
+<https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/APIDocumentation/fdsnws-event> a hydra:ApiDocumentation;
+                                                                                                 hydra:title "ahead-fdsnws-event documentation" ;
+                                                                                                 hydra:description "Documentation for the fdsnws-event webservice" ;
+                                                                                                 hydra:entrypoint "https://www.emidius.eu/AHEAD/services/epos_events.php"^^xsd:anyURI ;
+.
+
+<https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event/Operation> a hydra:Operation;
+                                                                                                  hydra:method "GET"^^xsd:string;
+                                                                                                  hydra:returns "application/xml";
+                                                                                                  hydra:expects <https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event/Operation/payload>; #this property is used to link the hydra:Class that contains the payload description
+                                                                                                  hydra:property[ a hydra:IriTemplate;
+                                                                                                                  hydra:template "https://www.emidius.eu/fdsnws/event/1/query{?starttime, endtime, eventid, minlatitude, maxlatitude, minlongitude, maxlongitude, latitude, longitude, maxradiuskm, minmagnitude, maxmagnitude, orderby, includeallorigins, includeallmagnitudes, limit, nodata}"^^xsd:string;
+                                                                                                                  hydra:mapping[ a hydra:IriTemplateMapping;
+                                                                                                                                 hydra:variable "starttime"^^xsd:string;
+                                                                                                                                 hydra:property "schema:startDate";
+                                                                                                                                 schema:valuePattern "YYYY-MM-DDThh:mm:ss";
+                                                                                                                                 rdfs:range "xsd:dateTime";
+                                                                                                                                 rdfs:label "Start time" ;
+                                                                                                                                 schema:minValue "1000-01-01T00:00:00";
+                                                                                                                                 schema:maxValue "1899-12-31T23:59:59";
+                                                                                                                                 schema:defaultValue "1000-01-01T00:00:00";
+                                                                                                                                 hydra:required "true"^^xsd:boolean;
+                                                                                                                    ];
+                                                                                                                  hydra:mapping[ a hydra:IriTemplateMapping;
+                                                                                                                                 hydra:variable "endtime"^^xsd:string;
+                                                                                                                                 hydra:property "schema:endDate";
+                                                                                                                                 schema:valuePattern "YYYY-MM-DDThh:mm:ss";
+                                                                                                                                 rdfs:range "xsd:dateTime";
+                                                                                                                                 rdfs:label "End time" ;
+                                                                                                                                 schema:minValue "1000-01-01T00:00:00";
+                                                                                                                                 schema:maxValue "1899-12-31T23:59:59";
+                                                                                                                                 schema:defaultValue "1899-12-31T23:59:59";
+                                                                                                                                 hydra:required "true"^^xsd:boolean;
+                                                                                                                    ];
+                                                                                                                  hydra:mapping[ a hydra:IriTemplateMapping;
+                                                                                                                                 hydra:variable "eventid"^^xsd:string;
+                                                                                                                                 rdfs:range "xsd:string";
+                                                                                                                                 rdfs:label "Event ID" ;
+                                                                                                                                 #hydra:property "epos:ahead_event_id" ; #semantic tag
+                                                                                                                                 hydra:required "false"^^xsd:boolean;
+                                                                                                                    ];
+                                                                                                                  hydra:mapping[ a hydra:IriTemplateMapping;
+                                                                                                                                 hydra:variable "minlatitude"^^xsd:string;
+                                                                                                                                 hydra:property "epos:southernmostLatitude";
+                                                                                                                                 rdfs:range "xsd:float";
+                                                                                                                                 rdfs:label "Minimum latitude" ;
+                                                                                                                                 schema:minValue "33.0000";
+                                                                                                                                 schema:maxValue "74.0000";
+                                                                                                                                 schema:defaultValue "33.0000";
+                                                                                                                                 hydra:required "false"^^xsd:boolean;
+                                                                                                                    ];
+                                                                                                                  hydra:mapping[ a hydra:IriTemplateMapping;
+                                                                                                                                 hydra:variable "maxlatitude"^^xsd:string;
+                                                                                                                                 hydra:property "epos:northernmostLatitude";
+                                                                                                                                 rdfs:range "xsd:float";
+                                                                                                                                 rdfs:label "Maximum latitude" ;
+                                                                                                                                 schema:minValue "33.0000";
+                                                                                                                                 schema:maxValue "74.0000";
+                                                                                                                                 schema:defaultValue "74.0000";
+                                                                                                                                 hydra:required "false"^^xsd:boolean;
+                                                                                                                    ];
+                                                                                                                  hydra:mapping[ a hydra:IriTemplateMapping;
+                                                                                                                                 hydra:variable "minlongitude"^^xsd:string;
+                                                                                                                                 hydra:property "epos:westernmostLongitude";
+                                                                                                                                 rdfs:range "xsd:float";
+                                                                                                                                 rdfs:label "Minimum longitude" ;
+                                                                                                                                 schema:minValue "-34.0000";
+                                                                                                                                 schema:maxValue "34.0000";
+                                                                                                                                 schema:defaultValue "-34.0000";
+                                                                                                                                 hydra:required "false"^^xsd:boolean;
+                                                                                                                    ];
+                                                                                                                  hydra:mapping[ a hydra:IriTemplateMapping;
+                                                                                                                                 hydra:variable "maxlongitude"^^xsd:string;
+                                                                                                                                 hydra:property "epos:easternmostLongitude";
+                                                                                                                                 rdfs:range "xsd:float";
+                                                                                                                                 rdfs:label "Maximum longitude" ;
+                                                                                                                                 schema:minValue "-34.0000";
+                                                                                                                                 http:paramValue "1.0000";
+                                                                                                                                 http:paramValue "2.0000";
+                                                                                                                                 schema:maxValue "34.0000";
+                                                                                                                                 schema:defaultValue "34.0000";
+                                                                                                                                 hydra:required "false"^^xsd:boolean;
+                                                                                                                    ];
+                                                                                                                  hydra:mapping[ a hydra:IriTemplateMapping;
+                                                                                                                                 hydra:variable "latitude"^^xsd:string;
+                                                                                                                                 rdfs:range "xsd:float";
+                                                                                                                                 rdfs:label "Circular search center latitude" ;
+                                                                                                                                 schema:minValue "33.0000";
+                                                                                                                                 http:paramValue "1.0000";
+                                                                                                                                 http:paramValue "2.0000";
+                                                                                                                                 schema:multipleValues "true"^^xsd:boolean ;
+                                                                                                                                 schema:maxValue "74.0000";
+                                                                                                                                 hydra:required "false"^^xsd:boolean;
+                                                                                                                    ];
+                                                                                                                  hydra:mapping[ a hydra:IriTemplateMapping;
+                                                                                                                                 hydra:variable "longitude"^^xsd:string;
+                                                                                                                                 rdfs:range "xsd:float";
+                                                                                                                                 rdfs:label "Circular search center longitude" ;
+                                                                                                                                 schema:minValue "-34.0000";
+                                                                                                                                 schema:maxValue "34.0000";
+                                                                                                                                 hydra:required "false"^^xsd:boolean;
+                                                                                                                    ];
+                                                                                                                  hydra:mapping[ a hydra:IriTemplateMapping;
+                                                                                                                                 hydra:variable "maxradiuskm"^^xsd:string;
+                                                                                                                                 rdfs:range "xsd:float";
+                                                                                                                                 rdfs:label "Circular search radius (in km)" ;
+                                                                                                                                 schema:minValue "0.00";
+                                                                                                                                 schema:maxValue "500.00";
+                                                                                                                                 hydra:required "false"^^xsd:boolean;
+                                                                                                                    ];
+                                                                                                                  hydra:mapping[ a hydra:IriTemplateMapping;
+                                                                                                                                 hydra:variable "minmagnitude"^^xsd:string;
+                                                                                                                                 rdfs:range "xsd:float";
+                                                                                                                                 rdfs:label "Minimum magnitude (Mw)" ;
+                                                                                                                                 schema:minValue "0.0";
+                                                                                                                                 schema:maxValue "10.0";
+                                                                                                                                 hydra:required "false"^^xsd:boolean;
+                                                                                                                    ];
+                                                                                                                  hydra:mapping[ a hydra:IriTemplateMapping;
+                                                                                                                                 hydra:variable "maxmagnitude"^^xsd:string;
+                                                                                                                                 rdfs:range "xsd:float";
+                                                                                                                                 rdfs:label "Maximum magnitude (Mw)" ;
+                                                                                                                                 schema:minValue "0.0";
+                                                                                                                                 schema:maxValue "10.0";
+                                                                                                                                 hydra:required "false"^^xsd:boolean;
+                                                                                                                    ];
+                                                                                                                  #hydra:mapping[ a hydra:IriTemplateMapping;
+                                                                                                                  #	hydra:variable "format"^^xsd:string;
+                                                                                                                  #	rdfs:range "xsd:string";
+                                                                                                                  #	rdfs:label "Output format" ;
+                                                                                                                  #	hydra:property "schema:encodingFormat";
+                                                                                                                  #	http:paramValue "xml";
+                                                                                                                  #	http:paramValue "text";
+                                                                                                                  #	http:paramValue "json";
+                                                                                                                  #	schema:defaultValue "xml";
+                                                                                                                  #	hydra:required "false"^^xsd:boolean;
+                                                                                                                  #];
+                                                                                                                  hydra:mapping[ a hydra:IriTemplateMapping;
+                                                                                                                                 hydra:variable "orderby"^^xsd:string;
+                                                                                                                                 rdfs:range "xsd:string";
+                                                                                                                                 rdfs:label "Output ordering" ;
+                                                                                                                                 http:paramValue "time";
+                                                                                                                                 http:paramValue "time-asc";
+                                                                                                                                 http:paramValue "magnitude";
+                                                                                                                                 http:paramValue "magnitude-asc";
+                                                                                                                                 schema:defaultValue "time";
+                                                                                                                                 hydra:required "false"^^xsd:boolean;
+                                                                                                                    ];
+                                                                                                                  hydra:mapping[ a hydra:IriTemplateMapping;
+                                                                                                                                 hydra:variable "includeallorigins"^^xsd:string;
+                                                                                                                                 rdfs:range "xsd:boolean";
+                                                                                                                                 rdfs:label "Include all origins" ;
+                                                                                                                                 schema:defaultValue "false";
+                                                                                                                                 http:paramValue "true";
+                                                                                                                                 http:paramValue "false";
+                                                                                                                                 hydra:required "false"^^xsd:boolean;
+                                                                                                                    ];
+                                                                                                                  hydra:mapping[ a hydra:IriTemplateMapping;
+                                                                                                                                 hydra:variable "includeallmagnitudes"^^xsd:string;
+                                                                                                                                 rdfs:range "xsd:boolean";
+                                                                                                                                 rdfs:label "Include all magnitudes" ;
+                                                                                                                                 schema:defaultValue "false";
+                                                                                                                                 http:paramValue "true";
+                                                                                                                                 http:paramValue "false";
+                                                                                                                                 hydra:required "false"^^xsd:boolean;
+                                                                                                                    ];
+                                                                                                                  hydra:mapping[ a hydra:IriTemplateMapping;
+                                                                                                                                 hydra:variable "limit"^^xsd:string;
+                                                                                                                                 rdfs:range "xsd:integer";
+                                                                                                                                 rdfs:label "Limit the no. of output entries" ;
+                                                                                                                                 schema:minValue "1";
+                                                                                                                                 schema:maxValue "5000";
+                                                                                                                                 schema:defaultValue "300";
+                                                                                                                                 hydra:required "true"^^xsd:boolean;
+                                                                                                                    ];
+                                                                                                                  hydra:mapping[ a hydra:IriTemplateMapping;
+                                                                                                                                 hydra:variable "nodata"^^xsd:string;
+                                                                                                                                 rdfs:range "xsd:string";
+                                                                                                                                 rdfs:label "Status code for " ;
+                                                                                                                                 http:paramValue "204";
+                                                                                                                                 http:paramValue "404";
+                                                                                                                                 schema:defaultValue "204";
+                                                                                                                                 hydra:required "false"^^xsd:boolean;
+                                                                                                                                 schema:readonlyValue "true"^^xsd:boolean;
+                                                                                                                    ];
+                                                                                                    ];
+.
+
+
+<https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event/Operation/payload> a hydra:Class ;
+                                                                                                          hydra:title "Payload description" ;
+                                                                                                          hydra:description "Payload description" ;
+                                                                                                          hydra:supportedProperty [ a hydra:SupportedProperty;
+                                                                                                                                    hydra:variable "Event ID"^^xsd:string;
+                                                                                                                                    hydra:property "epos:event_identifier" ;     # semantic tag
+                                                                                                                                    hydra:description "The event identifier" ;
+                                                                                                                                    hydra:required true ;
+                                                                                                            ];
+.
+
+
+#---------------------------------------------------------
+
+<https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography> a dcat:Dataset;
+                                                                             dct:title "TEST2 - Bibliography metadata for historical earthquakes";
+                                                                             dct:description "Bibliography metadata (e.g. author, title, publication date) of publicly available sources of data related to the earthquakes in AHEAD. Studies on historical earthquakes usually describes the historical investigation, generally providing a distribution of earthquake effects, and/or the assessed earthquakes parameters.";
+                                                                             dct:identifier "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography";
+                                                                             adms:identifier [ a adms:Identifier;
+                                                                                               adms:schemeAgency "DOI";
+                                                                                               skos:notation "10.6092/INGV.IT-AHEAD";
+                                                                               ];
+                                                                             adms:identifier [ a adms:Identifier;
+                                                                                               adms:schemeAgency "DOI";
+                                                                                               skos:notation "0000/test";
+                                                                               ];
+                                                                             adms:identifier [ a adms:Identifier;
+                                                                                               adms:schemeAgency "DDSS-ID";
+                                                                                               skos:notation "WP08-DDSS-026";
+                                                                               ];
+                                                                             dct:type "http://purl.org/dc/dcmitype/Dataset"^^xsd:anyURI;
+                                                                             dct:accrualPeriodicity "http://purl.org/cld/freq/irregular"^^xsd:anyURI;
+                                                                             dct:created "2010-06-01"^^xsd:date;
+                                                                             dct:modified "2018-09-10"^^xsd:date;
+                                                                             dct:temporal [ a dct:PeriodOfTime;
+                                                                                            schema:startDate "1950-01-01T00:00:00Z"^^xsd:dateTime;
+                                                                               ];
+                                                                             dct:spatial [ a dct:Location;
+                                                                                           locn:geometry "POLYGON((-34 74,45 74,45 33,-34 33,-34 74))"^^gsp:wktLiteral;
+                                                                               ];
+                                                                             dcat:theme <category:seismologicalproductsservices>;
+                                                                             dcat:keyword "bibliography", "metadata", "historical earthquake studies";
+                                                                             dqv:hasQualityAnnotation [ a oa:Annotation ;
+                                                                                                        oa:hasBody "https://www.emidius.eu/AHEAD/data_quality_assurance.php"^^xsd:anyURI  ;
+                                                                               ];
+                                                                             dcat:contactPoint <https://www.epos-eu.org/epos-dcat-ap/Seismology/Facility/AHEAD/scientificContact>;
+                                                                             dcat:contactPoint <https://www.epos-eu.org/epos-dcat-ap/Seismology/Facility/AHEAD/contactPoint>;
+                                                                             dct:publisher <PIC:999472675>;
+                                                                             dcat:distribution <https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography/distribution/restful>;
+.
+
+<https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography/distribution/restful> a dcat:Distribution;
+                                                                                                  dct:title "TEST2 - Bibliography for historical earthquakes";
+                                                                                                  dct:description "The distribution of bibliographical metadata via the restful web service is the main and preferred way to access the description of each data source considered in AHEAD, the European Archive of Historical Earthquake Data.";
+                                                                                                  dct:identifier "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography/distribution/restful";
+                                                                                                  dct:issued "2017-10-25"^^xsd:date;
+                                                                                                  dct:modified "2017-10-25"^^xsd:date;
+                                                                                                  dct:type "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"^^xsd:anyURI;
+                                                                                                  dct:conformsTo <https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/bibliography>;
+                                                                                                  dcat:accessURL <https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/bibliography/Operation>;
+                                                                                                  dct:license "https://creativecommons.org/licenses/by/4.0/"^^xsd:anyURI;
+                                                                                                  dct:format "http://publications.europa.eu/resource/authority/file-type/JSON"^^xsd:anyURI;
+.
+
+<https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/bibliography> a epos:WebService;
+                                                                                        schema:identifier "https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/bibliography";
+                                                                                        schema:description "Bibliography web service providing bibliographical metadata of the data sources in AHEAD, the European Archive of Historical Earthquake Data.";
+                                                                                        schema:name "Bibliography metadata for historical earthquake";
+                                                                                        hydra:entrypoint "https://www.emidius.eu/services/bibliography/query?"^^xsd:anyURI;
+                                                                                        schema:provider <PIC:999472675>;
+                                                                                        schema:datePublished "2017-07-30"^^xsd:date;
+                                                                                        schema:dateModified "2017-08-31"^^xsd:date;
+                                                                                        dct:spatial [ a dct:Location;
+                                                                                                      locn:geometry "POLYGON((-33.5 73.5,34.0 73.5,34.0 33.5,-33.5 33.5,-33.5 73.5))"^^gsp:wktLiteral;
+                                                                                          ];
+                                                                                        hydra:supportedOperation <https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/bibliography/Operation>;
+                                                                                        schema:keywords "bibliography", "metadata", "historical earthquake studies";
+                                                                                        dct:license "https://creativecommons.org/licenses/by/4.0/"^^xsd:anyURI;
+                                                                                        dcat:contactPoint <https://www.epos-eu.org/epos-dcat-ap/Seismology/Facility/AHEAD/contactPoint>;
+                                                                                        dcat:contactPoint <https://www.epos-eu.org/epos-dcat-ap/Seismology/Facility/AHEAD/scientificContact>;
+                                                                                        dct:conformsTo <https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/APIDocumentation/restful/bibliography>;
+.
+
+<https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/APIDocumentation/restful/bibliography> a hydra:ApiDocumentation;
+                                                                                                         hydra:title "ahead-restful-bibliography documentation" ;
+                                                                                                         hydra:description "Documentation for the RESTful bibliography webservice" ;
+                                                                                                         hydra:entrypoint "https://www.emidius.eu/AHEAD/services/epos_bibliography.php"^^xsd:anyURI ;
+.
+
+<https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/bibliography/Operation> a hydra:Operation;
+                                                                                                  hydra:method "GET"^^xsd:string;
+                                                                                                  hydra:returns "application/epos.table.geo+json";
+                                                                                                  hydra:property[ a hydra:IriTemplate;
+                                                                                                                  hydra:template "https://www.emidius.eu/services/bibliography/query{?biblioid, eventid, author, title, journal, publisher, doi, yearstart, yearend, minlatitude, maxlatitude, minlongitude, maxlongitude, latitude, longitude, maxradiuskm, format, orderby, nodata}"^^xsd:string;
+                                                                                                                  hydra:mapping[ a hydra:IriTemplateMapping;
+                                                                                                                                 hydra:variable "author"^^xsd:string;
+                                                                                                                                 rdfs:range "xsd:string";
+                                                                                                                                 rdfs:label "Author(s)" ;
+                                                                                                                                 hydra:required "false"^^xsd:boolean;
+                                                                                                                    ];
+                                                                                                                  hydra:mapping[ a hydra:IriTemplateMapping;
+                                                                                                                                 hydra:variable "title"^^xsd:string;
+                                                                                                                                 rdfs:range "xsd:string";
+                                                                                                                                 rdfs:label "Title" ;
+                                                                                                                                 schema:defaultValue "";
+                                                                                                                                 hydra:required "false"^^xsd:boolean;
+                                                                                                                    ];
+                                                                                                                  hydra:mapping[ a hydra:IriTemplateMapping;
+                                                                                                                                 hydra:variable "journal"^^xsd:string;
+                                                                                                                                 rdfs:range "xsd:string";
+                                                                                                                                 rdfs:label "Journal" ;
+                                                                                                                                 hydra:required "false"^^xsd:boolean;
+                                                                                                                    ];
+                                                                                                                  hydra:mapping[ a hydra:IriTemplateMapping;
+                                                                                                                                 hydra:variable "publisher"^^xsd:string;
+                                                                                                                                 rdfs:range "xsd:string";
+                                                                                                                                 rdfs:label "Publisher" ;
+                                                                                                                                 http:paramValue "publ-test1";
+                                                                                                                                 http:paramValue "publ-test2";
+                                                                                                                                 http:paramValue "publ-test3";
+                                                                                                                                 schema:multipleValues "true"^^xsd:boolean ;
+                                                                                                                                 hydra:required "false"^^xsd:boolean;
+                                                                                                                    ];
+                                                                                                                  hydra:mapping[ a hydra:IriTemplateMapping;
+                                                                                                                                 hydra:variable "doi"^^xsd:string;
+                                                                                                                                 rdfs:range "xsd:string";
+                                                                                                                                 rdfs:label "DOI" ;
+                                                                                                                                 hydra:required "false"^^xsd:boolean;
+                                                                                                                    ];
+                                                                                                                  hydra:mapping[ a hydra:IriTemplateMapping;
+                                                                                                                                 hydra:variable "yearstart"^^xsd:string;
+                                                                                                                                 hydra:property "schema:startDate";
+                                                                                                                                 schema:valuePattern "YYYY";
+                                                                                                                                 rdfs:range "xsd:dateTime";
+                                                                                                                                 rdfs:label "Year of publication (min)" ;
+                                                                                                                                 schema:minValue "1900";
+                                                                                                                                 schema:defaultValue "1900";
+                                                                                                                                 hydra:required "false"^^xsd:boolean;
+                                                                                                                    ];
+                                                                                                                  hydra:mapping[ a hydra:IriTemplateMapping;
+                                                                                                                                 hydra:variable "yearend"^^xsd:string;
+                                                                                                                                 hydra:property "schema:endDate";
+                                                                                                                                 schema:valuePattern "YYYY";
+                                                                                                                                 rdfs:range "xsd:dateTime";
+                                                                                                                                 rdfs:label "Year of publication (max)" ;
+                                                                                                                                 schema:minValue "1900";
+                                                                                                                                 hydra:required "false"^^xsd:boolean;
+                                                                                                                    ];
+                                                                                                                  hydra:mapping[ a hydra:IriTemplateMapping;
+                                                                                                                                 hydra:variable "biblioid"^^xsd:string;
+                                                                                                                                 rdfs:range "xsd:string";
+                                                                                                                                 rdfs:label "AHEAD biblio ID" ;
+                                                                                                                                 hydra:required "false"^^xsd:boolean;
+                                                                                                                    ];
+                                                                                                                  hydra:mapping[ a hydra:IriTemplateMapping;
+                                                                                                                                 hydra:variable "eventid"^^xsd:string;
+                                                                                                                                 rdfs:range "xsd:string";
+                                                                                                                                 hydra:property "epos:event_identifier" ; #semantic tag
+                                                                                                                                 rdfs:label "AHEAD event ID" ;
+                                                                                                                                 hydra:required "false"^^xsd:boolean;
+                                                                                                                    ];
+                                                                                                                  hydra:mapping[ a hydra:IriTemplateMapping;
+                                                                                                                                 hydra:variable "minlatitude"^^xsd:string;
+                                                                                                                                 hydra:property "epos:southernmostLatitude";
+                                                                                                                                 rdfs:range "xsd:float";
+                                                                                                                                 rdfs:label "Minimum latitude" ;
+                                                                                                                                 schema:minValue "33.0000";
+                                                                                                                                 schema:maxValue "74.0000";
+                                                                                                                                 hydra:required "false"^^xsd:boolean;
+                                                                                                                    ];
+                                                                                                                  hydra:mapping[ a hydra:IriTemplateMapping;
+                                                                                                                                 hydra:variable "maxlatitude"^^xsd:string;
+                                                                                                                                 hydra:property "epos:northernmostLatitude";
+                                                                                                                                 rdfs:range "xsd:float";
+                                                                                                                                 rdfs:label "Maximum latitude" ;
+                                                                                                                                 schema:minValue "33.0000";
+                                                                                                                                 schema:maxValue "74.0000";
+                                                                                                                                 hydra:required "false"^^xsd:boolean;
+                                                                                                                    ];
+                                                                                                                  hydra:mapping[ a hydra:IriTemplateMapping;
+                                                                                                                                 hydra:variable "minlongitude"^^xsd:string;
+                                                                                                                                 hydra:property "epos:westernmostLongitude";
+                                                                                                                                 rdfs:range "xsd:float";
+                                                                                                                                 rdfs:label "Minimum longitude" ;
+                                                                                                                                 schema:minValue "-34.0000";
+                                                                                                                                 schema:maxValue "34.0000";
+                                                                                                                                 hydra:required "false"^^xsd:boolean;
+                                                                                                                    ];
+                                                                                                                  hydra:mapping[ a hydra:IriTemplateMapping;
+                                                                                                                                 hydra:variable "maxlongitude"^^xsd:string;
+                                                                                                                                 hydra:property "epos:easternmostLongitude";
+                                                                                                                                 rdfs:range "xsd:float";
+                                                                                                                                 rdfs:label "Maximum longitude" ;
+                                                                                                                                 schema:minValue "-34.0000";
+                                                                                                                                 schema:maxValue "34.0000";
+                                                                                                                                 hydra:required "false"^^xsd:boolean;
+                                                                                                                    ];
+                                                                                                                  hydra:mapping[ a hydra:IriTemplateMapping;
+                                                                                                                                 hydra:variable "latitude"^^xsd:string;
+                                                                                                                                 rdfs:range "xsd:float";
+                                                                                                                                 rdfs:label "Circular search center latitude" ;
+                                                                                                                                 schema:minValue "33.0000";
+                                                                                                                                 schema:maxValue "74.0000";
+                                                                                                                                 hydra:required "false"^^xsd:boolean;
+                                                                                                                    ];
+                                                                                                                  hydra:mapping[ a hydra:IriTemplateMapping;
+                                                                                                                                 hydra:variable "longitude"^^xsd:string;
+                                                                                                                                 rdfs:range "xsd:float";
+                                                                                                                                 rdfs:label "Circular search center longitude" ;
+                                                                                                                                 schema:minValue "-34.0000";
+                                                                                                                                 schema:maxValue "34.0000";
+                                                                                                                                 hydra:required "false"^^xsd:boolean;
+                                                                                                                    ];
+                                                                                                                  hydra:mapping[ a hydra:IriTemplateMapping;
+                                                                                                                                 hydra:variable "maxradiuskm"^^xsd:string;
+                                                                                                                                 rdfs:range "xsd:float";
+                                                                                                                                 rdfs:label "Circular search radius (in km)" ;
+                                                                                                                                 schema:minValue "0.00";
+                                                                                                                                 schema:maxValue "500.00";
+                                                                                                                                 hydra:required "false"^^xsd:boolean;
+                                                                                                                    ];
+                                                                                                                  hydra:mapping[ a hydra:IriTemplateMapping;
+                                                                                                                                 hydra:variable "orderby"^^xsd:string;
+                                                                                                                                 rdfs:range "xsd:string";
+                                                                                                                                 rdfs:label "Output ordering" ;
+                                                                                                                                 http:paramValue "author";
+                                                                                                                                 http:paramValue "year";
+                                                                                                                                 http:paramValue "title";
+                                                                                                                                 hydra:required "false"^^xsd:boolean;
+                                                                                                                    ];
+                                                                                                                  hydra:mapping[ a hydra:IriTemplateMapping;
+                                                                                                                                 hydra:variable "format"^^xsd:string;
+                                                                                                                                 rdfs:range "xsd:string";
+                                                                                                                                 rdfs:label "Output format" ;
+                                                                                                                                 hydra:property "schema:encodingFormat";
+                                                                                                                                 http:paramValue "json";
+                                                                                                                                 http:paramValue "geojson";
+                                                                                                                                 http:paramValue "rdf";
+                                                                                                                                 http:paramValue "bib";
+                                                                                                                                 http:paramValue "xml_oai";
+                                                                                                                                 http:paramValue "xml_dc";
+                                                                                                                                 schema:defaultValue "geojson";
+                                                                                                                                 hydra:required "false"^^xsd:boolean;
+                                                                                                                                 schema:readonlyValue "true"^^xsd:boolean;
+                                                                                                                    ];
+                                                                                                                  hydra:mapping[ a hydra:IriTemplateMapping;
+                                                                                                                                 hydra:variable "nodata"^^xsd:string;
+                                                                                                                                 rdfs:range "xsd:string";
+                                                                                                                                 rdfs:label "Status code for " ;
+                                                                                                                                 http:paramValue "204";
+                                                                                                                                 http:paramValue "404";
+                                                                                                                                 schema:defaultValue "204";
+                                                                                                                                 hydra:required "false"^^xsd:boolean;
+                                                                                                                                 schema:readonlyValue "true"^^xsd:boolean;
+                                                                                                                    ];
+                                                                                                    ];
+.
+
+
+#---------------------------------------------------------
+
+
+
+<http://www.epos-eu.org/epos-dcat-ap/Seismology/SeismologicalProducts/ESMFlatFile/Dataset/001> a dcat:Dataset ;
+                                                                                               dct:identifier "http://www.epos-eu.org/epos-dcat-ap/Seismology/SeismologicalProducts/ESMFlatFile/Dataset/001" ;
+                                                                                               dct:title "TEST3 - Engineering Strong-motion database - flat-file 2018" ;
+                                                                                               dct:description "This distribution is a parametric table which contains metadata and intensity measures of manually processed waveforms recorded by accelerometers for magnitude (moment Mw, local ML or surface waves Ms) higher or equal than 4.0. It covers the time interval 1960-2016 and is limited to the Pan-European region" ;
+                                                                                               adms:identifier [ a adms:Identifier ;
+                                                                                                                 adms:schemeAgency "DDSS-ID" ;
+                                                                                                                 skos:notation "WP08-DDSS-053" ;
+                                                                                                 ];
+                                                                                               adms:identifier [ a adms:Identifier ;
+                                                                                                                 adms:schemeAgency "DDSS-ID" ;
+                                                                                                                 skos:notation "WP08-DDSS-010" ;
+                                                                                                 ];
+                                                                                               adms:identifier [ a adms:Identifier ;
+                                                                                                                 adms:schemeAgency "DOI" ;
+                                                                                                                 skos:notation "10.13127/esm/flatfile.1.0" ;
+                                                                                                 ];
+                                                                                               dct:created "2018-01-01T00:00:00Z"^^xsd:dateTime ;
+                                                                                               dct:issued "2018-01-01T00:00:00Z"^^xsd:dateTime ;
+                                                                                               dct:modified "2018-01-01T00:00:00Z"^^xsd:dateTime ;
+                                                                                               owl:versionInfo "1.0.0" ;
+                                                                                               dct:type "http://purl.org/dc/dcmitype/Dataset"^^xsd:anyURI ;
+                                                                                               dct:accrualPeriodicity "http://purl.org/cld/freq/annual"^^xsd:anyURI ;
+                                                                                               dcat:theme <category:tsuteststrgmotiparameters>;
+                                                                                               dcat:keyword "earthquake","event","seismic waveform","seismicity","station","waveform","PGA","PGV","PGD","Epicentral Distance","Hypocentral distance","Joyner-Boore distance","Response spectrum","Rupture distance" ;
+                                                                                               dqv:hasQualityAnnotation [ a oa:Annotation ;
+                                                                                                                          oa:hasBody "https://orfeus.readthedocs.io/en/latest/overview.html"^^xsd:anyURI  ;
+                                                                                                 ];
+                                                                                               dcat:contactPoint <http://orcid.org/0000-0001-7947-4281/scientificContact> ;
+                                                                                               dct:publisher <https://doi.org/10.7914/SN/IT>;
+                                                                                               dct:publisher <MOID:https://gnss-metadata.eu/MOID/datasupplier.641dd8c7e06540da270881d8>;
+                                                                                               prov:qualifiedAttribution <PIC:999472675/owner> ; #non usato
+                                                                                               dcat:distribution <http://www.epos-eu.org/epos-dcat-ap/Seismology/SeismologicalProducts/ESMFlatFile/Dataset/001/Distribution/001> ;
+                                                                                               dct:spatial [ a dct:Location ;
+                                                                                                             locn:geometry "POLYGON((-26.0 72.0, 68.5 72.0, 68.5 23.5, -26.0 23.5, -26.0 72.0))"^^gsp:wktLiteral ;
+                                                                                                 ];
+                                                                                               dct:temporal [ a dct:PeriodOfTime ;
+                                                                                                              schema:startDate "1960-01-01T00:00:00Z"^^xsd:dateTime ;
+                                                                                                              schema:endDate "2016-12-31T23:59:59Z"^^xsd:dateTime ;
+                                                                                                 ] ;
+    # This property refers to a related Dataset that is part of the described Dataset.
+    # dct:hasPart <http://www.epos-eu.org/epos-dcat-ap/Seismology/EngineeringStrongMotionDatabase/Dataset/001> ;
+.
+
+<PIC:999472675/owner> a prov:Attribution ; #non usato
+                      dcat:hadRole "owner" ; # role
+                      prov:agent <PIC:999472675> . # Organization
+
+
+<http://www.epos-eu.org/epos-dcat-ap/Seismology/SeismologicalProducts/ESMFlatFile/Dataset/001/Distribution/001> a dcat:Distribution ;
+                                                                                                                dct:identifier "http://www.epos-eu.org/epos-dcat-ap/Seismology/SeismologicalProducts/ESMFlatFile/Dataset/001/Distribution/001" ;
+                                                                                                                dct:title "TEST3 - Engineering Strong-Motion (ESM) Flatfile 2018" ;
+                                                                                                                dct:description "This distribution (https://esm-db.eu/#/products/flat_file/) is a parametric table which contains metadata and intensity measures of manually processed waveforms recorded by accelerometers for magnitude (moment Mw, local ML or surface waves Ms) higher or equal than 4.0. It is encoded in a zip file contains 3 parametric tables in csv format separated by ';'. It covers the time interval 1960-2016 and is limited to the Pan-European region" ;
+                                                                                                                dct:issued "2018-01-01"^^xsd:date ;
+                                                                                                                dct:modified "2018-01-01"^^xsd:date ;
+                                                                                                                dct:type "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE"^^xsd:anyURI ;
+                                                                                                                dcat:accessURL "https://esm-db.eu/assets/files/ESM_flatfile_2018.zip"^^xsd:anyURI ;
+                                                                                                                dcat:downloadURL "https://esm-db.eu/assets/files/ESM_flatfile_2018.zip"^^xsd:anyURI ;
+                                                                                                                dct:format "http://publications.europa.eu/resource/authority/file-type/ZIP"^^xsd:anyURI ;
+                                                                                                                dct:license "https://creativecommons.org/licenses/by/4.0/"^^xsd:anyURI ;
+
+                                                                                                                # This property contains the size of a Distribution in bytes.
+                                                                                                                dcat:byteSize "72981156"^^xsd:decimal ;
+.
+
+#---------------------------------------------------------
+
+#SoftwareSourceCode
+
+<ROR:048a87296> a schema:Organization;
+                schema:identifier [ a schema:PropertyValue;
+                                    schema:propertyID "URL";
+                                    schema:value "https://ror.org/048a87296";
+                  ];
+                schema:legalName "Uppsala University" ;
+                schema:leiCode "Legal Entity Identifier Search: http://www.lei-lookup.com/#!search" ;
+                schema:address [ a schema:PostalAddress;
+                                 schema:streetAddress "Dag Hammarskjölds väg 7";
+                                 schema:addressLocality "Uppsala";
+                                 schema:postalCode "751 05";
+                                 schema:addressCountry "Sweden";
+                  ];
+                schema:logo "https://www.uu.se/images/18.17dda5f1791cdbd287d9b55/1622452923523/uu-logo-red.svg"^^xsd:anyURI;
+                schema:url "http://www.uu.se"^^xsd:anyURI;
+                schema:contactPoint <https://ror.org/048a87296/legalContact> ;
+.
+
+<https://ror.org/048a87296/legalContact> a schema:ContactPoint;
+                                         schema:contactType "legalContact";
+                                         schema:email "registrator@uu.se";
+                                         schema:availableLanguage "en" ;
+.
+
+<https://orcid.org/0000-0001-6095-2941> a schema:ContactPoint;
+                                        schema:email "henning.lorenz@geo.uu.se";
+                                        schema:availableLanguage "en" ;
+                                        schema:contactType "author" ;
+.
+
+
+<https://doi.org/10.5281/zenodo.17598403> a schema:SoftwareSourceCode;
+                                          schema:identifier "https://doi.org/10.5281/zenodo.17598403" ;
+                                          schema:name "Discovery, automation/scripting and integration of EPOS data and services. Basic workflows in JupyterLab." ;
+                                          schema:description "This repository contains a Jupyter Notebook with documentation for demonstrating multidisciplinary interaction with diverse EPOS data services, data integration and simple visualisation. The notebook uses data from TCS Geological Information and Modelling, GNSS data, and Seismology, and some data that is loaded from other sources. To get started, follow the steps explained in the HTML-documentation. The only file that you need to copy to your working directory is the notebook." ;
+                                          schema:identifier [ a schema:PropertyValue ;
+                                                              schema:propertyID  "DOI" ;
+                                                              schema:value "10.5281/zenodo.17598403" ;
+                                            ];
+                                          schema:identifier [ a schema:PropertyValue ;
+                                                              schema:propertyID  "DDSS-ID" ;
+                                                              schema:value "WP" ;
+                                            ];
+                                          dcat:theme <category:software_jup_conc_multi>;
+                                          schema:keywords "EPOS, JupyterLab, notebook, introduction, GIM, GNSS, seismology, OGC, OWS, EIDA, GLASS framework, web mapping, web services";
+                                          schema:contactPoint <https://orcid.org/0000-0001-6095-2941>;
+                                          schema:creator <ROR:048a87296>;
+                                          schema:codeRepository "https://raw.githubusercontent.com/daoane/epos-multidisciplinary-service-integration/refs/heads/main/Basic_workflows_service_integration.ipynb"^^xsd:anyURI ;
+                                          schema:license "https://spdx.org/licenses/GPL-3.0-or-later.html"^^xsd:anyURI ;
+                                          schema:version "tag/release name";
+                                          schema:mainEntityOfPage "http://www.uu.se"^^xsd:anyURI ;
+                                          schema:programmingLanguage "Python" ;
+                                          schema:softwareRequirements "http://www.uu.se"; #file link
+                                          schema:runtimePlatform "Python2.3";
+.
+
+#SoftwareApplication
+
+<anthropogenic_hazards/software/CatalogToXls> a schema:SoftwareApplication;
+                                              schema:identifier [ a schema:PropertyValue ;
+                                                                  schema:propertyID  "DDSS-ID" ;
+                                                                  schema:value "WP14-DDSS-A01" ;
+                                                ];
+                                              schema:identifier [ a schema:PropertyValue ;
+                                                                  schema:propertyID  "DOI" ;
+                                                                  schema:value "10.5281/zenodo.17598403" ;
+                                                ];
+                                              schema:name "Catalog to XLS converter" ;
+                                              schema:description "Exports a Catalog MATLAB file as a spreadsheet file (in XLSX format)" ;
+                                              schema:contactPoint  <https://ror.org/048a87296/legalContact> ;
+                                              schema:mainEntityOfPage "https://episodesplatform.eu/#app:CatalogToXls"^^xsd:anyURI ;
+                                              schema:license "https://creativecommons.org/licenses/by/4.0/"^^xsd:anyURI ;
+                                              schema:softwareVersion "1.0";
+                                              schema:keywords "format conversion", "data download", "data export" ;
+                                              dcat:theme <category:software_appl_conc_multi>;
+                                              schema:downloadUrl "URL"^^xsd:anyURI;
+                                              schema:softwareRequirements "URL"^^xsd:anyURI;
+                                              schema:creator <ROR:048a87296>;
+                                              schema:operatingSystem "Windows 7";
+.
+
+
+#---------------------------------------------------------
+
+# Facility - Equipment
+
+<ROR:00qps9a02> a schema:Organization;
+                schema:identifier [ a schema:PropertyValue;
+                                    schema:propertyID "PIC";
+                                    schema:value "999472675";
+                  ];
+                schema:legalName "National Institute of Geophysics and Volcanology";
+                schema:leiCode "Legal Entity Identifier Search: http://www.lei-lookup.com/#!search" ;
+                schema:address [ a schema:PostalAddress;
+                                 schema:streetAddress "Via di Vigna Murata, 605";
+                                 schema:addressLocality "Rome";
+                                 schema:postalCode "00143";
+                                 schema:addressCountry "IT";
+                  ];
+                schema:logo "http://roma2.rm.ingv.it/userfiles/file/Logo/INGV_Logo-abbr_colore.jpg"^^xsd:anyURI;
+                schema:url "https://www.ingv.it/"^^xsd:anyURI;
+#	schema:contactPoint <https://orcid.org/0000-0002-8651-6387/legalContact>;
+             	schema:owns <Facility_038> ;
+.
+
+<https://orcid.org/0000-0002-8333-1547> a schema:Person;
+                                        schema:identifier [ a schema:PropertyValue;
+                                                            schema:propertyID "ORCID";
+                                                            schema:value "https://orcid.org/0000-0002-8333-1547";
+                                          ];
+                                        schema:familyName "Andronico";
+                                        schema:givenName "Daniele";
+                                        schema:address [ a schema:PostalAddress;
+                                                         schema:streetAddress "Piazza Roma, 2";
+                                                         schema:addressLocality "Catania";
+                                                         schema:postalCode "95125";
+                                                         schema:addressCountry "Italy";
+                                          ];
+                                        schema:email "daniele.andronico@ingv.it";
+                                        schema:telephone "+003909571658001";
+                                        schema:url "https://orcid.org/0000-0002-8333-1547"^^xsd:anyURI;
+                                        schema:qualifications "Researcher";
+                                        schema:affiliation <ROR:00qps9a02>;
+                                        schema:contactPoint <https://orcid.org/0000-0002-8333-1547/ContactPoint>;
+.
+
+<https://orcid.org/0000-0002-8333-1547/ContactPoint> a schema:ContactPoint;
+                                                     schema:email "daniele.andronico@ingv.it";
+                                                     schema:availableLanguage "en" ;
+                                                     schema:contactType "ContactPoint" ;
+.
+
+<Facility_038>  a    epos:Facility ;
+                dct:identifier   "Facility_038" ;
+                dct:title        "CAMSIZER" ;
+                dct:description  "CAMSIZER (Retsch) is a compact laboratory instrument for simultaneous measurement of particle size distribution in the range 30 micron-30 mm by digital image processing. The sample is fed in from a vibratory feed channel that controls particle falling through the measurement field. Two digital cameras record the particle flow and produce digital images. The projected particle shadows are recorded at a rate of more than 60 images per second and processed (by Retsch Technology software) to set measurements and evaluate several shape parameters." ;
+                dct:type         <epos:Access_to_Volcano_Observatories_and_Volcano_Research_Institutions>;
+                dcat:theme       <category:Volcanology_conc>;
+                dcat:contactPoint  <https://orcid.org/0000-0002-8333-1547/ContactPoint> ;
+                dct:spatial [ a dct:Location;
+                              locn:geometry "POINT(15.085 37.525)"^^gsp:wktLiteral; #INGV-OE
+                     ];
+                dcat:keyword "Laboratory of sedimentology","Particle size measurement";
+#foaf:page "http://facilityURL.org"^^xsd:anyURI;
+.
+
+<Equipment_038_1>    a    epos:Equipment ;
+                     schema:identifier   "Equipment_038_1";
+                     schema:name         "CAMSIZER (Retsch)";
+                     schema:description  " CAMSIZER (Retsch) is a compact laboratory instrument for simultaneous measurement of particle size distribution in the range 30 micron-30 mm by digital image processing. The sample is fed in from a vibratory feed channel that controls particle falling through the measurement field. Two digital cameras record the particle flow and produce digital images. The projected particle shadows are recorded at a rate of more than 60 images per second and processed (by Retsch Technology software) to set measurements and evaluate several shape parameters." ;
+                     dct:type            <epos:Particle_Size_Measuring_Software_definition> ;
+                     dcat:theme          <epos:Permanent>;
+                     dct:isPartOf        <Facility_038>;
+                     dcat:keyword "Laboratory of sedimentology","Particle size measurement";
+                     dct:spatial [ a dct:Location;
+                                   locn:geometry "POINT(15.085 37.525)"^^gsp:wktLiteral; #INGV-OE
+                          ];
+                     dcat:contactPoint   <https://orcid.org/0000-0002-8333-1547/ContactPoint>;
+#foaf:page  "not available"^^xsd:anyURI ;
+#epos:filter       "not available" ;
+#epos:orientation  "not available" ;
+                     schema:serialNumber "not available";
+#epos:resolution   "not available" ;
+#epos:dynamicRange [ a schema:QuantitativeValue ;
+# schema:unitCode   "not available";
+#schema:value       "0.0"^^xsd:double ;
+#];
+# This property contains the sample period (unit and value).
+# epos:samplePeriod [ a schema:QuantitativeValue ;
+# schema:unitCode   "unit code" ; # http://wiki.goodrelations-vocabulary.org/Documentation/UN/CEFACT_Common_Codes
+    # schema:value      "0"^^xsd:double ;
+    # ];
+#dct:temporal [ a dct:PeriodOfTime ;
+#schema:startDate "2020-01-01T00:00:00Z"^^xsd:dateTime ;
+#schema:endDate   "2020-12-31T00:00:00Z"^^xsd:dateTime ;
+#] ;
+.
+
+<epos:Particle_Size_Measuring_Software>
+    a                skos:ConceptScheme ;
+    dct:description  "Particle Size Measuring Software" ;
+    dct:title        "Particle Size Measuring Software"
+.
+<epos:Particle_Size_Measuring_Software_definition>
+    a                skos:Concept ;
+    skos:definition  "Particle Size Measuring Software definition" ;
+    skos:inScheme    <epos:Particle_Size_Measuring_Software>;
+    skos:prefLabel   "Particle Size Measuring Software"
+.
+
+<epos:Equipment_Category>
+    a                skos:ConceptScheme ;
+    dct:description  "Description equipment category" ;
+    dct:title        "Equipment category"
+.
+<epos:Permanent>
+    a                skos:Concept ;
+    skos:definition  "Description" ;
+    skos:inScheme    <epos:Equipment_Category>;
+    skos:prefLabel   "Permanent instrument"
+.
+
+<epos:Facility_Type>
+    a                skos:ConceptScheme ;
+    dct:description  "Facility type" ;
+    dct:title        "Facility type"
+.
+<epos:Access_to_Volcano_Observatories_and_Volcano_Research_Institutions>
+    a                skos:Concept ;
+    skos:definition  "Access to Volcano Observatories and Volcano Research Institutions" ;
+    skos:inScheme    <epos:Facility_Type> ;
+    skos:prefLabel   "Access to Volcano Observatories and Volcano Research Institutions"
+.
