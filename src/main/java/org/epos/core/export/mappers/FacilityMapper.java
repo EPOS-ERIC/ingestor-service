@@ -48,8 +48,59 @@ public class FacilityMapper implements EntityMapper<Facility> {
         // dct:title, literal, 1..1
         RDFHelper.addStringLiteral(model, subject, RDFConstants.DCT_TITLE, entity.getTitle());
 
-		// dct:type, skos:Concept or rdfs:Literal typed with URI, 0..1
-		RDFHelper.addURILiteral(model, subject, RDFConstants.DCT_TYPE, entity.getType());
+		RDFHelper.addURI(model, subject, RDFConstants.DCT_TYPE, entity.getType());
+
+        if (entity.getCategory() != null && !entity.getCategory().isEmpty()) {
+            for (LinkedEntity linkedEntity : entity.getCategory()) {
+                EPOSDataModelEntity categoryEntity = entityMap.get(linkedEntity.getUid());
+                if (categoryEntity instanceof org.epos.eposdatamodel.Category) {
+                    CategoryMapper categoryMapper = new CategoryMapper();
+                    Resource categoryResource = categoryMapper.exportToV1((org.epos.eposdatamodel.Category) categoryEntity, model, entityMap, resourceCache);
+                    if (categoryResource != null) {
+                        model.add(subject, RDFConstants.DCAT_THEME, categoryResource);
+                    } else {
+                        LOGGER.warn("Skipping invalid category for Facility {}", entity.getUid());
+                    }
+                }
+            }
+        }
+
+        if (entity.getContactPoint() != null && !entity.getContactPoint().isEmpty()) {
+            for (LinkedEntity linkedEntity : entity.getContactPoint()) {
+                EPOSDataModelEntity contactEntity = entityMap.get(linkedEntity.getUid());
+                if (contactEntity instanceof org.epos.eposdatamodel.ContactPoint) {
+                    ContactPointMapper contactMapper = new ContactPointMapper();
+                    Resource contactResource = contactMapper.exportToV1((org.epos.eposdatamodel.ContactPoint) contactEntity, model, entityMap, resourceCache);
+                    if (contactResource != null) {
+                        model.add(subject, RDFConstants.DCAT_CONTACT_POINT, contactResource);
+                    } else {
+                        LOGGER.warn("Skipping invalid contactPoint for Facility {}", entity.getUid());
+                    }
+                }
+            }
+        }
+
+        if (entity.getSpatialExtent() != null && !entity.getSpatialExtent().isEmpty()) {
+            for (LinkedEntity linkedEntity : entity.getSpatialExtent()) {
+                EPOSDataModelEntity locationEntity = entityMap.get(linkedEntity.getUid());
+                if (locationEntity instanceof org.epos.eposdatamodel.Location) {
+                    LocationMapper locationMapper = new LocationMapper();
+                    Resource locationResource = locationMapper.exportToV1((org.epos.eposdatamodel.Location) locationEntity, model, entityMap, resourceCache);
+                    if (locationResource != null) {
+                        model.add(subject, RDFConstants.DCT_SPATIAL, locationResource);
+                    } else {
+                        LOGGER.warn("Skipping invalid spatial extent for Facility {}", entity.getUid());
+                    }
+                }
+            }
+        }
+
+        if (entity.getKeywords() != null && !entity.getKeywords().isEmpty()) {
+            String[] keywords = entity.getKeywords().split(",");
+            for (String keyword : keywords) {
+                RDFHelper.addStringLiteral(model, subject, RDFConstants.DCAT_KEYWORD, keyword.trim());
+            }
+        }
 
         return subject;
     }

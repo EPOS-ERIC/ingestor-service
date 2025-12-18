@@ -60,7 +60,7 @@ public class RDFConstants {
         public static final Resource HYDRA_IRI_TEMPLATE = ResourceFactory.createResource(HYDRA_NS + "IriTemplate");
         public static final Resource HYDRA_IRI_TEMPLATE_MAPPING = ResourceFactory.createResource(HYDRA_NS + "IriTemplateMapping");
         public static final Resource HYDRA_API_DOCUMENTATION = ResourceFactory.createResource(HYDRA_NS + "ApiDocumentation");
-        public static final Property HYDRA_SUPPORTED_PROPERTY = ResourceFactory.createProperty(HYDRA_NS, "supportedProperty");
+        public static final Resource HYDRA_SUPPORTED_PROPERTY_CLASS = ResourceFactory.createProperty(HYDRA_NS, "SupportedProperty");
         public static final Resource HYDRA_CLASS = ResourceFactory.createResource(HYDRA_NS + "Class");
         public static final Resource OA_ANNOTATION = ResourceFactory.createResource(OA_NS + "Annotation");
         public static final Resource PROV_ATTRIBUTION = ResourceFactory.createResource(PROV_NS + "Attribution");
@@ -195,6 +195,7 @@ public class RDFConstants {
         public static final Property HYDRA_DESCRIPTION = ResourceFactory.createProperty(HYDRA_NS, "description");
         public static final Property HYDRA_ENTRYPOINT = ResourceFactory.createProperty(HYDRA_NS, "entrypoint");
         public static final Property HYDRA_EXPECTS = ResourceFactory.createProperty(HYDRA_NS, "expects");
+        public static final Property HYDRA_SUPPORTED_PROPERTY = ResourceFactory.createProperty(HYDRA_NS, "supportedProperty");
 
         // Location Properties
         public static final Property LOCN_GEOMETRY = ResourceFactory.createProperty(LOCN_NS, "geometry");
@@ -234,6 +235,9 @@ public class RDFConstants {
         public static final Property SCHEMA_TARGET_PRODUCT = ResourceFactory.createProperty(SCHEMA_NS, "targetProduct");
         public static final Property SCHEMA_LICENSE = ResourceFactory.createProperty(SCHEMA_NS, "license");
         public static final Property SCHEMA_SOFTWARE_REQUIREMENTS = ResourceFactory.createProperty(SCHEMA_NS, "softwareRequirements");
+        public static final Property SCHEMA_VERSION = ResourceFactory.createProperty(SCHEMA_NS, "version");
+        public static final Property SCHEMA_OPERATING_SYSTEM = ResourceFactory.createProperty(SCHEMA_NS, "operatingSystem");
+
 
         // EPOS Properties
         public static final Property EPOS_FILTER = ResourceFactory.createProperty(EPOS_NS, "filter");

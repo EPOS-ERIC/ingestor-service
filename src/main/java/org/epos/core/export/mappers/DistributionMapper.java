@@ -11,6 +11,8 @@ import org.epos.eposdatamodel.LinkedEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
@@ -28,7 +30,7 @@ public class DistributionMapper implements EntityMapper<Distribution> {
 			return resourceCache.get(entity.getUid());
 		}
 		// Compliance check for v1 model required fields
-		if (entity.getAccessService() == null || entity.getAccessService().isEmpty()) {
+		if ((entity.getSupportedOperation() == null || entity.getSupportedOperation().isEmpty()) && (entity.getDownloadURL() == null || entity.getDownloadURL().isEmpty())) {
 			LOGGER.warn("Entity {} not compliant with v1 model: missing required fields (accessURL)", entity.getUid());
 			return null;
 		}
@@ -43,6 +45,12 @@ public class DistributionMapper implements EntityMapper<Distribution> {
 		if (entity.getSupportedOperation() != null && !entity.getSupportedOperation().isEmpty()) {
 			for (LinkedEntity linkedEntity : entity.getSupportedOperation()) {
 				model.add(subject, RDFConstants.DCAT_ACCESS_URL, model.createResource(linkedEntity.getUid()));
+			}
+		} else {
+			for (var downloadURL : entity.getDownloadURL()) {
+				if (!downloadURL.isEmpty()) {
+					RDFHelper.addURILiteral(model, subject, RDFConstants.DCAT_ACCESS_URL, downloadURL);
+				}
 			}
 		}
 
@@ -138,10 +146,6 @@ public class DistributionMapper implements EntityMapper<Distribution> {
 				RDFHelper.addURILiteral(model, subject, RDFConstants.DCAT_ACCESS_URL, accessURL);
 			}
 		} 
-		// TODO: remove this
-		// else {
-		// 	RDFHelper.addURILiteral(model, subject, RDFConstants.DCAT_ACCESS_URL, "TODO access url");
-		// }
 
 		// dct:identifier, literal, 1..1
 		RDFHelper.addStringLiteral(model, subject, RDFConstants.DCT_IDENTIFIER, entity.getUid());
@@ -196,13 +200,13 @@ public class DistributionMapper implements EntityMapper<Distribution> {
 
 		// dct:issued, literal typed as xsd:date or xsd:dateTime, 0..1
 		if (entity.getIssued() != null) {
-			String dateString = entity.getIssued().format(DateTimeFormatter.ISO_DATE_TIME);
+			String dateString = ((LocalDateTime) entity.getIssued()).atZone(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT);
 			RDFHelper.addTypedLiteral(model, subject, RDFConstants.DCT_ISSUED, dateString, XSDDatatype.XSDdateTime);
 		}
 
 		// dct:modified, literal typed as xsd:date or xsd:dateTime, 0..1
 		if (entity.getModified() != null) {
-			String dateString = entity.getModified().format(DateTimeFormatter.ISO_DATE_TIME);
+			String dateString = ((LocalDateTime) entity.getModified()).atZone(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT);
 			RDFHelper.addTypedLiteral(model, subject, RDFConstants.DCT_MODIFIED, dateString, XSDDatatype.XSDdateTime);
 		}
 

@@ -35,7 +35,6 @@ import org.epos.core.export.mappers.LocationMapper;
 import org.epos.core.export.mappers.MappingMapper;
 import org.epos.core.export.mappers.OperationMapper;
 import org.epos.core.export.mappers.OrganizationMapper;
-import org.epos.core.export.mappers.OutputMappingMapper;
 import org.epos.core.export.mappers.PayloadMapper;
 import org.epos.core.export.mappers.PeriodOfTimeMapper;
 import org.epos.core.export.mappers.PersonMapper;
@@ -80,7 +79,6 @@ public class MetadataExporter {
 		MAPPERS.put(org.epos.eposdatamodel.Documentation.class, new DocumentationMapper());
 		MAPPERS.put(org.epos.eposdatamodel.QuantitativeValue.class, new QuantitativeValueMapper());
 		MAPPERS.put(org.epos.eposdatamodel.Mapping.class, new MappingMapper());
-		MAPPERS.put(org.epos.eposdatamodel.OutputMapping.class, new OutputMappingMapper());
 		MAPPERS.put(org.epos.eposdatamodel.Payload.class, new PayloadMapper());
 		MAPPERS.put(org.epos.eposdatamodel.SoftwareSourceCode.class, new SoftwareSourceCodeMapper());
 	}

@@ -20,13 +20,31 @@ public class PayloadMapper implements EntityMapper<Payload> {
         if (resourceCache.containsKey(entity.getUid())) {
             return resourceCache.get(entity.getUid());
         }
-        // Create resource
         Resource subject = model.createResource(entity.getUid());
         resourceCache.put(entity.getUid(), subject);
+        RDFHelper.addType(model, subject, RDFConstants.HYDRA_CLASS);
+        RDFHelper.addStringLiteral(model, subject, RDFConstants.HYDRA_TITLE, "Payload description");
+        RDFHelper.addStringLiteral(model, subject, RDFConstants.HYDRA_DESCRIPTION, "Payload description");
 
-		// Add type
-		RDFHelper.addType(model, subject, RDFConstants.HYDRA_SUPPORTED_OPERATION);
-
+        // Add supportedProperty from outputMapping
+        if (entity.getOutputMapping() != null) {
+            for (LinkedEntity linked : entity.getOutputMapping()) {
+                EPOSDataModelEntity outputEntity = entityMap.get(linked.getUid());
+                if (outputEntity instanceof org.epos.eposdatamodel.OutputMapping) {
+                    org.epos.eposdatamodel.OutputMapping outputMapping = (org.epos.eposdatamodel.OutputMapping) outputEntity;
+                    Resource supportedProperty = model.createResource();
+                    RDFHelper.addType(model, supportedProperty, RDFConstants.HYDRA_SUPPORTED_PROPERTY_CLASS);
+                    RDFHelper.addStringLiteral(model, supportedProperty, RDFConstants.HYDRA_VARIABLE, outputMapping.getOutputVariable());
+                    RDFHelper.addStringLiteral(model, supportedProperty, RDFConstants.HYDRA_PROPERTY, outputMapping.getOutputProperty());
+                    RDFHelper.addStringLiteral(model, supportedProperty, RDFConstants.HYDRA_DESCRIPTION, outputMapping.getOutputLabel());
+                    if ("true".equals(outputMapping.getOutputRequired())) {
+                        model.add(supportedProperty, RDFConstants.HYDRA_REQUIRED, model.createTypedLiteral(true));
+                    }
+                    model.add(subject, RDFConstants.HYDRA_SUPPORTED_PROPERTY, supportedProperty);
+                }
+            }
+        }
+        
         return subject;
     }
 

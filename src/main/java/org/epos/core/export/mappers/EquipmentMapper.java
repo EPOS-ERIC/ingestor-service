@@ -49,7 +49,7 @@ public class EquipmentMapper implements EntityMapper<Equipment> {
         RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_NAME, entity.getName());
 
         // dct:type, skos:Concept or rdfs:Literal typed with URI, 0..1
-        RDFHelper.addURILiteral(model, subject, RDFConstants.DCT_TYPE, entity.getType());
+        RDFHelper.addURI(model, subject, RDFConstants.DCT_TYPE, entity.getType());
 
 		// schema:manufacturer, schema:Organization, 0..1
 		if (entity.getManufacturer() != null) {
@@ -59,8 +59,68 @@ public class EquipmentMapper implements EntityMapper<Equipment> {
         // schema:serialNumber, literal, 0..1
         RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_SERIAL_NUMBER, entity.getSerialNumber());
 
-		// dct:type, skos:Concept or rdfs:Literal typed with URI, 0..1
-		RDFHelper.addURILiteral(model, subject, RDFConstants.DCT_TYPE, entity.getType());
+        // dcat:theme, skos:Concept, 0..n
+        if (entity.getCategory() != null && !entity.getCategory().isEmpty()) {
+            for (LinkedEntity linkedEntity : entity.getCategory()) {
+                EPOSDataModelEntity categoryEntity = entityMap.get(linkedEntity.getUid());
+                if (categoryEntity instanceof org.epos.eposdatamodel.Category) {
+                    CategoryMapper categoryMapper = new CategoryMapper();
+                    Resource categoryResource = categoryMapper.exportToV1((org.epos.eposdatamodel.Category) categoryEntity, model, entityMap, resourceCache);
+                    if (categoryResource != null) {
+                        model.add(subject, RDFConstants.DCAT_THEME, categoryResource);
+                    } else {
+                        LOGGER.warn("Skipping invalid category for Equipment {}", entity.getUid());
+                    }
+                }
+            }
+        }
+
+        // dct:isPartOf, resource, 0..n
+        if (entity.getIsPartOf() != null && !entity.getIsPartOf().isEmpty()) {
+            for (LinkedEntity linked : entity.getIsPartOf()) {
+                model.add(subject, RDFConstants.DCT_IS_PART_OF, model.createResource(linked.getUid()));
+            }
+        }
+
+		// dcat:keyword, literal, 0..n
+		if (entity.getKeywords() != null && !entity.getKeywords().isEmpty()) {
+			String[] keywords = entity.getKeywords().split(",");
+			for (String keyword : keywords) {
+				RDFHelper.addStringLiteral(model, subject, RDFConstants.DCAT_KEYWORD, keyword.trim());
+			}
+		}
+
+        // dct:spatial, dct:Location, 0..n
+        if (entity.getSpatialExtent() != null && !entity.getSpatialExtent().isEmpty()) {
+            for (LinkedEntity linkedEntity : entity.getSpatialExtent()) {
+                EPOSDataModelEntity locationEntity = entityMap.get(linkedEntity.getUid());
+                if (locationEntity instanceof org.epos.eposdatamodel.Location) {
+                    LocationMapper locationMapper = new LocationMapper();
+                    Resource locationResource = locationMapper.exportToV1((org.epos.eposdatamodel.Location) locationEntity, model, entityMap, resourceCache);
+                    if (locationResource != null) {
+                        model.add(subject, RDFConstants.DCT_SPATIAL, locationResource);
+                    } else {
+                        LOGGER.warn("Skipping invalid spatial extent for Equipment {}", entity.getUid());
+                    }
+                }
+            }
+        }
+
+        // dcat:contactPoint, vcard:Kind or schema:ContactPoint, 0..n
+        if (entity.getContactPoint() != null && !entity.getContactPoint().isEmpty()) {
+            for (LinkedEntity linkedEntity : entity.getContactPoint()) {
+                EPOSDataModelEntity contactEntity = entityMap.get(linkedEntity.getUid());
+                if (contactEntity instanceof org.epos.eposdatamodel.ContactPoint) {
+                    ContactPointMapper contactMapper = new ContactPointMapper();
+                    Resource contactResource = contactMapper.exportToV1((org.epos.eposdatamodel.ContactPoint) contactEntity, model, entityMap, resourceCache);
+                    if (contactResource != null) {
+                        model.add(subject, RDFConstants.DCAT_CONTACT_POINT, contactResource);
+                    } else {
+                        LOGGER.warn("Skipping invalid contactPoint for Equipment {}", entity.getUid());
+                    }
+                }
+            }
+        }
 
         return subject;
     }

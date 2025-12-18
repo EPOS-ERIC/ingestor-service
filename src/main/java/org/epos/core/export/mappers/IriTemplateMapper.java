@@ -20,15 +20,28 @@ public class IriTemplateMapper implements EntityMapper<org.epos.eposdatamodel.Ir
         if (resourceCache.containsKey(entity.getUid())) {
             return resourceCache.get(entity.getUid());
         }
-        // Create resource
-        Resource subject = model.createResource(entity.getUid());
-        resourceCache.put(entity.getUid(), subject);
+        // IriTemplate uses blank nodes, so we don't use resource cache
+        // Create blank node for IriTemplate
+        Resource subject = RDFHelper.createBlankNode(model);
 
-		// Add type
-		RDFHelper.addType(model, subject, RDFConstants.HYDRA_IRI_TEMPLATE);
+        // Add type
+        RDFHelper.addType(model, subject, RDFConstants.HYDRA_IRI_TEMPLATE);
 
-		// hydra:template, literal, 0..1
-		RDFHelper.addStringLiteral(model, subject, RDFConstants.HYDRA_TEMPLATE, entity.getTemplate());
+        // hydra:template, literal, 1..1
+        RDFHelper.addStringLiteral(model, subject, RDFConstants.HYDRA_TEMPLATE, entity.getTemplate());
+
+        // hydra:mapping, hydra:IriTemplateMapping, 0..n
+        if (entity.getMappings() != null && !entity.getMappings().isEmpty()) {
+            MappingMapper mappingMapper = new MappingMapper();
+            for (LinkedEntity mappingLinked : entity.getMappings()) {
+                EPOSDataModelEntity mappingEntity = entityMap.get(mappingLinked.getUid());
+                if (mappingEntity instanceof org.epos.eposdatamodel.Mapping) {
+                    org.epos.eposdatamodel.Mapping mapping = (org.epos.eposdatamodel.Mapping) mappingEntity;
+                    Resource mappingResource = mappingMapper.exportToV1(mapping, model, entityMap, resourceCache);
+                    model.add(subject, RDFConstants.HYDRA_MAPPING, mappingResource);
+                }
+            }
+        }
 
         return subject;
     }

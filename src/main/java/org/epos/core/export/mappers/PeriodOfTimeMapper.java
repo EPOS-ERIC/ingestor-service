@@ -7,6 +7,9 @@ import org.epos.core.export.util.RDFConstants;
 import org.epos.core.export.util.RDFHelper;
 import org.epos.eposdatamodel.PeriodOfTime;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
 /**
@@ -29,12 +32,14 @@ public class PeriodOfTimeMapper implements EntityMapper<PeriodOfTime> {
 
         // schema:startDate, xsd:date or xsd:dateTime, 0..1
         if (entity.getStartDate() != null) {
-            model.add(subject, RDFConstants.SCHEMA_START_DATE, model.createTypedLiteral(entity.getStartDate().toString(), XSDDatatype.XSDdateTime));
+            String dateString = ((LocalDateTime) entity.getStartDate()).atZone(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT);
+            model.add(subject, RDFConstants.SCHEMA_START_DATE, model.createTypedLiteral(dateString, XSDDatatype.XSDdateTime));
         }
 
         // schema:endDate, xsd:date or xsd:dateTime, 0..1
         if (entity.getEndDate() != null) {
-            model.add(subject, RDFConstants.SCHEMA_END_DATE, model.createTypedLiteral(entity.getEndDate().toString(), XSDDatatype.XSDdateTime));
+            String dateString = ((LocalDateTime) entity.getEndDate()).atZone(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT);
+            model.add(subject, RDFConstants.SCHEMA_END_DATE, model.createTypedLiteral(dateString, XSDDatatype.XSDdateTime));
         }
 
         return subject;
@@ -54,12 +59,14 @@ public class PeriodOfTimeMapper implements EntityMapper<PeriodOfTime> {
 
         // dcat:startDate, xsd:date or xsd:dateTime, 0..1
         if (entity.getStartDate() != null) {
-            model.add(subject, RDFConstants.DCAT_START_DATE, model.createTypedLiteral(entity.getStartDate().toString(), XSDDatatype.XSDdateTime));
+            String dateString = ((LocalDateTime) entity.getStartDate()).atZone(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT);
+            model.add(subject, RDFConstants.DCAT_START_DATE, model.createTypedLiteral(dateString, XSDDatatype.XSDdateTime));
         }
 
         // dcat:endDate, xsd:date or xsd:dateTime, 0..1
         if (entity.getEndDate() != null) {
-            model.add(subject, RDFConstants.DCAT_END_DATE, model.createTypedLiteral(entity.getEndDate().toString(), XSDDatatype.XSDdateTime));
+            String dateString = ((LocalDateTime) entity.getEndDate()).atZone(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT);
+            model.add(subject, RDFConstants.DCAT_END_DATE, model.createTypedLiteral(dateString, XSDDatatype.XSDdateTime));
         }
 
         return subject;

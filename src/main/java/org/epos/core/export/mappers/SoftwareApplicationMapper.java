@@ -21,8 +21,7 @@ public class SoftwareApplicationMapper implements EntityMapper<SoftwareApplicati
     private static final Logger LOGGER = LoggerFactory.getLogger(SoftwareApplicationMapper.class);
 
     @Override
-    public Resource exportToV1(SoftwareApplication entity, Model model, Map<String, EPOSDataModelEntity> entityMap,
-            Map<String, Resource> resourceCache) {
+    public Resource exportToV1(SoftwareApplication entity, Model model, Map<String, EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
         if (resourceCache.containsKey(entity.getUid())) {
             return resourceCache.get(entity.getUid());
         }
@@ -57,6 +56,73 @@ public class SoftwareApplicationMapper implements EntityMapper<SoftwareApplicati
 
 		// schema:description, literal, 0..1
 		RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_DESCRIPTION, entity.getDescription());
+
+        // dcat:contactPoint or schema:contactPoint, schema:ContactPoint, 0..n
+        if (entity.getContactPoint() != null && !entity.getContactPoint().isEmpty()) {
+            for (LinkedEntity linkedEntity : entity.getContactPoint()) {
+                EPOSDataModelEntity contactEntity = entityMap.get(linkedEntity.getUid());
+                if (contactEntity instanceof org.epos.eposdatamodel.ContactPoint) {
+                    ContactPointMapper contactMapper = new ContactPointMapper();
+                    Resource contactResource = contactMapper.exportToV1((org.epos.eposdatamodel.ContactPoint) contactEntity, model, entityMap, resourceCache);
+                    if (contactResource != null) {
+                        model.add(subject, RDFConstants.SCHEMA_CONTACT_POINT, contactResource);
+                    } else {
+                        LOGGER.warn("Skipping invalid contactPoint for SoftwareApplication {}", entity.getUid());
+                    }
+                }
+            }
+        }
+
+        // schema:mainEntityOfPage, literal typed with URI, 0..1
+        RDFHelper.addURILiteral(model, subject, RDFConstants.SCHEMA_MAIN_ENTITY_OF_PAGE, entity.getMainEntityOfPage());
+
+        // schema:license, literal typed with URI, 0..1
+        RDFHelper.addURILiteral(model, subject, RDFConstants.SCHEMA_LICENSE, entity.getLicenseURL());
+
+        // schema:softwareVersion, literal, 0..1
+        RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_SOFTWARE_VERSION, entity.getSoftwareVersion());
+
+        if (entity.getKeywords() != null && !entity.getKeywords().isEmpty()) {
+            String[] keywords = entity.getKeywords().split(",");
+            for (String keyword : keywords) {
+                RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_KEYWORDS, keyword.trim());
+            }
+        }
+
+        // dcat:theme, skos:Concept, 0..n
+        if (entity.getCategory() != null && !entity.getCategory().isEmpty()) {
+            for (LinkedEntity linkedEntity : entity.getCategory()) {
+                EPOSDataModelEntity categoryEntity = entityMap.get(linkedEntity.getUid());
+                if (categoryEntity instanceof org.epos.eposdatamodel.Category) {
+                    CategoryMapper categoryMapper = new CategoryMapper();
+                    Resource categoryResource = categoryMapper.exportToV1((org.epos.eposdatamodel.Category) categoryEntity, model, entityMap, resourceCache);
+                    if (categoryResource != null) {
+                        model.add(subject, RDFConstants.DCAT_THEME, categoryResource);
+                    } else {
+                        LOGGER.warn("Skipping invalid category for SoftwareApplication {}", entity.getUid());
+                    }
+                }
+            }
+        }
+
+        // schema:downloadUrl, literal typed with URI, 0..1
+        RDFHelper.addURILiteral(model, subject, RDFConstants.SCHEMA_DOWNLOAD_URL, entity.getDownloadURL());
+
+        // schema:softwareRequirements, literal typed with URI, 0..1
+        RDFHelper.addURILiteral(model, subject, RDFConstants.SCHEMA_SOFTWARE_REQUIREMENTS, entity.getRequirements());
+
+        // schema:creator, schema:Organization or schema:Person or foaf:Agent, 0..n
+        if (entity.getCreator() != null && !entity.getCreator().isEmpty()) {
+            for (LinkedEntity linked : entity.getCreator()) {
+                model.add(subject, RDFConstants.SCHEMA_CREATOR, model.createResource(linked.getUid()));
+            }
+        }
+
+		if (entity.getOperatingSystem() != null && !entity.getOperatingSystem().isEmpty()) {
+			for (String operatingSystem : entity.getOperatingSystem()) {
+				RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_OPERATING_SYSTEM, operatingSystem);
+			}
+		}
 
         return subject;
     }

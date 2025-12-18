@@ -55,7 +55,7 @@ public class WebServiceMapper implements EntityMapper<WebService> {
                 }
             }
         } else {
-			RDFHelper.addURILiteral(model, subject, RDFConstants.SCHEMA_IDENTIFIER, entity.getUid());
+			RDFHelper.addLiteral(model, subject, RDFConstants.SCHEMA_IDENTIFIER, entity.getUid());
 		}
 
         // dcat:contactPoint or schema:contactPoint, schema:ContactPoint, 0..n
