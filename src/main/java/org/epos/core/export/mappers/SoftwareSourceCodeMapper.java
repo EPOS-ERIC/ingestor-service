@@ -106,8 +106,7 @@ public class SoftwareSourceCodeMapper implements EntityMapper<SoftwareSourceCode
 
         RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_RUNTIME_PLATFORM, entity.getRuntimePlatform());
 
-        // TODO: add to the db-api
-        // RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_SOFTWARE_REQUIREMENTS, entity.getSoftwareRequirements());
+        RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_SOFTWARE_REQUIREMENTS, entity.getSoftwareRequirements());
 
         return subject;
     }
