@@ -19,7 +19,8 @@
 		<java.version>21</java.version>
 		<maven.compiler.source>${java.version}</maven.compiler.source>
 		<maven.compiler.target>${java.version}</maven.compiler.target>
-		<spring-boot.version>3.3.0</spring-boot.version>
+		<spring-boot.version>3.5.0</spring-boot.version>
+        <tomcat.version>10.1.49</tomcat.version>
 	</properties>
 	<parent>
 		<groupId>org.springframework.boot</groupId>
@@ -117,14 +118,14 @@
 		<dependency>
 			<groupId>org.apache.jena</groupId>
 			<artifactId>jena-core</artifactId>
-			<version>5.4.0</version>
+			<version>5.5.0</version>
 		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/org.apache.jena/jena-arq -->
 		<dependency>
 			<groupId>org.apache.jena</groupId>
 			<artifactId>jena-arq</artifactId>
-			<version>5.4.0</version>
+			<version>5.5.0</version>
 		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/org.apache.jena/jena-fuseki-main -->
@@ -137,7 +138,7 @@
 		<dependency>
 			<groupId>org.epos-eu.ics-c</groupId>
 			<artifactId>db-api</artifactId>
-			<version>3.5.3</version>
+			<version>3.5.8</version>
 		</dependency>
 
 
@@ -148,34 +149,27 @@
 			<version>5.13.0</version>
 			<scope>test</scope>
 		</dependency>
+        <!-- https://mvnrepository.com/artifact/org.testcontainers/testcontainers -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <version>2.0.2</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.testcontainers/junit-jupiter -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers-junit-jupiter</artifactId>
+            <version>2.0.2</version>
+            <scope>test</scope>
+        </dependency>
 
-		<!-- https://mvnrepository.com/artifact/org.testcontainers/junit-jupiter -->
-		<dependency>
-			<groupId>org.testcontainers</groupId>
-			<artifactId>junit-jupiter</artifactId>
-			<version>1.21.1</version>
-			<scope>test</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>org.testcontainers</groupId>
-			<artifactId>postgresql</artifactId>
-			<version>1.21.1</version>
-			<scope>test</scope>
-		</dependency>
-
-<!--		&lt;!&ndash; https://mvnrepository.com/artifact/jakarta.persistence/jakarta.persistence-api &ndash;&gt;-->
-<!--		<dependency>-->
-<!--			<groupId>jakarta.persistence</groupId>-->
-<!--			<artifactId>jakarta.persistence-api</artifactId>-->
-<!--			<version>3.2.0</version>-->
-<!--		</dependency>-->
-
-<!--		<dependency>-->
-<!--			<groupId>com.zaxxer</groupId>-->
-<!--			<artifactId>HikariCP</artifactId>-->
-<!--			<version>6.3.0</version>-->
-<!--		</dependency>-->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers-postgresql</artifactId>
+            <version>2.0.2</version>
+            <scope>test</scope>
+        </dependency>
 
 	</dependencies>
 </project>

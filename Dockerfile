@@ -1,8 +1,25 @@
-FROM amazoncorretto:21-alpine-jdk
+FROM amazoncorretto:21-alpine
 
-RUN apk --no-cache add curl
+LABEL org.opencontainers.image.source="https://github.com/your-org/your-repo" \
+      org.opencontainers.image.description="Your app description" \
+      org.opencontainers.image.licenses="MIT"
 
-ADD target/*.jar app.jar
+# Upgrade all packages to fix vulnerabilities + add minimal dependencies
+RUN apk upgrade --no-cache \
+    && apk add --no-cache ca-certificates tzdata curl \
+    && addgroup -g 1001 -S appgroup \
+    && adduser -u 1001 -S appuser -G appgroup
 
-ENTRYPOINT ["java","-Dlog4j.configurationFile=/etc/log4j2/log4j2.properties", "-Djava.security.egd=file:/dev/./urandom","-jar","app.jar"]
+# Create logs directory with proper ownership
+RUN mkdir -p /logs && chown 1001:1001 /logs
 
+COPY --chown=1001:1001 target/*.jar app.jar
+
+USER 1001:1001
+
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:8080/actuator/health || exit 1
+
+ENTRYPOINT ["java", "-jar", "/app.jar"]

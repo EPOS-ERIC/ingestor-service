@@ -5,25 +5,34 @@ import org.junit.jupiter.api.*;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
+import java.time.Duration;
+import java.util.logging.Logger;
+
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class TestcontainersLifecycle {
+
+    protected static Logger LOG = Logger.getGlobal();
+
+    private static EntityManagerService dbService;
+
     public static PostgreSQLContainer<?> METADATA_CATALOGUE = new PostgreSQLContainer<>(
-            DockerImageName.parse("epos/metadata-database-deploy-test:latest")
+            DockerImageName.parse("ghcr.io/epos-eric/metadata-database/deploy:main")
                     .asCompatibleSubstituteFor("postgres")
-
-    ).withDatabaseName("cerif").withUsername("postgres").withPassword("changeme").withExposedPorts(5432);
-
+    )
+            .withDatabaseName("cerif")
+            .withUsername("postgres")
+            .withPassword("changeme")
+            .withExposedPorts(5432)
+            .withStartupTimeout(Duration.ofMinutes(5))
+            .withEnv("POSTGRES_HOST_AUTH_METHOD", "md5")
+            .withCommand("postgres", "-c", "password_encryption=md5");
 
     @BeforeAll
-    static void startContainers()  {
+    static void startContainers() {
         METADATA_CATALOGUE.start();
-    }
 
-    @BeforeEach
-    void connect() throws InterruptedException {
-        new EntityManagerService.EntityManagerServiceBuilder()
-                .setPostgresqlHost(METADATA_CATALOGUE.getHost()+":"+METADATA_CATALOGUE.getMappedPort(5432))
-                .setPostgresqlDBName(METADATA_CATALOGUE.getDatabaseName())
+        dbService = new EntityManagerService.EntityManagerServiceBuilder()
+                .setConnectionString(METADATA_CATALOGUE.getJdbcUrl())
                 .setPostgresqlUsername(METADATA_CATALOGUE.getUsername())
                 .setPostgresqlPassword(METADATA_CATALOGUE.getPassword())
                 .build();
@@ -31,8 +40,11 @@ public class TestcontainersLifecycle {
 
     @AfterAll
     static void stopContainers() {
+        if (dbService != null) {
+            LOG.info("Closing EntityManagerService singleton to reset connection pool.");
+            dbService.close();
+        }
+
         METADATA_CATALOGUE.stop();
     }
-
 }
-

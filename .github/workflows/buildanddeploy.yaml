@@ -1,0 +1,226 @@
+# Workflow: Release, Push to GitHub Container Registry and Mirror to GitLab
+#
+# Triggers:
+#   - Push to main branch: Runs security scans, builds and pushes Docker image with SHA tag only
+#   - Push of a tag: Runs security scans, builds and pushes Docker image with version tag, latest tag, and SHA tag
+#   - Pull request to main: Runs security scans only (no build/push)
+#
+# Jobs:
+#   1. security-scan: Runs CodeQL analysis for Java code
+#   2. dependency-check: Scans dependencies for known vulnerabilities (fails on CVSS >= 7)
+#   3. build: Builds JAR artifact and Docker image, pushes to GitHub Container Registry (public)
+#   4. mirror: Mirrors the repository to GitLab
+
+name: "release, push to ghcr.io and mirror"
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - '*'
+  pull_request:
+    branches:
+      - main
+
+env:
+  VERSION: ${{ github.ref_type == 'tag' && github.ref_name || 'latest' }}
+  REGISTRY: ghcr.io
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: java
+
+      - name: Build for CodeQL
+        run: mvn clean compile -DskipTests
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v4
+
+  dependency-check:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Build with Maven
+        run: mvn clean package -DskipTests
+
+      - name: Run Dependency-Check
+        uses: dependency-check/Dependency-Check_Action@main
+        id: depcheck
+        env:
+          JAVA_HOME: /opt/jdk
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        with:
+          project: ${{ github.event.repository.name }}
+          path: '.'
+          format: 'SARIF'
+          out: 'reports'
+          args: >
+            --failOnCVSS 7
+            --enableRetired
+            --nvdApiKey ${{ secrets.NVD_API_KEY }}
+            --disableCentral
+
+      - name: Upload Dependency-Check results
+        uses: github/codeql-action/upload-sarif@v4
+        if: always()
+        with:
+          sarif_file: reports/
+
+  build:
+    runs-on: ubuntu-latest
+    needs: [security-scan, dependency-check]
+    if: github.event_name == 'push'
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
+      id-token: write       # Required for provenance attestation
+      attestations: write   # Required for SBOM attestation
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      # Docker/OCI image names must be lowercase
+      - name: Set lowercase image name
+        id: image-name
+        run: |
+          echo "name=$(echo 'ghcr.io/${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+          echo "owner=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+          echo "repo=$(echo '${{ github.event.repository.name }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
+      - name: Update version in pom.xml
+        run: mvn -B versions:set -DnewVersion=${{ env.VERSION }} -DgenerateBackupPoms=false
+
+      - name: Build artifact
+        run: mvn clean install -DskipTests
+
+      - name: Upload jar artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: jar-artifact
+          path: ${{ github.workspace }}/target/*.jar
+          retention-days: 1
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Tagging strategy:
+      # - On tag push: version tag (e.g., v1.0.0), latest tag, and commit SHA
+      # - On main push: commit SHA only
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.image-name.outputs.name }}
+          tags: |
+            type=raw,value=${{ env.VERSION }},enable=${{ github.ref_type == 'tag' }}
+            type=raw,value=latest,enable=${{ github.ref_type == 'tag' }}
+            type=ref,event=branch
+            type=sha,prefix=
+
+      - name: Build and Push with Attestations
+        id: build-push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          sbom: true
+          provenance: mode=max
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+
+      # Using digest to reference the exact image that was just built
+      - name: Scan Docker image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ steps.image-name.outputs.name }}@${{ steps.build-push.outputs.digest }}'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v4
+        if: always() && hashFiles('trivy-results.sarif') != ''
+        with:
+          sarif_file: 'trivy-results.sarif'
+          
+      # Login to Docker Hub (required for Docker Scout)
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          
+      - name: Run Docker Scout
+        uses: docker/scout-action@v1
+        if: github.ref_type == 'tag'  # Only on releases
+        with:
+          command: cves,recommendations
+          image: ${{ steps.image-name.outputs.name }}:${{ env.VERSION }}
+          only-severities: critical,high
+          exit-code: false  # Set to true to fail on vulnerabilities
+
+  mirror:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push'
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Mirror to GitLab
+        run: |
+          git remote add gitlab https://github:${{ secrets.GITLAB }}@epos-ci.brgm.fr/epos/${{ github.event.repository.name }}.git
+          git push --force gitlab ${{ github.ref }}

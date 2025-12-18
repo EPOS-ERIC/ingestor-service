@@ -45,7 +45,7 @@ public class BeansCreation <T extends EPOSDataModelEntity> {
             return object;
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException |
                  InvocationTargetException e) {
-            LOGGER.error(e.getLocalizedMessage());
+            //LOGGER.error(e.getLocalizedMessage());
             return null;
         }
     }
@@ -96,14 +96,14 @@ public class BeansCreation <T extends EPOSDataModelEntity> {
         try {
             method = classObject.getClass().getMethod("add" + propertyName, propertyValueClass);
         } catch (NoSuchMethodException e) {
-            LOGGER.error(e.getLocalizedMessage());
+            //LOGGER.error(e.getLocalizedMessage());
         }
 
         if (method == null) {
             try {
                 method = classObject.getClass().getMethod("set" + propertyName, propertyValueClass);
             } catch (NoSuchMethodException e) {
-                LOGGER.error(e.getLocalizedMessage());
+                //LOGGER.error(e.getLocalizedMessage());
             }
         }
 
@@ -114,13 +114,13 @@ public class BeansCreation <T extends EPOSDataModelEntity> {
                 //System.out.println("Invoking: "+propertyName+" "+propertyValue);
                 method.invoke(classObject, propertyValue);
             } catch (IllegalArgumentException |IllegalAccessException | InvocationTargetException e) {
-                LOGGER.error("ERROR Invoking [\nProperty Name: " + propertyName +
+                /*LOGGER.error("ERROR Invoking [\nProperty Name: " + propertyName +
                         "\nPropertyValue: " + propertyValue +
                         "\nPropertyClass: " + propertyValueClass +
                         "\nClass Name:" + classObject.getClass().getName() +
                         "\nMethod Name:" + method.getName() +
                         "\nExpected Parameters: " + Arrays.asList(method.getParameterTypes()).toString() + "\n]"+
-                        "\nError message: " + e.getLocalizedMessage());
+                        "\nError message: " + e.getLocalizedMessage());*/
             }
         }
     }
@@ -179,13 +179,13 @@ public class BeansCreation <T extends EPOSDataModelEntity> {
                 try {
                     method.invoke(classObject, le);
                 } catch (IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
-                    LOGGER.error("ERROR Invoking [\nProperty Name: " + propertyName +
+                    /*LOGGER.error("ERROR Invoking [\nProperty Name: " + propertyName +
                             "\nPropertyValue: " + propertyValue +
                             "\nPropertyClass: " + propertyValueClass +
                             "\nClass Name:" + classObject.getClass().getName() +
                             "\nMethod Name:" + method.getName() +
                             "\nExpected Parameters: " + Arrays.asList(method.getParameterTypes()).toString() + "\n]"+
-                            "\n Error message: " + e.getLocalizedMessage());
+                            "\n Error message: " + e.getLocalizedMessage());*/
                 }
             }
         }

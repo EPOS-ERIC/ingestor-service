@@ -10,7 +10,7 @@ import java.util.Map;
 
 public class SPARQLManager {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(OntologiesManager.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SPARQLManager.class);
 
     public static Map<String,Map<String,String>> retrieveMainEntities(Model model){
 
