@@ -69,7 +69,7 @@ public class SparqlService {
         LOGGER.info("Fuseki server started on port {}", fusekiServer.getPort());
     }
 
-    @Scheduled(fixedRate = 3600000) // Refresh every hour
+    @Scheduled(fixedRateString = "${sparql.refresh.rate:3600000}") // Refresh every hour
     public void refreshModel() {
         LOGGER.info("Refreshing RDF models");
         buildModel(EPOSVersion.V1);
