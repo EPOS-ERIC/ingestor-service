@@ -32,7 +32,7 @@
   skos:prefLabel "DOMAIN TEST" ;
   dct:title "DOMAIN TEST 1" ;
   dct:description "TCS Domain" ;
-  foaf:logo "assets/img/logo/NFO_logo.png" ;
+  foaf:logo "https://github.com/epos-eu/platform-gui-icons/blob/main/ProcServ_c.png?raw=true" ;
   foaf:homepage "https://www.epos-eu.org/tcs/near-fault-observatories" ;
   schema:color "#5e3160";
   schema:orderItemNumber "1";
@@ -62,7 +62,7 @@
        skos:prefLabel "FACILITY TEST" ;
        dct:title "FACILITY TEST" ;
        dct:description "Facility Domain" ;
-       foaf:logo "assets/img/logo/LABS_logo.png" ;
+	   foaf:logo "https://github.com/epos-eu/platform-gui-icons/blob/main/ProcServ_c.png?raw=true" ;
        #foaf:homepage "" ;
        schema:color "#27A468";
        schema:orderItemNumber "1";
