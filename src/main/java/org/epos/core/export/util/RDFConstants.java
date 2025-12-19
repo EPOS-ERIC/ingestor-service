@@ -217,6 +217,7 @@ public class RDFConstants {
         // PROV Properties
         public static final Property PROV_AGENT = ResourceFactory.createProperty(PROV_NS, "agent");
         public static final Property PROV_HAD_ROLE = ResourceFactory.createProperty(PROV_NS, "hadRole");
+        public static final Property PROV_QUALIFIED_ATTRIBUTION = ResourceFactory.createProperty(PROV_NS, "qualifiedAttribution");
 
         // DQV Properties
         public static final Property DQV_HAS_QUALITY_ANNOTATION = ResourceFactory.createProperty(DQV_NS, "hasQualityAnnotation");
@@ -237,6 +238,7 @@ public class RDFConstants {
         public static final Property SCHEMA_SOFTWARE_REQUIREMENTS = ResourceFactory.createProperty(SCHEMA_NS, "softwareRequirements");
         public static final Property SCHEMA_VERSION = ResourceFactory.createProperty(SCHEMA_NS, "version");
         public static final Property SCHEMA_OPERATING_SYSTEM = ResourceFactory.createProperty(SCHEMA_NS, "operatingSystem");
+        public static final Property SCHEMA_VARIABLE_MEASURED = ResourceFactory.createProperty(SCHEMA_NS, "variableMeasured");
 
 
         // EPOS Properties

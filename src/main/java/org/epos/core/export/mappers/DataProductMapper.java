@@ -218,8 +218,32 @@ public class DataProductMapper implements EntityMapper<DataProduct> {
 			RDFHelper.addDateLiteral(model, subject, RDFConstants.DCT_MODIFIED, entity.getModified().toLocalDate().toString());
 		}
 
-		// dcat:version, literal, 0..1
-		RDFHelper.addStringLiteral(model, subject, RDFConstants.DCAT_VERSION, entity.getVersionInfo());
+		// owl:versionInfo literal, 0..1
+		RDFHelper.addStringLiteral(model, subject, RDFConstants.OWL_VERSION_INFO, entity.getVersionInfo());
+
+		// schema:variableMeasured, literal string, 0..n
+		if (entity.getVariableMeasured() != null && !entity.getVariableMeasured().isEmpty()) {
+			for (String variableMeasured : entity.getVariableMeasured()) {
+				RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_VARIABLE_MEASURED, variableMeasured);
+			}
+		}
+
+		// TODO: check if this works
+		// prov:qualifiedAttribution, prov:Attribution, 0..1
+		if (entity.getQualifiedAttribution() != null && !entity.getQualifiedAttribution().isEmpty()) {
+			for (LinkedEntity linkedEntity : entity.getQualifiedAttribution()) {
+				EPOSDataModelEntity qualifiedAttributionEntity = entityMap.get(linkedEntity.getUid());
+				if (qualifiedAttributionEntity instanceof org.epos.eposdatamodel.Attribution) {
+					AttributionMapper qualifiedAttributionMapper = new AttributionMapper();
+					Resource qualifiedAttributionResource = qualifiedAttributionMapper.exportToV1((org.epos.eposdatamodel.Attribution) qualifiedAttributionEntity, model, entityMap, resourceCache);
+					if (qualifiedAttributionResource != null) {
+						model.add(subject, RDFConstants.PROV_QUALIFIED_ATTRIBUTION, qualifiedAttributionResource);
+					} else {
+						LOGGER.warn("Skipping invalid qualifiedAttribution for DataProduct {}", entity.getUid());
+					}
+				}
+			}
+		}
 
 		return subject;
 	}
