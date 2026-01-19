@@ -207,9 +207,6 @@ public class MetadataPopulator {
 
 		/** PREPARE PROPERTIES **/
 		exploreGraphAndCreateBeans(modelmapping, beansCreation, graph, null, classes, uidDone, selectedGroup);
-		 for(EPOSDataModelEntity eposDataModelEntity : classes){
-		 System.out.println("PREVIEW "+eposDataModelEntity);
-		 }
 
 		List<IriTemplate> templates = new ArrayList<>();
 		for (EPOSDataModelEntity eposDataModelEntity : classes) {
@@ -234,11 +231,12 @@ public class MetadataPopulator {
 
 		/** DATABASE POPULATION **/
 		for (EPOSDataModelEntity eposDataModelEntity : classes) {
+            if(status!=null) eposDataModelEntity.setStatus(status);
 			// System.out.println("[ADDING TO DATABASE] "+eposDataModelEntity);
 			try {
 				AbstractAPI api = AbstractAPI.retrieveAPI(eposDataModelEntity.getClass().getSimpleName().toUpperCase());
-				// LOGGER.debug("Ingesting -> "+eposDataModelEntity);
-				LinkedEntity le = api.create(eposDataModelEntity, status, null, null);
+                LOGGER.debug("Ingesting -> "+eposDataModelEntity);
+				LinkedEntity le = api.create(eposDataModelEntity, null, null, null);
 				returnMap.put(le.getUid(), le);
 			} catch (Exception apiCreationException) {
 				apiCreationException.printStackTrace();
