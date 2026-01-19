@@ -232,6 +232,11 @@ public class MetadataPopulator {
 		/** DATABASE POPULATION **/
 		for (EPOSDataModelEntity eposDataModelEntity : classes) {
             if(status!=null) eposDataModelEntity.setStatus(status);
+            if(eposDataModelEntity instanceof org.epos.eposdatamodel.ContactPoint) eposDataModelEntity.setStatus(StatusType.PUBLISHED);
+            if(eposDataModelEntity instanceof org.epos.eposdatamodel.Category) eposDataModelEntity.setStatus(StatusType.PUBLISHED);
+            if(eposDataModelEntity instanceof org.epos.eposdatamodel.CategoryScheme) eposDataModelEntity.setStatus(StatusType.PUBLISHED);
+            if(eposDataModelEntity instanceof org.epos.eposdatamodel.Organization) eposDataModelEntity.setStatus(StatusType.PUBLISHED);
+            if(eposDataModelEntity instanceof org.epos.eposdatamodel.Person) eposDataModelEntity.setStatus(StatusType.PUBLISHED);
 			// System.out.println("[ADDING TO DATABASE] "+eposDataModelEntity);
 			try {
 				AbstractAPI api = AbstractAPI.retrieveAPI(eposDataModelEntity.getClass().getSimpleName().toUpperCase());
