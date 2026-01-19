@@ -3,6 +3,8 @@ package org.epos.core;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
@@ -11,6 +13,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
@@ -229,9 +232,13 @@ public class MetadataPopulator {
 			}
 		}
 
-		/** DATABASE POPULATION **/
+        String salt = RandomStringUtils.randomAlphanumeric(17).toUpperCase();
+
+
+        /** DATABASE POPULATION **/
 		for (EPOSDataModelEntity eposDataModelEntity : classes) {
             if(status!=null) eposDataModelEntity.setStatus(status);
+            eposDataModelEntity.setFileProvenance(salt);
             if(eposDataModelEntity instanceof org.epos.eposdatamodel.ContactPoint) eposDataModelEntity.setStatus(StatusType.PUBLISHED);
             if(eposDataModelEntity instanceof org.epos.eposdatamodel.Category) eposDataModelEntity.setStatus(StatusType.PUBLISHED);
             if(eposDataModelEntity instanceof org.epos.eposdatamodel.CategoryScheme) eposDataModelEntity.setStatus(StatusType.PUBLISHED);
