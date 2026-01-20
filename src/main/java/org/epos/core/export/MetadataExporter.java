@@ -234,6 +234,7 @@ public class MetadataExporter {
 		model.setNsPrefix("locn", "http://www.w3.org/ns/locn#");
 		model.setNsPrefix("gsp", "http://www.opengis.net/ont/geosparql#");
 		model.setNsPrefix("dqv", "http://www.w3.org/ns/dqv#");
+		model.setNsPrefix("prov", "http://www.w3.org/ns/prov#");
 	}
 
 	private static Lang getLangForFormat(String format) {
