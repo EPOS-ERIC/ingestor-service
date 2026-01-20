@@ -61,7 +61,7 @@ public class IngestionComplexFullFileMetadataTest extends TestcontainersLifecycl
             }
         }
 
-        MetadataPopulator.startMetadataPopulation(resource.toURI().toString(), "EDM-TO-DCAT-AP", selectedGroup, StatusType.PUBLISHED);
+        MetadataPopulator.startMetadataPopulation(resource.toURI().toString(), "EDM-TO-DCAT-AP", selectedGroup, StatusType.PUBLISHED, "ingestor");
 
         // Assert Categories and schemes
         AbstractAPI categorySchemeApi = AbstractAPI.retrieveAPI(EntityNames.CATEGORYSCHEME.name());

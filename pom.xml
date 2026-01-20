@@ -153,14 +153,7 @@
 		<dependency>
 			<groupId>org.epos-eu.ics-c</groupId>
 			<artifactId>db-api</artifactId>
-			<version>3.5.10</version>
-		</dependency>
-
-		<!-- https://mvnrepository.com/artifact/commons-beanutils/commons-beanutils -->
-		<dependency>
-			<groupId>commons-beanutils</groupId>
-			<artifactId>commons-beanutils</artifactId>
-			<version>1.11.0</version>
+			<version>3.6.2</version>
 		</dependency>
 
 

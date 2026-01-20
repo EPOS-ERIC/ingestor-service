@@ -61,7 +61,7 @@ public class IngestionComplexFullFileMetadatoneTest extends TestcontainersLifecy
             }
         }
 
-        MetadataPopulator.startMetadataPopulation(resource.toURI().toString(), "EDM-TO-DCAT-AP", selectedGroup, StatusType.PUBLISHED);
+        MetadataPopulator.startMetadataPopulation(resource.toURI().toString(), "EDM-TO-DCAT-AP", selectedGroup, StatusType.PUBLISHED, "ingestor");
 
         // Assert Categories and schemes
         AbstractAPI categorySchemeApi = AbstractAPI.retrieveAPI(EntityNames.CATEGORYSCHEME.name());
@@ -146,6 +146,14 @@ public class IngestionComplexFullFileMetadatoneTest extends TestcontainersLifecy
         for (org.epos.eposdatamodel.Organization or : orgList) {
 
             System.out.println(or);
+        }
+
+        AbstractAPI att = AbstractAPI.retrieveAPI(EntityNames.ATTRIBUTION.name());
+        List<org.epos.eposdatamodel.Attribution> attList = att.retrieveAll();
+
+        for (org.epos.eposdatamodel.Attribution at : attList) {
+
+            System.out.println(at);
         }
 
     }
