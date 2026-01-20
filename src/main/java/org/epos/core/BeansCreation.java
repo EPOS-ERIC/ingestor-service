@@ -1,44 +1,33 @@
 package org.epos.core;
 
-import abstractapis.AbstractAPI;
-import commonapis.LinkedEntityAPI;
-import model.StatusType;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.jena.datatypes.BaseDatatype;
-import org.apache.jena.datatypes.xsd.XSDDateTime;
-import org.epos.api.MetadataPopulationApiController;
 import org.epos.eposdatamodel.EPOSDataModelEntity;
-import org.epos.eposdatamodel.Facility;
 import org.epos.eposdatamodel.Group;
 import org.epos.eposdatamodel.LinkedEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
-import java.time.format.DateTimeParseException;
-import java.time.temporal.ChronoField;
-import java.util.*;
+import model.StatusType;
 
 public class BeansCreation <T extends EPOSDataModelEntity> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BeansCreation.class);
 
-    public T getEPOSDataModelClass(String className, String uid, Group selectedGroup){
-        //System.out.println("GET EDM class: "+className+" "+uid);
+    public T getEPOSDataModelClass(String className, String uid, Group selectedGroup, String editorId){
         try {
             Class clazz = Class.forName("org.epos.eposdatamodel."+className);
             Constructor[] ctor = clazz.getConstructors();
             T object = (T) ctor[0].newInstance();
-            //object.setInstanceId(UUID.randomUUID().toString());
-            //object.setMetaId(UUID.randomUUID().toString());
             object.setUid(uid);
-            object.setEditorId("ingestor");
+            object.setEditorId(editorId);
             object.setFileProvenance("ingestor");
             object.setStatus(StatusType.PUBLISHED);
 
@@ -125,7 +114,7 @@ public class BeansCreation <T extends EPOSDataModelEntity> {
         }
     }
 
-    public void getEPOSDataModelPropertiesNode(EPOSDataModelEntity classObject, List<EPOSDataModelEntity> classes, Map<String, String> property, String propertyValue, Group selectedGroup) {
+    public void getEPOSDataModelPropertiesNode(EPOSDataModelEntity classObject, List<EPOSDataModelEntity> classes, Map<String, String> property, String propertyValue, Group selectedGroup, String editorId) {
 
         Class<?> propertyValueClass = propertyValue.getClass();
         String propertyName = property.get("property").substring(0, 1).toUpperCase() + property.get("property").substring(1);
@@ -143,7 +132,7 @@ public class BeansCreation <T extends EPOSDataModelEntity> {
         }
 
         if(entity==null){
-            entity = getEPOSDataModelClass(property.get("range"),propertyValue, selectedGroup);
+            entity = getEPOSDataModelClass(property.get("range"),propertyValue, selectedGroup, editorId);
         }
 
         if (entity != null) {

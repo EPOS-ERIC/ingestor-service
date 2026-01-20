@@ -47,6 +47,7 @@ public class MetadataPopulationApiController implements MetadataPopulationApi {
 			@Parameter(in = ParameterIn.QUERY, description = "metadata mapping model", required = true, schema = @Schema()) @RequestParam(value = "mapping", required = true) String mapping,
 			@Parameter(in = ParameterIn.QUERY, description = "metadata group where the resource should be placed", required = false, schema = @Schema()) @RequestParam(value = "metadataGroup", required = false) String metadataGroup,
 			@Parameter(in = ParameterIn.QUERY, description = "status to ingest the file as", required = false, schema = @Schema()) @RequestParam(value = "status", required = false, defaultValue = "PUBLISHED") StatusType status,
+			@Parameter(in = ParameterIn.QUERY, description = "editor id for the ingested entities", required = false, schema = @Schema()) @RequestParam(value = "editorId", required = false, defaultValue = "ingestor") String editorId,
 			@RequestBody(required = false) String body) {
 
 		if (!isBodyValid(body) && (path == null || path.isBlank())) {
@@ -88,9 +89,9 @@ public class MetadataPopulationApiController implements MetadataPopulationApi {
 					Map<String, LinkedEntity> result;
 					if ((path == null || path.isBlank()) && isBodyValid(body)) {
 						result = MetadataPopulator.startMetadataPopulationFromContent(body, mapping, selectedGroup,
-								status);
+								status, editorId);
 					} else {
-						result = MetadataPopulator.startMetadataPopulation(urlsingle, mapping, selectedGroup, status);
+						result = MetadataPopulator.startMetadataPopulation(urlsingle, mapping, selectedGroup, status, editorId);
 					}
 					finalIngestionResult.putAll(result);
 					LOGGER.info("[Ingestion finished] Ingested file {}", urlsingle);
@@ -106,9 +107,9 @@ public class MetadataPopulationApiController implements MetadataPopulationApi {
 					selectedGroup.getName());
 			if ((path == null || path.isBlank()) && isBodyValid(body)) {
 				finalIngestionResult = MetadataPopulator.startMetadataPopulationFromContent(body, mapping,
-						selectedGroup, status);
+						selectedGroup, status, editorId);
 			} else {
-				finalIngestionResult = MetadataPopulator.startMetadataPopulation(path, mapping, selectedGroup, status);
+				finalIngestionResult = MetadataPopulator.startMetadataPopulation(path, mapping, selectedGroup, status, editorId);
 			}
 			LOGGER.info("[Ingestion finished] Ingested file {}", path);
 		}

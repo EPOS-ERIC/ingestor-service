@@ -3,8 +3,6 @@ package org.epos.core;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
@@ -77,7 +75,7 @@ public class MetadataPopulator {
 		return model;
 	}
 
-    public static void retrievePlainValueFromInnerMethods(Model modelmapping,BeansCreation beansCreation, List<EPOSDataModelEntity> classes, Graph graph, String subject, EPOSDataModelEntity activeClass, Group selectedGroup){
+    public static void retrievePlainValueFromInnerMethods(Model modelmapping,BeansCreation beansCreation, List<EPOSDataModelEntity> classes, Graph graph, String subject, EPOSDataModelEntity activeClass, Group selectedGroup, String editorId){
         Map<String, String> prefixes = modelmapping.getNsPrefixMap();
 
         for (ExtendedIterator<Triple> it = graph.find(); it.hasNext(); ) {
@@ -96,7 +94,7 @@ public class MetadataPopulator {
                     itemValue = SPARQLManager.retrievePropertyValueInEDM(value, activeClass.getClass().getSimpleName(), modelmapping);
                     /** TODO: add recursive gathering of the element **/
                     if(itemValue == null){
-                        if(triple.getObject().isBlank()) retrievePlainValueFromInnerMethods(modelmapping, beansCreation, classes, graph, triple.getObject().toString(), activeClass, selectedGroup);
+                        if(triple.getObject().isBlank()) retrievePlainValueFromInnerMethods(modelmapping, beansCreation, classes, graph, triple.getObject().toString(), activeClass, selectedGroup, editorId);
                     } else{
                         innerValue.put("itemValue",itemValue);
                         if(triple.getObject().isLiteral()) innerValue.put("plain",triple.getObject().getLiteralValue());
@@ -104,7 +102,7 @@ public class MetadataPopulator {
                         if(innerValue.get("plain")!=null)
                             beansCreation.getEPOSDataModelPropertiesLiteral(activeClass, classes, (Map<String, String>) innerValue.get("itemValue"), innerValue.get("plain").toString());
                         if(innerValue.get("node")!=null)
-                            beansCreation.getEPOSDataModelPropertiesNode(activeClass, classes, (Map<String, String>) innerValue.get("itemValue"), innerValue.get("node").toString(), selectedGroup);
+                            beansCreation.getEPOSDataModelPropertiesNode(activeClass, classes, (Map<String, String>) innerValue.get("itemValue"), innerValue.get("node").toString(), selectedGroup, editorId);
 
                     }
                 }
@@ -113,7 +111,7 @@ public class MetadataPopulator {
     }
 
 
-    public static void exploreGraphAndCreateBeans(Model modelmapping, BeansCreation beansCreation, Graph graph, EPOSDataModelEntity activeClass, List<EPOSDataModelEntity> classes, List<String> uidDone, Group selectedGroup) {
+    public static void exploreGraphAndCreateBeans(Model modelmapping, BeansCreation beansCreation, Graph graph, EPOSDataModelEntity activeClass, List<EPOSDataModelEntity> classes, List<String> uidDone, Group selectedGroup, String editorId) {
         /** SET PREFIXES **/
         Map<String, String> prefixes = modelmapping.getNsPrefixMap();
 
@@ -149,12 +147,12 @@ public class MetadataPopulator {
                                 itemValue = SPARQLManager.retrievePropertyValueInEDM(predicate, activeClass.getClass().getSimpleName(), modelmapping);
                                 //NOTE: !triple1.getSubject().isBlank() && triple1.getObject().isBlank() &&  removed
                                 if(itemValue==null){
-                                    retrievePlainValueFromInnerMethods(modelmapping, beansCreation, classes, graph, triple1.getObject().toString(), activeClass, selectedGroup);
+                                    retrievePlainValueFromInnerMethods(modelmapping, beansCreation, classes, graph, triple1.getObject().toString(), activeClass, selectedGroup, editorId);
                                 }
                             }
 
                             if(itemValue != null) {
-                                manageItemValue(activeClass, classes, itemValue, triple1.getObject(), selectedGroup);
+                                manageItemValue(activeClass, classes, itemValue, triple1.getObject(), selectedGroup, editorId);
                             }
                         }
                     }
@@ -163,12 +161,12 @@ public class MetadataPopulator {
         }
     }
 
-    private static void manageItemValue(EPOSDataModelEntity activeClass, List<EPOSDataModelEntity> classes, Map<String, String> itemValue, Node node, Group selectedGroup) {
+    private static void manageItemValue(EPOSDataModelEntity activeClass, List<EPOSDataModelEntity> classes, Map<String, String> itemValue, Node node, Group selectedGroup, String editorId) {
         //System.out.println("["+activeClass.getClass().getSimpleName()+"] "+node.toString()+" "+itemValue);
         if (node.isURI()) {
-            beansCreation.getEPOSDataModelPropertiesNode(activeClass, classes, itemValue, node.toString(), selectedGroup);
+            beansCreation.getEPOSDataModelPropertiesNode(activeClass, classes, itemValue, node.toString(), selectedGroup, editorId);
         } else if (node.isBlank()) {
-            beansCreation.getEPOSDataModelPropertiesNode(activeClass, classes, itemValue, node.toString(), selectedGroup);
+            beansCreation.getEPOSDataModelPropertiesNode(activeClass, classes, itemValue, node.toString(), selectedGroup, editorId);
         }else if (node.isLiteral()) {
             String s = null;
             if(node.toString().contains("\"")){
@@ -187,7 +185,7 @@ public class MetadataPopulator {
     }
 
 	private static Map<String, LinkedEntity> populateMetadata(Model model, String inputMappingModel,
-			Group selectedGroup, StatusType status) {
+			Group selectedGroup, StatusType status, String editorId) {
 		/** RETRIEVE MAPPING MODEL AND MODEL FROM TTL **/
 		Map<String, LinkedEntity> returnMap = new HashMap<>();
 		Model modelmapping = retrieveModelMapping(inputMappingModel);
@@ -203,13 +201,13 @@ public class MetadataPopulator {
 		for (String uid : classesMap.keySet()) {
 			String className = SPARQLManager.retrieveEDMMappedClass(classesMap.get(uid).get("class").toString(),
 					modelmapping);
-			EPOSDataModelEntity entity = beansCreation.getEPOSDataModelClass(className, uid, selectedGroup);
+			EPOSDataModelEntity entity = beansCreation.getEPOSDataModelClass(className, uid, selectedGroup, editorId);
 			classes.add(entity);
 		}
 		classes.removeIf(Objects::isNull);
 
 		/** PREPARE PROPERTIES **/
-		exploreGraphAndCreateBeans(modelmapping, beansCreation, graph, null, classes, uidDone, selectedGroup);
+		exploreGraphAndCreateBeans(modelmapping, beansCreation, graph, null, classes, uidDone, selectedGroup, editorId);
 
 		List<IriTemplate> templates = new ArrayList<>();
 		for (EPOSDataModelEntity eposDataModelEntity : classes) {
@@ -266,13 +264,13 @@ public class MetadataPopulator {
 		return returnMap;
 	}
 
-    public static Map<String,LinkedEntity> startMetadataPopulation(String url, String inputMappingModel, Group selectedGroup, StatusType status){
+    public static Map<String,LinkedEntity> startMetadataPopulation(String url, String inputMappingModel, Group selectedGroup, StatusType status, String editorId){
 		Model model = retrieveMetadataModelFromTTL(url);
-		return populateMetadata(model, inputMappingModel, selectedGroup, status);
+		return populateMetadata(model, inputMappingModel, selectedGroup, status, editorId);
     }
 
-	public static Map<String, LinkedEntity> startMetadataPopulationFromContent(String ttlContent, String inputMappingModel, Group selectedGroup, StatusType status) {
+	public static Map<String, LinkedEntity> startMetadataPopulationFromContent(String ttlContent, String inputMappingModel, Group selectedGroup, StatusType status, String editorId) {
 		Model model = retrieveMetadataModelFromString(ttlContent);
-		return populateMetadata(model, inputMappingModel, selectedGroup, status);
+		return populateMetadata(model, inputMappingModel, selectedGroup, status, editorId);
 	}
 }

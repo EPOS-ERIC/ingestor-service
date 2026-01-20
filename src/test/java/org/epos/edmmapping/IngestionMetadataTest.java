@@ -1,29 +1,30 @@
 package org.epos.edmmapping;
 
-import abstractapis.AbstractAPI;
-import dao.EposDataModelDAO;
-import metadataapis.EntityNames;
-import model.Category;
-import model.CategoryScheme;
-import model.Ontology;
-import model.StatusType;
-import org.apache.jena.graph.Graph;
-import org.apache.jena.graph.Node;
-import org.apache.jena.graph.Triple;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.util.iterator.ExtendedIterator;
-import org.epos.core.*;
-import org.epos.eposdatamodel.*;
+import org.epos.core.BeansCreation;
+import org.epos.core.MetadataPopulator;
+import org.epos.core.OntologiesManager;
+import org.epos.core.SPARQLManager;
+import org.epos.eposdatamodel.EPOSDataModelEntity;
+import org.epos.eposdatamodel.LinkedEntity;
+import org.epos.eposdatamodel.User;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.*;
-
-import static org.junit.jupiter.api.Assertions.*;
+import abstractapis.AbstractAPI;
+import dao.EposDataModelDAO;
+import metadataapis.EntityNames;
+import model.Ontology;
+import model.StatusType;
 
 public class IngestionMetadataTest extends TestcontainersLifecycle {
 
@@ -83,7 +84,7 @@ public class IngestionMetadataTest extends TestcontainersLifecycle {
 
         for(String uid : classesMap.keySet()){
             String className = SPARQLManager.retrieveEDMMappedClass(classesMap.get(uid).get("class").toString(), modelmapping);
-            classes.add(beansCreation.getEPOSDataModelClass(className,uid, null));
+            classes.add(beansCreation.getEPOSDataModelClass(className,uid, null, "ingestor"));
         }
 
         System.out.println(classes);
@@ -101,7 +102,7 @@ public class IngestionMetadataTest extends TestcontainersLifecycle {
 
         String metadataURL = "https://raw.githubusercontent.com/epos-eu/EPOS-DCAT-AP/EPOS-DCAT-AP-shapes/examples/EPOS-DCAT-AP_metadata_template.ttl";
 
-        Map<String, LinkedEntity> returnMap = MetadataPopulator.startMetadataPopulation(metadataURL, "EDM-TO-DCAT-AP", null, StatusType.PUBLISHED);
+        Map<String, LinkedEntity> returnMap = MetadataPopulator.startMetadataPopulation(metadataURL, "EDM-TO-DCAT-AP", null, StatusType.PUBLISHED, "ingestor");
 
         System.out.println(returnMap);
 
