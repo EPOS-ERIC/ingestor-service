@@ -52,7 +52,7 @@ public class IngestionComplexFromFileMetadataTest extends TestcontainersLifecycl
             throw new IllegalArgumentException("file not found!");
         }
 
-        MetadataPopulator.startMetadataPopulation(resource.toURI().toString(), "EDM-TO-DCAT-AP", null, StatusType.PUBLISHED);
+        MetadataPopulator.startMetadataPopulation(resource.toURI().toString(), "EDM-TO-DCAT-AP", null, StatusType.PUBLISHED, "ingestor");
 
         AbstractAPI categorySchemeApi = AbstractAPI.retrieveAPI(EntityNames.CATEGORYSCHEME.name());
         AbstractAPI categoryApi = AbstractAPI.retrieveAPI(EntityNames.CATEGORY.name());
@@ -90,7 +90,7 @@ public class IngestionComplexFromFileMetadataTest extends TestcontainersLifecycl
             throw new IllegalArgumentException("file not found!");
         }
 
-        MetadataPopulator.startMetadataPopulation(resource.toURI().toString(), "EDM-TO-DCAT-AP", null, StatusType.PUBLISHED);
+        MetadataPopulator.startMetadataPopulation(resource.toURI().toString(), "EDM-TO-DCAT-AP", null, StatusType.PUBLISHED, "ingestor");
 
         AbstractAPI organizationAPI = AbstractAPI.retrieveAPI(EntityNames.ORGANIZATION.name());
 
@@ -114,7 +114,7 @@ public class IngestionComplexFromFileMetadataTest extends TestcontainersLifecycl
             throw new IllegalArgumentException("file not found!");
         }
 
-        MetadataPopulator.startMetadataPopulation(resource.toURI().toString(), "EDM-TO-DCAT-AP", null, StatusType.PUBLISHED);
+        MetadataPopulator.startMetadataPopulation(resource.toURI().toString(), "EDM-TO-DCAT-AP", null, StatusType.PUBLISHED, "ingestor");
 
         AbstractAPI dataproductAPI = AbstractAPI.retrieveAPI(EntityNames.DATAPRODUCT.name());
 
