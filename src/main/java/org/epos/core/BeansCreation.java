@@ -5,6 +5,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -42,7 +43,7 @@ public class BeansCreation <T extends EPOSDataModelEntity> {
     public void getEPOSDataModelPropertiesLiteral(EPOSDataModelEntity classObject, List<EPOSDataModelEntity> classes, Map<String, String> property, Object propertyValue) {
         Class<?> propertyValueClass = propertyValue.getClass();
         String propertyName = property.get("property").substring(0, 1).toUpperCase() + property.get("property").substring(1);
-        //System.out.println("PRE DEBUG: " + classObject.getClass().getName() + " " + propertyValueClass + " " + propertyValue.getClass() + " " + propertyName+" "+propertyValue);
+        //System.out.println("PRE DEBUG LITERAL: " + classObject.getClass().getName() + " " + propertyValueClass + " " + propertyValue.getClass() + " " + propertyName+" "+propertyValue);
 
         Method method = null;
         LinkedEntity le = null;
@@ -118,7 +119,7 @@ public class BeansCreation <T extends EPOSDataModelEntity> {
 
         Class<?> propertyValueClass = propertyValue.getClass();
         String propertyName = property.get("property").substring(0, 1).toUpperCase() + property.get("property").substring(1);
-        //System.out.println("PRE DEBUG: " + property.get("range") +" " + propertyValueClass + " " + propertyValue.getClass() + " " + propertyName + " "+ propertyValue);
+        //System.out.println("PRE DEBUG NODE: " + property.get("range") +" " + propertyValueClass + " " + propertyValue.getClass() + " " + propertyName + " "+ propertyValue);
 
         Method method = null;
         LinkedEntity le = null;
@@ -141,7 +142,7 @@ public class BeansCreation <T extends EPOSDataModelEntity> {
                 le.setUid(entity.getUid());
                 le.setEntityType(entity.getClass().getSimpleName().toUpperCase());
             } catch (Exception skip) {
-                //LOGGER.error(skip.getLocalizedMessage());
+                // LOGGER.error(skip.getLocalizedMessage());
             }
             propertyValueClass = LinkedEntity.class;
 
@@ -160,7 +161,6 @@ public class BeansCreation <T extends EPOSDataModelEntity> {
             }
 
             if(method == null && le!=null && property.get("range").equals("string")){
-                    //System.out.println("[** OMG **] EXCEPTIONALLY IS A STRING!!");
                     propertyValue = le.getUid();
                     getEPOSDataModelPropertiesLiteral(classObject,classes,property,propertyValue);
             }

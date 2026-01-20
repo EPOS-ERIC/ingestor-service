@@ -148,6 +148,14 @@ public class IngestionComplexFullFileMetadatoneTest extends TestcontainersLifecy
             System.out.println(or);
         }
 
+        AbstractAPI att = AbstractAPI.retrieveAPI(EntityNames.ATTRIBUTION.name());
+        List<org.epos.eposdatamodel.Attribution> attList = att.retrieveAll();
+
+        for (org.epos.eposdatamodel.Attribution at : attList) {
+
+            System.out.println(at);
+        }
+
     }
 
 }
