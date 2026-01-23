@@ -70,6 +70,7 @@ public class IngestionComplexTsuFileMetadataTest extends TestcontainersLifecycle
         List<org.epos.eposdatamodel.Category> categoryList = categoryApi.retrieveAll();
         List<org.epos.eposdatamodel.CategoryScheme> categorySchemeList = categorySchemeApi.retrieveAll();
 
+        System.out.println("CATEGORY LIST: "+categoryList);
 
         assertAll(
                 () -> assertEquals(1, categoryList.size()),

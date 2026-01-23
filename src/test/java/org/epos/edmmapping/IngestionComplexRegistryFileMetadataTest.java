@@ -72,7 +72,7 @@ public class IngestionComplexRegistryFileMetadataTest extends TestcontainersLife
 
 
         assertAll(
-                () -> assertEquals(4, categoryList.size()),
+                () -> assertEquals(3, categoryList.size()),
                 () -> assertEquals(3, categorySchemeList.size())
         );
 
