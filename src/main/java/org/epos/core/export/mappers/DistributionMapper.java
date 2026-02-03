@@ -74,7 +74,7 @@ public class DistributionMapper implements EntityMapper<Distribution> {
 		}
 
 		// dct:format, dct:MediaTypeOrExtent, 0..1
-		RDFHelper.addStringLiteral(model, subject, RDFConstants.DCT_FORMAT, entity.getFormat());
+		RDFHelper.addURILiteral(model, subject, RDFConstants.DCT_FORMAT, entity.getFormat());
 
 		// dct:license, dct:LicenseDocument, 0..1
 		RDFHelper.addURILiteral(model, subject, RDFConstants.DCT_LICENSE, entity.getLicence());
@@ -93,7 +93,7 @@ public class DistributionMapper implements EntityMapper<Distribution> {
 
 		// dcat:byteSize, xsd:nonNegativeInteger, 0..1
 		if (entity.getByteSize() != null) {
-			RDFHelper.addTypedLiteral(model, subject, RDFConstants.DCAT_BYTE_SIZE, entity.getByteSize().toString(), XSDDatatype.XSDnonNegativeInteger);
+			RDFHelper.addTypedLiteral(model, subject, RDFConstants.DCAT_BYTE_SIZE, entity.getByteSize().toString(), XSDDatatype.XSDdecimal);
 		}
 
 		// dcat:downloadURL, rdfs:Resource, 0..n

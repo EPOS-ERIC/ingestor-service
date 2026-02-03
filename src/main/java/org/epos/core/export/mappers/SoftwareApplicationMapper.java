@@ -82,12 +82,9 @@ public class SoftwareApplicationMapper implements EntityMapper<SoftwareApplicati
         // schema:softwareVersion, literal, 0..1
         RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_SOFTWARE_VERSION, entity.getSoftwareVersion());
 
-        if (entity.getKeywords() != null && !entity.getKeywords().isEmpty()) {
-            String[] keywords = entity.getKeywords().split(",");
-            for (String keyword : keywords) {
-                RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_KEYWORDS, keyword.trim());
-            }
-        }
+		if (entity.getKeywords() != null) {
+			RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_KEYWORDS, entity.getKeywords().replace("\t", " "));
+		}
 
         // dcat:theme, skos:Concept, 0..n
         if (entity.getCategory() != null && !entity.getCategory().isEmpty()) {

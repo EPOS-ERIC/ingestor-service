@@ -62,7 +62,7 @@ public class CategorySchemeMapper implements EntityMapper<CategoryScheme> {
         RDFHelper.addURILiteral(model, subject, RDFConstants.FOAF_HOMEPAGE, entity.getHomepage());
 
         // foaf:logo, literal, 0..1
-        RDFHelper.addURILiteral(model, subject, RDFConstants.FOAF_LOGO, entity.getLogo());
+        RDFHelper.addStringLiteral(model, subject, RDFConstants.FOAF_LOGO, entity.getLogo());
 
         // schema:orderItemNumber, literal, 0..1
         RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_ORDER_ITEM_NUMBER, entity.getOrderitemnumber());

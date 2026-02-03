@@ -28,12 +28,12 @@ public class AttributionMapper implements EntityMapper<Attribution> {
 
 		// prov:agent, prov:Agent, 0..1
 		if (entity.getAgent() != null) {
-			RDFHelper.addURILiteral(model, subject, RDFConstants.PROV_AGENT, entity.getAgent().getUid());
+			RDFHelper.addURI(model, subject, RDFConstants.PROV_AGENT, entity.getAgent().getUid());
 		}
 
 		// prov:hadRole, prov:Role, 0..1
 		if (entity.getRole() != null && !entity.getRole().isEmpty()) {
-			RDFHelper.addURILiteral(model, subject, RDFConstants.PROV_HAD_ROLE, entity.getRole().get(0));
+			RDFHelper.addStringLiteral(model, subject, RDFConstants.DCAT_HAD_ROLE, entity.getRole().get(0));
 		}
 
 		return subject;

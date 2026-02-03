@@ -95,12 +95,13 @@ public class FacilityMapper implements EntityMapper<Facility> {
             }
         }
 
-        if (entity.getKeywords() != null && !entity.getKeywords().isEmpty()) {
-            String[] keywords = entity.getKeywords().split(",");
-            for (String keyword : keywords) {
-                RDFHelper.addStringLiteral(model, subject, RDFConstants.DCAT_KEYWORD, keyword.trim());
-            }
-        }
+		// dcat:keyword, literal, 0..n
+		if (entity.getKeywords() != null && !entity.getKeywords().isEmpty()) {
+			var keywords = entity.getKeywords();
+			for (String keyword : keywords) {
+				RDFHelper.addStringLiteral(model, subject, RDFConstants.DCAT_KEYWORD, keyword.trim());
+			}
+		}
 
         return subject;
     }

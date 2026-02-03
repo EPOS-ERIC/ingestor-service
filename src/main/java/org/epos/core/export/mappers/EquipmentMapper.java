@@ -84,7 +84,7 @@ public class EquipmentMapper implements EntityMapper<Equipment> {
 
 		// dcat:keyword, literal, 0..n
 		if (entity.getKeywords() != null && !entity.getKeywords().isEmpty()) {
-			String[] keywords = entity.getKeywords().split(",");
+			var keywords = entity.getKeywords();
 			for (String keyword : keywords) {
 				RDFHelper.addStringLiteral(model, subject, RDFConstants.DCAT_KEYWORD, keyword.trim());
 			}

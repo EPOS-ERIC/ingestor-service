@@ -188,13 +188,9 @@ public class WebServiceMapper implements EntityMapper<WebService> {
             }
         }
 
-        // schema:keywords, literal, 0..n
-        if (entity.getKeywords() != null && !entity.getKeywords().isEmpty()) {
-            String[] keywords = entity.getKeywords().split(",");
-            for (String keyword : keywords) {
-                RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_KEYWORDS, keyword.trim());
-            }
-        }
+		if (entity.getKeywords() != null) {
+			RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_KEYWORDS, entity.getKeywords().replace("\t", " "));
+		}
 
         return subject;
     }

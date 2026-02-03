@@ -66,12 +66,7 @@ public class SoftwareSourceCodeMapper implements EntityMapper<SoftwareSourceCode
             }
         }
 
-        if (entity.getKeywords() != null && !entity.getKeywords().isEmpty()) {
-            String[] keywords = entity.getKeywords().split(",");
-            for (String keyword : keywords) {
-                RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_KEYWORDS, keyword.trim());
-            }
-        }
+        RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_KEYWORDS, entity.getKeywords());
 
         if (entity.getContactPoint() != null && !entity.getContactPoint().isEmpty()) {
             for (LinkedEntity linkedEntity : entity.getContactPoint()) {

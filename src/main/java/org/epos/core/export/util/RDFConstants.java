@@ -41,7 +41,7 @@ public class RDFConstants {
         public static final Resource FOAF_AGENT = ResourceFactory.createResource(FOAF_NS + "Agent");
         public static final Resource SCHEMA_ORGANIZATION = ResourceFactory.createResource(SCHEMA_NS + "Organization");
         public static final Resource SCHEMA_PERSON = ResourceFactory.createResource(SCHEMA_NS + "Person");
-        public static final Property SCHEMA_CONTACT_POINT = ResourceFactory.createProperty(SCHEMA_NS, "ContactPoint");
+        public static final Property SCHEMA_CONTACT_POINT_CLASS = ResourceFactory.createProperty(SCHEMA_NS, "ContactPoint");
         public static final Resource SCHEMA_DEVICE = ResourceFactory.createResource(SCHEMA_NS + "Device");
         public static final Resource SCHEMA_SOFTWARE_APPLICATION = ResourceFactory.createResource(SCHEMA_NS + "SoftwareApplication");
         public static final Resource SCHEMA_QUANTITATIVE_VALUE = ResourceFactory.createResource(SCHEMA_NS + "QuantitativeValue");
@@ -84,8 +84,8 @@ public class RDFConstants {
         public static final Property DCAT_BBOX = ResourceFactory.createProperty(DCAT_NS, "bbox");
         public static final Property DCAT_START_DATE = ResourceFactory.createProperty(DCAT_NS, "startDate");
         public static final Property DCAT_END_DATE = ResourceFactory.createProperty(DCAT_NS, "endDate");
-        public static final Property DCAT_ENDPOINT_DESCRIPTION = ResourceFactory.createProperty(DCAT_NS,
-                        "endpointDescription");
+        public static final Property DCAT_ENDPOINT_DESCRIPTION = ResourceFactory.createProperty(DCAT_NS, "endpointDescription");
+        public static final Property DCAT_HAD_ROLE = ResourceFactory.createProperty(DCAT_NS, "hadRole");
 
         // Dublin Core Terms Properties
         public static final Property DCT_IDENTIFIER = ResourceFactory.createProperty(DCT_NS, "identifier");
@@ -165,6 +165,7 @@ public class RDFConstants {
         public static final Property SCHEMA_FUNDER = ResourceFactory.createProperty(SCHEMA_NS, "funder");
         public static final Property SCHEMA_MAINTAINER = ResourceFactory.createProperty(SCHEMA_NS, "maintainer");
         public static final Property SCHEMA_PUBLISHER = ResourceFactory.createProperty(SCHEMA_NS, "publisher");
+        public static final Property SCHEMA_CONTACT_POINT = ResourceFactory.createProperty(SCHEMA_NS, "contactPoint");
 
         // SKOS Properties
         public static final Property SKOS_PREF_LABEL = ResourceFactory.createProperty(SKOS_NS, "prefLabel");

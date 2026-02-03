@@ -50,6 +50,7 @@ import org.slf4j.LoggerFactory;
 
 import abstractapis.AbstractAPI;
 import metadataapis.EntityNames;
+import model.StatusType;
 
 public class MetadataExporter {
 
@@ -107,7 +108,7 @@ public class MetadataExporter {
 		}
 
 		if (version == null) {
-			version = EPOSVersion.V3;
+			version = EPOSVersion.V1;
 		}
 
 		if (ids != null && !ids.isEmpty() && entityType == null) {
@@ -197,6 +198,8 @@ public class MetadataExporter {
 
 			content = cleanupPrefixes(content);
 
+			content = cleanupFiles(content);
+
 			return content;
 
 		} catch (IllegalArgumentException e) {
@@ -210,7 +213,6 @@ public class MetadataExporter {
 
 	private static void setNamespacePrefixes(Model model) {
 		model.setNsPrefix("adms", "http://www.w3.org/ns/adms#");
-		model.setNsPrefix("dash", "http://datashapes.org/dash#");
 		model.setNsPrefix("dc", "http://purl.org/dc/elements/1.1/");
 		model.setNsPrefix("dcat", "http://www.w3.org/ns/dcat#");
 		model.setNsPrefix("dct", "http://purl.org/dc/terms/");
@@ -218,23 +220,20 @@ public class MetadataExporter {
 		model.setNsPrefix("foaf", "http://xmlns.com/foaf/0.1/");
 		model.setNsPrefix("cnt", "http://www.w3.org/2011/content#");
 		model.setNsPrefix("oa", "http://www.w3.org/ns/oa#");
-		model.setNsPrefix("org", "http://www.w3.org/ns/org#");
 		model.setNsPrefix("owl", "http://www.w3.org/2002/07/owl#");
 		model.setNsPrefix("rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#");
 		model.setNsPrefix("rdfs", "http://www.w3.org/2000/01/rdf-schema#");
 		model.setNsPrefix("schema", "http://schema.org/");
-		model.setNsPrefix("sh", "http://www.w3.org/ns/shacl#");
 		model.setNsPrefix("skos", "http://www.w3.org/2004/02/skos/core#");
-		model.setNsPrefix("spdx", "http://spdx.org/rdf/terms#");
 		model.setNsPrefix("vcard", "http://www.w3.org/2006/vcard/ns#");
 		model.setNsPrefix("hydra", "http://www.w3.org/ns/hydra/core#");
 		model.setNsPrefix("xsd", "http://www.w3.org/2001/XMLSchema#");
-		model.setNsPrefix("geo", "http://www.w3.org/2003/01/geo/wgs84_pos#");
 		model.setNsPrefix("http", "http://www.w3.org/2006/http#");
 		model.setNsPrefix("locn", "http://www.w3.org/ns/locn#");
 		model.setNsPrefix("gsp", "http://www.opengis.net/ont/geosparql#");
 		model.setNsPrefix("dqv", "http://www.w3.org/ns/dqv#");
 		model.setNsPrefix("prov", "http://www.w3.org/ns/prov#");
+		model.setNsPrefix("rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#");
 	}
 
 	private static Lang getLangForFormat(String format) {
@@ -264,6 +263,13 @@ public class MetadataExporter {
 		return content;
 	}
 
+	private static String cleanupFiles(String content) {
+		if (content == null) {
+			return null;
+		}
+		return content.replace("file:///", "");
+	}
+
 	private static List<EPOSDataModelEntity> retrieveEntities(EntityNames entityType, List<String> ids) {
 		try {
 			LOGGER.debug("Retrieving API for entity type '{}'", entityType.name());
@@ -275,6 +281,7 @@ public class MetadataExporter {
 				entities = ids.stream()
 						.map(id -> {
 							LOGGER.debug("Retrieving entity with ID: {}", id);
+							// TODO: update this with retrievebyuidusingstatus (will be a list)
 							return (EPOSDataModelEntity) api.retrieveByUID(id);
 						})
 						.filter(Objects::nonNull)
@@ -282,7 +289,7 @@ public class MetadataExporter {
 				LOGGER.debug("Retrieved {} entities out of {} requested IDs", entities.size(), ids.size());
 			} else {
 				LOGGER.debug("Retrieving all entities of type '{}'", entityType);
-				entities = (List<EPOSDataModelEntity>) api.retrieveAll();
+				entities = (List<EPOSDataModelEntity>) api.retrieveAllWithStatus(StatusType.PUBLISHED);
 				LOGGER.debug("Retrieved {} entities from retrieveAll()", entities.size());
 			}
 

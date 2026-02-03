@@ -80,7 +80,7 @@ public class PersonMapper implements EntityMapper<Person> {
         // dcat:contactPoint or schema:contactPoint, schema:ContactPoint, 0..n
         if (entity.getContactPoint() != null && !entity.getContactPoint().isEmpty()) {
             for (LinkedEntity linked : entity.getContactPoint()) {
-                model.add(subject, RDFConstants.DCAT_CONTACT_POINT, model.createResource(linked.getUid()));
+                model.add(subject, RDFConstants.SCHEMA_CONTACT_POINT, model.createResource(linked.getUid()));
             }
         }
 

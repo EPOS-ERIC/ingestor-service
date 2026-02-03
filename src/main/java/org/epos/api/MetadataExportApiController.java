@@ -34,7 +34,7 @@ public class MetadataExportApiController implements MetadataExportApi {
 					"turtle",
 					"json-ld" })) @RequestParam(value = "format", required = false, defaultValue = "turtle") String format,
 			@Parameter(in = ParameterIn.QUERY, description = "specific entity IDs to export (optional)", required = false, schema = @Schema()) @RequestParam(value = "ids", required = false) List<String> ids,
-			@Parameter(in = ParameterIn.QUERY, description = "EPOS-DCAT-AP version (optional, default: V3)", required = false, schema = @Schema()) @RequestParam(value = "version", required = false, defaultValue = "V3") EPOSVersion version) {
+			@Parameter(in = ParameterIn.QUERY, description = "EPOS-DCAT-AP version (optional, default: V1)", required = false, schema = @Schema()) @RequestParam(value = "version", required = false, defaultValue = "V1") EPOSVersion version) {
 
 		// Validation
 		if (format != null && !format.matches("(?i)(turtle|json-ld)")) {
