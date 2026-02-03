@@ -237,22 +237,31 @@ public class MetadataPopulator {
 		for (EPOSDataModelEntity eposDataModelEntity : classes) {
             if(status!=null) eposDataModelEntity.setStatus(status);
             eposDataModelEntity.setFileProvenance(salt);
-            if(eposDataModelEntity instanceof org.epos.eposdatamodel.ContactPoint) eposDataModelEntity.setStatus(StatusType.PUBLISHED);
             if(eposDataModelEntity instanceof org.epos.eposdatamodel.Category) eposDataModelEntity.setStatus(StatusType.PUBLISHED);
             if(eposDataModelEntity instanceof org.epos.eposdatamodel.CategoryScheme) eposDataModelEntity.setStatus(StatusType.PUBLISHED);
             if(eposDataModelEntity instanceof org.epos.eposdatamodel.Organization) eposDataModelEntity.setStatus(StatusType.PUBLISHED);
+            if(eposDataModelEntity instanceof org.epos.eposdatamodel.ContactPoint) eposDataModelEntity.setStatus(StatusType.PUBLISHED);
             if(eposDataModelEntity instanceof org.epos.eposdatamodel.Person) eposDataModelEntity.setStatus(StatusType.PUBLISHED);
-			// System.out.println("[ADDING TO DATABASE] "+eposDataModelEntity);
-			try {
-				AbstractAPI api = AbstractAPI.retrieveAPI(eposDataModelEntity.getClass().getSimpleName().toUpperCase());
-                LOGGER.debug("Ingesting -> "+eposDataModelEntity);
-				LinkedEntity le = api.create(eposDataModelEntity, null, null, null);
-				returnMap.put(le.getUid(), le);
-			} catch (Exception apiCreationException) {
-				apiCreationException.printStackTrace();
-				LOGGER.error("[ERROR] ON: " + eposDataModelEntity.toString() + "\n[EXCEPTION]: "
-						+ apiCreationException.getLocalizedMessage());
-			}
+            if((eposDataModelEntity instanceof  org.epos.eposdatamodel.Category ||
+                    eposDataModelEntity instanceof  org.epos.eposdatamodel.CategoryScheme ||
+                    eposDataModelEntity instanceof  org.epos.eposdatamodel.Organization ||
+                    eposDataModelEntity instanceof  org.epos.eposdatamodel.ContactPoint ||
+                    eposDataModelEntity instanceof  org.epos.eposdatamodel.Person)
+                    && status!=StatusType.PUBLISHED) {
+                LOGGER.debug("Skipping ingestion cause of already PUBLISHED information  -> " + eposDataModelEntity);
+            }
+            else {
+                try {
+                    AbstractAPI api = AbstractAPI.retrieveAPI(eposDataModelEntity.getClass().getSimpleName().toUpperCase());
+                    LOGGER.debug("Ingesting -> " + eposDataModelEntity);
+                    LinkedEntity le = api.create(eposDataModelEntity, null, null, null);
+                    returnMap.put(le.getUid(), le);
+                } catch (Exception apiCreationException) {
+                    apiCreationException.printStackTrace();
+                    LOGGER.error("[ERROR] ON: " + eposDataModelEntity.toString() + "\n[EXCEPTION]: "
+                            + apiCreationException.getLocalizedMessage());
+                }
+            }
 		}
 
 		for (Map.Entry<String, LinkedEntity> uid : returnMap.entrySet()) {

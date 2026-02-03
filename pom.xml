@@ -153,9 +153,8 @@
 		<dependency>
 			<groupId>org.epos-eu.ics-c</groupId>
 			<artifactId>db-api</artifactId>
-			<version>3.6.5</version>
+			<version>4.2.25</version>
 		</dependency>
-
 
 		<!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter -->
 		<dependency>

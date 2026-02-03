@@ -40,6 +40,10 @@
 #
 #   -------------------------------- Datasets --------------------------------
 #
+<category:theeuromediterraneansubmarelslidedatabaseemss21> a skos:Concept;
+				skos:prefLabel "CATEGORY TEST 1";
+				skos:definition "TCS Subdomain";
+.
 
 <https://ls3gp.icm.csic.es/?page_id=553> a dcat:Dataset;
 	dct:title "Euro-Mediterranean Submarine landSlide database (EMSS21) ";
