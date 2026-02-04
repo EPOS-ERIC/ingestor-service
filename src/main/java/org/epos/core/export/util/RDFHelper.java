@@ -44,6 +44,16 @@ public class RDFHelper {
     }
 
     /**
+     * Adds a typed string literal property to a resource.
+     * Uses xsd:string datatype. Does nothing if value is null. If the value is empty it is still added
+     */
+    public static void addStringLiteralEmpty(Model model, Resource subject, Property property, String value) {
+        if (value != null) {
+            model.add(subject, property, model.createTypedLiteral(value, XSDDatatype.XSDstring));
+        }
+    }
+
+    /**
      * Adds a typed boolean literal property to a resource.
      * Does nothing if value is null.
      */

@@ -45,7 +45,7 @@ public class MappingMapper implements EntityMapper<Mapping> {
         RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_VALUE_PATTERN, entity.getValuePattern());
 
         // schema:defaultValue, literal, 0..1
-        RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_DEFAULT_VALUE, entity.getDefaultValue());
+        RDFHelper.addStringLiteralEmpty(model, subject, RDFConstants.SCHEMA_DEFAULT_VALUE, entity.getDefaultValue());
 
         // schema:minValue, literal, 0..1
         RDFHelper.addStringLiteral(model, subject, RDFConstants.SCHEMA_MIN_VALUE, entity.getMinValue());
