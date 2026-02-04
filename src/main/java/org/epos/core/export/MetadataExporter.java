@@ -16,7 +16,10 @@ import java.util.stream.Collectors;
 
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.epos.core.export.mappers.AddressMapper;
@@ -191,6 +194,11 @@ public class MetadataExporter {
 			LOGGER.debug("Converted {} entities to RDF triples", rootEntities.size());
 			LOGGER.debug("RDF model now has {} statements", rdfModel.size());
 
+			if (ids != null && !ids.isEmpty()) {
+				rdfModel = filterModelByReachability(rdfModel, ids);
+				LOGGER.debug("Filtered RDF model now has {} statements", rdfModel.size());
+			}
+
 			StringWriter writer = new StringWriter();
 			Lang lang = getLangForFormat(format);
 			RDFDataMgr.write(writer, rdfModel, lang);
@@ -268,6 +276,44 @@ public class MetadataExporter {
 			return null;
 		}
 		return content.replace("file:///", "");
+	}
+
+	private static Model filterModelByReachability(Model model, List<String> rootIds) {
+		Model filteredModel = ModelFactory.createDefaultModel();
+		filteredModel.setNsPrefixes(model.getNsPrefixMap());
+		filteredModel.removeNsPrefix("rdf");
+
+		Set<Resource> visited = new HashSet<>();
+		Queue<Resource> queue = new LinkedList<>();
+
+		for (String id : rootIds) {
+			if (id == null || id.trim().isEmpty()) {
+				continue;
+			}
+			Resource root = model.createResource(id);
+			if (visited.add(root)) {
+				queue.add(root);
+			}
+		}
+
+		while (!queue.isEmpty()) {
+			Resource current = queue.poll();
+			StmtIterator iterator = model.listStatements(current, null, (RDFNode) null);
+			while (iterator.hasNext()) {
+				Statement statement = iterator.nextStatement();
+				filteredModel.add(statement);
+				RDFNode object = statement.getObject();
+				if (object.isResource()) {
+					Resource objectResource = object.asResource();
+					if (visited.add(objectResource)) {
+						queue.add(objectResource);
+					}
+				}
+			}
+			iterator.close();
+		}
+
+		return filteredModel;
 	}
 
 	private static List<EPOSDataModelEntity> retrieveEntities(EntityNames entityType, List<String> ids) {
