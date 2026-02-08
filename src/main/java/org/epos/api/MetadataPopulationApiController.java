@@ -3,11 +3,11 @@ package org.epos.api;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
 
+import jakarta.annotation.Generated;
 import org.epos.core.MetadataPopulator;
 import org.epos.eposdatamodel.Group;
 import org.epos.eposdatamodel.LinkedEntity;
@@ -26,7 +26,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import model.StatusType;
 import usermanagementapis.UserGroupManagementAPI;
 
-@jakarta.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2021-10-12T08:15:11.660Z[GMT]")
+@Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2021-10-12T08:15:11.660Z[GMT]")
 @RestController
 public class MetadataPopulationApiController implements MetadataPopulationApi {
 
@@ -64,14 +64,22 @@ public class MetadataPopulationApiController implements MetadataPopulationApi {
 		}
 
 		try {
-			metadataGroup = java.net.URLDecoder.decode(metadataGroup, StandardCharsets.UTF_8.name());
+			metadataGroup = URLDecoder.decode(metadataGroup, StandardCharsets.UTF_8.name());
 		} catch (UnsupportedEncodingException e) {
 			LOGGER.error("[Error] Error decoding groupname {}", e.getLocalizedMessage());
 		}
 
-		Group selectedGroup = UserGroupManagementAPI.retrieveGroupByName(metadataGroup);
-		if (selectedGroup == null) {
-			selectedGroup = UserGroupManagementAPI.retrieveGroupByName("ALL");
+		List<Group> selectedGroup = new ArrayList<>();
+
+		if (metadataGroup.equals("*")){
+			for(Group group : UserGroupManagementAPI.retrieveAllGroups()){
+				selectedGroup.add(group);
+			}
+		}
+		else selectedGroup.add(UserGroupManagementAPI.retrieveGroupByName(metadataGroup));
+		
+		if (selectedGroup.isEmpty()) {
+			selectedGroup.add(UserGroupManagementAPI.retrieveGroupByName("ALL"));
 		}
 
 		boolean multiline = type.equals("single") ? false : true;
@@ -85,7 +93,7 @@ public class MetadataPopulationApiController implements MetadataPopulationApi {
 				while (s.hasNextLine()) {
 					String urlsingle = s.nextLine();
 					LOGGER.info("[Ingestion initialized] Ingesting file {} using mapping {} in the group {}", urlsingle,
-							mapping, selectedGroup.getName());
+							mapping, selectedGroup);
 					Map<String, LinkedEntity> result;
 					if ((path == null || path.isBlank()) && isBodyValid(body)) {
 						result = MetadataPopulator.startMetadataPopulationFromContent(body, mapping, selectedGroup,
@@ -104,7 +112,7 @@ public class MetadataPopulationApiController implements MetadataPopulationApi {
 
 		} else {
 			LOGGER.info("[Ingestion initialized] Ingesting file {} using mapping {} in the group {}", path, mapping,
-					selectedGroup.getName());
+					selectedGroup);
 			if ((path == null || path.isBlank()) && isBodyValid(body)) {
 				finalIngestionResult = MetadataPopulator.startMetadataPopulationFromContent(body, mapping,
 						selectedGroup, status, editorId);

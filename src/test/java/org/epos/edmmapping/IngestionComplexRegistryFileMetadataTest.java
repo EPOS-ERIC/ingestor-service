@@ -16,6 +16,7 @@ import usermanagementapis.UserGroupManagementAPI;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -53,11 +54,11 @@ public class IngestionComplexRegistryFileMetadataTest extends TestcontainersLife
             throw new IllegalArgumentException("file not found!");
         }
 
-        Group selectedGroup = null;
+        List<Group> selectedGroup = new ArrayList<>();
 
         for(Group group : UserGroupManagementAPI.retrieveAllGroups()){
             if(group.getName().equals("ALL")){
-                selectedGroup = group;
+                selectedGroup.add(group);
             }
         }
 
@@ -72,7 +73,7 @@ public class IngestionComplexRegistryFileMetadataTest extends TestcontainersLife
 
 
         assertAll(
-                () -> assertEquals(3, categoryList.size()),
+                () -> assertEquals(4, categoryList.size()),
                 () -> assertEquals(3, categorySchemeList.size())
         );
 

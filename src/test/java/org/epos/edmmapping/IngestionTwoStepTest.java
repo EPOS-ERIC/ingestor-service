@@ -16,6 +16,8 @@ import usermanagementapis.UserGroupManagementAPI;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -137,11 +139,11 @@ public class IngestionTwoStepTest extends TestcontainersLifecycle {
 
     private void runIngestion(File ttlFile) {
         try {
-            Group selectedGroup = null;
+            List<Group> selectedGroup = new ArrayList<>();
+
             for(Group group : UserGroupManagementAPI.retrieveAllGroups()){
                 if(group.getName().equals("ALL")){
-                    selectedGroup = group;
-                    break;
+                    selectedGroup.add(group);
                 }
             }
             MetadataPopulator.startMetadataPopulation(

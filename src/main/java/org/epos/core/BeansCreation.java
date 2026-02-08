@@ -22,7 +22,7 @@ public class BeansCreation <T extends EPOSDataModelEntity> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BeansCreation.class);
 
-    public T getEPOSDataModelClass(String className, String uid, Group selectedGroup, String editorId){
+    public T getEPOSDataModelClass(String className, String uid, List<Group> selectedGroup, String editorId){
         try {
             Class clazz = Class.forName("org.epos.eposdatamodel."+className);
             Constructor[] ctor = clazz.getConstructors();
@@ -115,7 +115,7 @@ public class BeansCreation <T extends EPOSDataModelEntity> {
         }
     }
 
-    public void getEPOSDataModelPropertiesNode(EPOSDataModelEntity classObject, List<EPOSDataModelEntity> classes, Map<String, String> property, String propertyValue, Group selectedGroup, String editorId) {
+    public void getEPOSDataModelPropertiesNode(EPOSDataModelEntity classObject, List<EPOSDataModelEntity> classes, Map<String, String> property, String propertyValue, List<Group> selectedGroup, String editorId) {
 
         Class<?> propertyValueClass = propertyValue.getClass();
         String propertyName = property.get("property").substring(0, 1).toUpperCase() + property.get("property").substring(1);

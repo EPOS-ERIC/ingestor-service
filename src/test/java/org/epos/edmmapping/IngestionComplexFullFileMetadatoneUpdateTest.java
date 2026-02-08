@@ -16,6 +16,7 @@ import usermanagementapis.UserGroupManagementAPI;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -54,11 +55,11 @@ public class IngestionComplexFullFileMetadatoneUpdateTest extends Testcontainers
             throw new IllegalArgumentException("file not found!");
         }
 
-        Group selectedGroup = null;
+        List<Group> selectedGroup = new ArrayList<>();
 
         for(Group group : UserGroupManagementAPI.retrieveAllGroups()){
             if(group.getName().equals("ALL")){
-                selectedGroup = group;
+                selectedGroup.add(group);
             }
         }
 
@@ -171,11 +172,11 @@ public class IngestionComplexFullFileMetadatoneUpdateTest extends Testcontainers
             throw new IllegalArgumentException("file not found!");
         }
 
-        Group selectedGroup = null;
+        List<Group> selectedGroup = new ArrayList<>();
 
         for(Group group : UserGroupManagementAPI.retrieveAllGroups()){
             if(group.getName().equals("ALL")){
-                selectedGroup = group;
+                selectedGroup.add(group);
             }
         }
 

@@ -19,6 +19,7 @@ import usermanagementapis.UserGroupManagementAPI;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -59,10 +60,11 @@ public class IngestionDeferredResolutionTest extends TestcontainersLifecycle {
             throw new IllegalArgumentException("file not found!");
         }
 
-        Group selectedGroup = null;
-        for (Group group : UserGroupManagementAPI.retrieveAllGroups()) {
-            if (group.getName().equals("ALL")) {
-                selectedGroup = group;
+        List<Group> selectedGroup = new ArrayList<>();
+
+        for(Group group : UserGroupManagementAPI.retrieveAllGroups()){
+            if(group.getName().equals("ALL")){
+                selectedGroup.add(group);
             }
         }
 

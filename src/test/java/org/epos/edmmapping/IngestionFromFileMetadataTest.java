@@ -81,7 +81,7 @@ public class IngestionFromFileMetadataTest extends TestcontainersLifecycle {
 
 
         assertAll(
-                () -> assertEquals(9, categoryList.size()),
+                () -> assertEquals(10, categoryList.size()),
                 () -> assertEquals(1, categorySchemeList.size())
         );
     }

@@ -75,7 +75,7 @@ public class MetadataPopulator {
 		return model;
 	}
 
-    public static void retrievePlainValueFromInnerMethods(Model modelmapping,BeansCreation beansCreation, List<EPOSDataModelEntity> classes, Graph graph, String subject, EPOSDataModelEntity activeClass, Group selectedGroup, String editorId){
+    public static void retrievePlainValueFromInnerMethods(Model modelmapping,BeansCreation beansCreation, List<EPOSDataModelEntity> classes, Graph graph, String subject, EPOSDataModelEntity activeClass, List<Group> selectedGroup, String editorId){
         Map<String, String> prefixes = modelmapping.getNsPrefixMap();
 
         for (ExtendedIterator<Triple> it = graph.find(); it.hasNext(); ) {
@@ -111,7 +111,7 @@ public class MetadataPopulator {
     }
 
 
-    public static void exploreGraphAndCreateBeans(Model modelmapping, BeansCreation beansCreation, Graph graph, EPOSDataModelEntity activeClass, List<EPOSDataModelEntity> classes, List<String> uidDone, Group selectedGroup, String editorId) {
+    public static void exploreGraphAndCreateBeans(Model modelmapping, BeansCreation beansCreation, Graph graph, EPOSDataModelEntity activeClass, List<EPOSDataModelEntity> classes, List<String> uidDone, List<Group> selectedGroup, String editorId) {
         /** SET PREFIXES **/
         Map<String, String> prefixes = modelmapping.getNsPrefixMap();
 
@@ -161,7 +161,7 @@ public class MetadataPopulator {
         }
     }
 
-    private static void manageItemValue(EPOSDataModelEntity activeClass, List<EPOSDataModelEntity> classes, Map<String, String> itemValue, Node node, Group selectedGroup, String editorId) {
+    private static void manageItemValue(EPOSDataModelEntity activeClass, List<EPOSDataModelEntity> classes, Map<String, String> itemValue, Node node, List<Group> selectedGroup, String editorId) {
         //System.out.println("["+activeClass.getClass().getSimpleName()+"] "+node.toString()+" "+itemValue);
         if (node.isURI()) {
             beansCreation.getEPOSDataModelPropertiesNode(activeClass, classes, itemValue, node.toString(), selectedGroup, editorId);
@@ -185,7 +185,7 @@ public class MetadataPopulator {
     }
 
 	private static Map<String, LinkedEntity> populateMetadata(Model model, String inputMappingModel,
-			Group selectedGroup, StatusType status, String editorId) {
+			List<Group> selectedGroup, StatusType status, String editorId) {
 		/** RETRIEVE MAPPING MODEL AND MODEL FROM TTL **/
 		Map<String, LinkedEntity> returnMap = new HashMap<>();
 		Model modelmapping = retrieveModelMapping(inputMappingModel);
@@ -266,19 +266,20 @@ public class MetadataPopulator {
 
 		for (Map.Entry<String, LinkedEntity> uid : returnMap.entrySet()) {
 			if (selectedGroup != null) {
-				UserGroupManagementAPI.addMetadataElementToGroup(uid.getValue().getMetaId(), selectedGroup.getId());
+                for(Group selectedGroup1 : selectedGroup)
+				    UserGroupManagementAPI.addMetadataElementToGroup(uid.getValue().getMetaId(), selectedGroup1.getId());
 			}
 		}
 
 		return returnMap;
 	}
 
-    public static Map<String,LinkedEntity> startMetadataPopulation(String url, String inputMappingModel, Group selectedGroup, StatusType status, String editorId){
+    public static Map<String,LinkedEntity> startMetadataPopulation(String url, String inputMappingModel, List<Group> selectedGroup, StatusType status, String editorId){
 		Model model = retrieveMetadataModelFromTTL(url);
 		return populateMetadata(model, inputMappingModel, selectedGroup, status, editorId);
     }
 
-	public static Map<String, LinkedEntity> startMetadataPopulationFromContent(String ttlContent, String inputMappingModel, Group selectedGroup, StatusType status, String editorId) {
+	public static Map<String, LinkedEntity> startMetadataPopulationFromContent(String ttlContent, String inputMappingModel, List<Group> selectedGroup, StatusType status, String editorId) {
 		Model model = retrieveMetadataModelFromString(ttlContent);
 		return populateMetadata(model, inputMappingModel, selectedGroup, status, editorId);
 	}
