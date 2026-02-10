@@ -356,6 +356,12 @@ public class MetadataExporter {
 					LOGGER.debug("Retrieving entities for type: {}", entityType);
 					AbstractAPI api = AbstractAPI.retrieveAPI(entityType.name());
 
+					// Skip entity types that don't have an API implementation
+					if (api == null) {
+						LOGGER.debug("No API implementation for entity type: {}, skipping", entityType);
+						continue;
+					}
+
 					List<EPOSDataModelEntity> entities;
 					if (ids != null && !ids.isEmpty()) {
 						LOGGER.debug("Retrieving {} specific entities by IDs for type {}", ids.size(), entityType);
