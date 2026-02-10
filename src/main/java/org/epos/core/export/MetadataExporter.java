@@ -160,13 +160,13 @@ public class MetadataExporter {
 			List<EPOSDataModelEntity> rootEntities;
 			if (entityType != null) {
 				rootEntities = entities.stream()
-						.filter(e -> !e.getUid().startsWith("_:"))
+						.filter(e -> e.getUid() != null && !e.getUid().startsWith("_:"))
 						.filter(entity -> !(entity instanceof org.epos.eposdatamodel.IriTemplate))
 						.collect(Collectors.toList());
 			} else {
 				rootEntities = entities.stream()
 						.filter(entity -> !(entity instanceof org.epos.eposdatamodel.Element))
-						.filter(e -> !e.getUid().startsWith("_:"))
+						.filter(e -> e.getUid() != null && !e.getUid().startsWith("_:"))
 						.filter(entity -> !(entity instanceof org.epos.eposdatamodel.IriTemplate))
 						.collect(Collectors.toList());
 			}

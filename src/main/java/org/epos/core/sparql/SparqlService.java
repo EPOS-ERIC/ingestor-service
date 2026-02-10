@@ -26,13 +26,55 @@ public class SparqlService {
     private FusekiServer fusekiServer;
     private Map<EPOSVersion, Dataset> datasets = new HashMap<>();
     private EPOSVersion defaultVersion = EPOSVersion.V1;
+    private volatile boolean ready = false;
+    private volatile String initializationError = null;
 
     @PostConstruct
     public void init() {
         LOGGER.info("Initializing SPARQL service");
-        buildModel(EPOSVersion.V1);
-        buildModel(EPOSVersion.V3);
-        startFusekiServer();
+        try {
+            buildModel(EPOSVersion.V1);
+            buildModel(EPOSVersion.V3);
+            startFusekiServer();
+            ready = true;
+            LOGGER.info("SPARQL service initialized successfully");
+        } catch (Exception e) {
+            initializationError = e.getMessage();
+            LOGGER.error("SPARQL service initialization failed - service will start with empty models. Error: {}", e.getMessage());
+            // Initialize with empty datasets so the application can still start
+            initializeEmptyDatasets();
+        }
+    }
+
+    private void initializeEmptyDatasets() {
+        for (EPOSVersion version : EPOSVersion.values()) {
+            if (!datasets.containsKey(version)) {
+                Dataset emptyDataset = DatasetFactory.create(ModelFactory.createDefaultModel());
+                datasets.put(version, emptyDataset);
+                LOGGER.warn("Created empty dataset for version {}", version);
+            }
+        }
+        try {
+            startFusekiServer();
+        } catch (Exception e) {
+            LOGGER.error("Failed to start Fuseki server even with empty datasets", e);
+        }
+    }
+
+    /**
+     * Check if the SPARQL service is ready with populated data.
+     * @return true if the service initialized successfully with data, false otherwise
+     */
+    public boolean isReady() {
+        return ready;
+    }
+
+    /**
+     * Get the initialization error message if initialization failed.
+     * @return the error message, or null if initialization succeeded
+     */
+    public String getInitializationError() {
+        return initializationError;
     }
 
     @PreDestroy
@@ -43,7 +85,7 @@ public class SparqlService {
         }
     }
 
-    private void buildModel(EPOSVersion version) {
+    private boolean buildModel(EPOSVersion version) {
         LOGGER.info("Building RDF model for version {}", version);
         try {
             String rdfContent = MetadataExporter.exportToRDF(null, "turtle", null, version);
@@ -52,6 +94,7 @@ public class SparqlService {
             Dataset dataset = DatasetFactory.create(rdfModel);
             datasets.put(version, dataset);
             LOGGER.info("RDF model built for version {} with {} statements", version, rdfModel.size());
+            return true;
         } catch (Exception e) {
             LOGGER.error("Error building RDF model for version {}", version, e);
             throw new RuntimeException("Failed to build RDF model for version " + version, e);
@@ -72,9 +115,17 @@ public class SparqlService {
     @Scheduled(fixedRateString = "${sparql.refresh.rate:3600000}") // Refresh every hour
     public void refreshModel() {
         LOGGER.info("Refreshing RDF models");
-        buildModel(EPOSVersion.V1);
-        buildModel(EPOSVersion.V3);
-        startFusekiServer();
+        try {
+            buildModel(EPOSVersion.V1);
+            buildModel(EPOSVersion.V3);
+            startFusekiServer();
+            ready = true;
+            initializationError = null;
+            LOGGER.info("RDF models refreshed successfully");
+        } catch (Exception e) {
+            LOGGER.error("Failed to refresh RDF models: {}", e.getMessage());
+            // Keep the existing datasets if refresh fails
+        }
     }
 
     public Dataset getDataset(EPOSVersion version) {
