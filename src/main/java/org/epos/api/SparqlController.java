@@ -1,5 +1,6 @@
 package org.epos.api;
 
+import io.swagger.v3.oas.annotations.Operation;
 import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.Lang;
@@ -29,6 +30,7 @@ public class SparqlController {
     @Autowired
     private SparqlService sparqlService;
 
+    @Operation(summary = "SPARQL endpoint operation", description = "SPARQL endpoint to access data.", tags={ "Ontologies Management Service" })
     @PostMapping(consumes = "application/sparql-query", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> executeQuery(@RequestBody String queryString,
             @Parameter(in = ParameterIn.QUERY, description = "EPOS-DCAT-AP version (optional, default: V1)", required = false, schema = @Schema()) @RequestParam(value = "version", required = false, defaultValue = "V1") EPOSVersion version) {
