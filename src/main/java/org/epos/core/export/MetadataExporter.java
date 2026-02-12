@@ -9,7 +9,6 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -327,10 +326,9 @@ public class MetadataExporter {
 				entities = ids.stream()
 						.map(id -> {
 							LOGGER.debug("Retrieving entity with ID: {}", id);
-							// TODO: update this with retrievebyuidusingstatus (will be a list)
 							return (EPOSDataModelEntity) api.retrieveByUID(id);
 						})
-						.filter(Objects::nonNull)
+						.filter(MetadataExporter::isPublished)
 						.collect(Collectors.toList());
 				LOGGER.debug("Retrieved {} entities out of {} requested IDs", entities.size(), ids.size());
 			} else {
@@ -370,11 +368,11 @@ public class MetadataExporter {
 									LOGGER.debug("Retrieving entity with ID: {} for type {}", id, entityType);
 									return (EPOSDataModelEntity) api.retrieveByUID(id);
 								})
-								.filter(Objects::nonNull)
+								.filter(MetadataExporter::isPublished)
 								.collect(Collectors.toList());
 					} else {
 						LOGGER.debug("Retrieving all entities for type {}", entityType);
-						entities = (List<EPOSDataModelEntity>) api.retrieveAll();
+						entities = (List<EPOSDataModelEntity>) api.retrieveAllWithStatus(StatusType.PUBLISHED);
 						LOGGER.debug("Retrieved {} entities for type {}", entities.size(), entityType);
 					}
 
@@ -398,6 +396,9 @@ public class MetadataExporter {
 		Set<EPOSDataModelEntity> allEntities = new LinkedHashSet<>(startingEntities);
 		Set<String> visitedUids = new HashSet<>();
 		Queue<EPOSDataModelEntity> queue = new LinkedList<>();
+		Map<String, EPOSDataModelEntity> linkedEntityCache = new HashMap<>();
+		Map<EntityNames, AbstractAPI> apiCache = new HashMap<>();
+		Map<Class<?>, List<Method>> getterMethodsCache = new HashMap<>();
 
 		// Initialize with starting entities
 		for (EPOSDataModelEntity entity : startingEntities) {
@@ -415,44 +416,46 @@ public class MetadataExporter {
 				EPOSDataModelEntity currentEntity = queue.poll();
 				LOGGER.debug("Processing entity {} at depth {}", currentEntity.getUid(), currentDepth);
 
-				// Scan all getter methods for LinkedEntity properties
-				Method[] methods = currentEntity.getClass().getMethods();
-				for (Method method : methods) {
-					if (method.getName().startsWith("get") && method.getParameterCount() == 0 &&
-							!method.getName().equals("getClass") && !method.getName().equals("getUid")) {
+				List<Method> methods = getterMethodsCache.computeIfAbsent(currentEntity.getClass(), clazz ->
+						java.util.Arrays.stream(clazz.getMethods())
+								.filter(method -> method.getName().startsWith("get") && method.getParameterCount() == 0
+										&& !method.getName().equals("getClass") && !method.getName().equals("getUid"))
+								.collect(Collectors.toList()));
 
-						try {
-							Object value = method.invoke(currentEntity);
-							if (value != null) {
-								if (value instanceof LinkedEntity) {
-									EPOSDataModelEntity linkedEntity = resolveLinkedEntity((LinkedEntity) value);
-									if (linkedEntity != null && !visitedUids.contains(linkedEntity.getUid())) {
-										visitedUids.add(linkedEntity.getUid());
-										allEntities.add(linkedEntity);
-										queue.add(linkedEntity);
-										LOGGER.debug("Added linked entity: {}", linkedEntity.getUid());
-									}
-								} else if (value instanceof List) {
-									@SuppressWarnings("unchecked")
-									List<Object> list = (List<Object>) value;
-									for (Object item : list) {
-										if (item instanceof LinkedEntity) {
-											EPOSDataModelEntity linkedEntity = resolveLinkedEntity((LinkedEntity) item);
-											if (linkedEntity != null && !visitedUids.contains(linkedEntity.getUid())) {
-												visitedUids.add(linkedEntity.getUid());
-												allEntities.add(linkedEntity);
-												queue.add(linkedEntity);
-												LOGGER.debug("Added linked entity from list: {}",
-														linkedEntity.getUid());
-											}
+				for (Method method : methods) {
+					try {
+						Object value = method.invoke(currentEntity);
+						if (value != null) {
+							if (value instanceof LinkedEntity) {
+								EPOSDataModelEntity linkedEntity = resolveLinkedEntity((LinkedEntity) value,
+										linkedEntityCache, apiCache);
+								if (linkedEntity != null && !visitedUids.contains(linkedEntity.getUid())) {
+									visitedUids.add(linkedEntity.getUid());
+									allEntities.add(linkedEntity);
+									queue.add(linkedEntity);
+									LOGGER.debug("Added linked entity: {}", linkedEntity.getUid());
+								}
+							} else if (value instanceof List) {
+								@SuppressWarnings("unchecked")
+								List<Object> list = (List<Object>) value;
+								for (Object item : list) {
+									if (item instanceof LinkedEntity) {
+										EPOSDataModelEntity linkedEntity = resolveLinkedEntity((LinkedEntity) item,
+												linkedEntityCache, apiCache);
+										if (linkedEntity != null && !visitedUids.contains(linkedEntity.getUid())) {
+											visitedUids.add(linkedEntity.getUid());
+											allEntities.add(linkedEntity);
+											queue.add(linkedEntity);
+											LOGGER.debug("Added linked entity from list: {}",
+													linkedEntity.getUid());
 										}
 									}
 								}
 							}
-						} catch (Exception e) {
-							LOGGER.debug("Error invoking method {} on {}: {}", method.getName(),
-									currentEntity.getClass().getSimpleName(), e.getLocalizedMessage());
 						}
+					} catch (Exception e) {
+						LOGGER.debug("Error invoking method {} on {}: {}", method.getName(),
+								currentEntity.getClass().getSimpleName(), e.getLocalizedMessage());
 					}
 				}
 			}
@@ -465,24 +468,44 @@ public class MetadataExporter {
 		return new ArrayList<>(allEntities);
 	}
 
-	private static EPOSDataModelEntity resolveLinkedEntity(LinkedEntity linkedEntity) {
+	private static EPOSDataModelEntity resolveLinkedEntity(LinkedEntity linkedEntity,
+			Map<String, EPOSDataModelEntity> linkedEntityCache, Map<EntityNames, AbstractAPI> apiCache) {
 		try {
 			String entityTypeStr = linkedEntity.getEntityType();
-			if (entityTypeStr == null) {
-				LOGGER.warn("Linked entity has null entity type: {}", linkedEntity.getInstanceId());
+			String instanceId = linkedEntity.getInstanceId();
+			if (entityTypeStr == null || instanceId == null) {
+				LOGGER.warn("Linked entity has null type or instance id: {}", linkedEntity);
 				return null;
 			}
+
+			String cacheKey = entityTypeStr + ":" + instanceId;
+			if (linkedEntityCache.containsKey(cacheKey)) {
+				return linkedEntityCache.get(cacheKey);
+			}
+
 			EntityNames entityType = EntityNames.valueOf(entityTypeStr);
-			@SuppressWarnings("rawtypes")
-			AbstractAPI api = AbstractAPI.retrieveAPI(entityType.name());
-			EPOSDataModelEntity entity = (EPOSDataModelEntity) api.retrieve(linkedEntity.getInstanceId());
+			AbstractAPI api = apiCache.computeIfAbsent(entityType, type -> AbstractAPI.retrieveAPI(type.name()));
+			EPOSDataModelEntity entity = (EPOSDataModelEntity) api.retrieve(instanceId);
 			if (entity == null) {
 				LOGGER.warn("Linked entity not found: {} of type {}", linkedEntity.getInstanceId(), entityTypeStr);
+				linkedEntityCache.put(cacheKey, null);
+				return null;
 			}
+
+			if (!isPublished(entity)) {
+				linkedEntityCache.put(cacheKey, null);
+				return null;
+			}
+
+			linkedEntityCache.put(cacheKey, entity);
 			return entity;
 		} catch (Exception e) {
 			LOGGER.warn("Error resolving linked entity {}: {}", linkedEntity.getInstanceId(), e.getLocalizedMessage());
 			return null;
 		}
+	}
+
+	private static boolean isPublished(EPOSDataModelEntity entity) {
+		return entity != null && StatusType.PUBLISHED.equals(entity.getStatus());
 	}
 }
