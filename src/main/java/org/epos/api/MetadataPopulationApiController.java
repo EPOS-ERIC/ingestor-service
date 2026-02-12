@@ -65,8 +65,11 @@ public class MetadataPopulationApiController implements MetadataPopulationApi {
 
 		try {
 			metadataGroup = URLDecoder.decode(metadataGroup, StandardCharsets.UTF_8.name());
+			LOGGER.info("[Debugging] Decoded GROUP NAME: "+metadataGroup);
 		} catch (UnsupportedEncodingException e) {
-			LOGGER.error("[Error] Error decoding groupname {}", e.getLocalizedMessage());
+			LOGGER.error("[CRITICAL ERROR] Error decoding GROUP NAME {}", e.getLocalizedMessage());
+			IngestionResult result = new IngestionResult("ERROR", e.getLocalizedMessage(), path, new HashMap<>());
+			return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).body(result);
 		}
 
 		List<Group> selectedGroup = new ArrayList<>();
@@ -81,6 +84,8 @@ public class MetadataPopulationApiController implements MetadataPopulationApi {
 		if (selectedGroup.isEmpty()) {
 			selectedGroup.add(UserGroupManagementAPI.retrieveGroupByName("ALL"));
 		}
+
+		LOGGER.info("[Debugging] Selected GROUPS: "+selectedGroup);
 
 		boolean multiline = type.equals("single") ? false : true;
 		Map<String, LinkedEntity> finalIngestionResult = new HashMap<>();
