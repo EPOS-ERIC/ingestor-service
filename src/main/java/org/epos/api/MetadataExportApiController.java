@@ -29,11 +29,11 @@ public class MetadataExportApiController implements MetadataExportApi {
 
 	@RequestMapping(value = "/export", produces = { "text/turtle", "application/ld+json" }, method = RequestMethod.GET)
 	public ResponseEntity<String> metadataExport(
-			@Parameter(in = ParameterIn.QUERY, description = "entity type to export (optional - if not provided, exports all entity types)", required = false, schema = @Schema()) @RequestParam(value = "entityType", required = false) EntityNames entityType,
+			@Parameter(in = ParameterIn.QUERY, description = "entity type to export (optional - if not provided, exports all published entity types)", required = false, schema = @Schema()) @RequestParam(value = "entityType", required = false) EntityNames entityType,
 			@Parameter(in = ParameterIn.QUERY, description = "output format (optional, default: turtle)", required = false, schema = @Schema(allowableValues = {
 					"turtle",
 					"json-ld" })) @RequestParam(value = "format", required = false, defaultValue = "turtle") String format,
-			@Parameter(in = ParameterIn.QUERY, description = "specific entity IDs to export (optional)", required = false, schema = @Schema()) @RequestParam(value = "ids", required = false) List<String> ids,
+			@Parameter(in = ParameterIn.QUERY, description = "specific entity UIDs to export (optional, only published entities are included)", required = false, schema = @Schema()) @RequestParam(value = "ids", required = false) List<String> ids,
 			@Parameter(in = ParameterIn.QUERY, description = "EPOS-DCAT-AP version (optional, default: V1)", required = false, schema = @Schema()) @RequestParam(value = "version", required = false, defaultValue = "V1") EPOSVersion version) {
 
 		// Validation
