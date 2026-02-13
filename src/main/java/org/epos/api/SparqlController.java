@@ -35,6 +35,9 @@ public class SparqlController {
     public ResponseEntity<String> executeQuery(@RequestBody String queryString,
             @Parameter(in = ParameterIn.QUERY, description = "EPOS-DCAT-AP version (optional, default: V1)", required = false, schema = @Schema()) @RequestParam(value = "version", required = false, defaultValue = "V1") EPOSVersion version) {
         try {
+            if (version != EPOSVersion.V1) {
+                return ResponseEntity.badRequest().body("{\"error\": \"Unsupported EPOS-DCAT-AP version\", \"message\": \"Only V1 is supported by /api/sparql\"}");
+            }
             LOGGER.debug("Received SPARQL query: {} for version {}", queryString, version);
             Query query = QueryFactory.create(queryString);
             try (QueryExecution qexec = QueryExecutionFactory.create(query, sparqlService.getDataset(version))) {

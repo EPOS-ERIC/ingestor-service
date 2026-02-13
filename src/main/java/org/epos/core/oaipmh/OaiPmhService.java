@@ -453,7 +453,16 @@ public class OaiPmhService {
 	 * Get the dataset from the SPARQL service based on configured version.
 	 */
 	private Dataset getDataset() {
-		EPOSVersion version = EPOSVersion.valueOf(eposVersionString);
+		EPOSVersion version = EPOSVersion.V1;
+		try {
+			version = EPOSVersion.valueOf(eposVersionString);
+		} catch (IllegalArgumentException e) {
+			LOGGER.warn("[OAI-PMH] Unsupported configured EPOS version '{}', falling back to V1", eposVersionString);
+		}
+		if (version != EPOSVersion.V1) {
+			LOGGER.warn("[OAI-PMH] Configured EPOS version '{}' is not supported by SPARQL endpoint, falling back to V1", version);
+			version = EPOSVersion.V1;
+		}
 		return sparqlService.getDataset(version);
 	}
 

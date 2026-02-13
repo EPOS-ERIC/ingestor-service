@@ -100,6 +100,7 @@ public class MetadataExporter {
 			String format,
 			List<String> ids,
 			EPOSVersion version) {
+		long startedAt = System.currentTimeMillis();
 
 		if (format == null || format.trim().isEmpty()) {
 			format = "turtle";
@@ -215,6 +216,8 @@ public class MetadataExporter {
 			LOGGER.error("Error during export: {}", e.getLocalizedMessage());
 			e.printStackTrace();
 			throw new RuntimeException("Export failed", e);
+		} finally {
+			LOGGER.info("Export completed in {} ms", System.currentTimeMillis() - startedAt);
 		}
 	}
 

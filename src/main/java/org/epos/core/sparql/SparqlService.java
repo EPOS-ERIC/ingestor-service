@@ -34,7 +34,6 @@ public class SparqlService {
         LOGGER.info("Initializing SPARQL service");
         try {
             buildModel(EPOSVersion.V1);
-            buildModel(EPOSVersion.V3);
             startFusekiServer();
             ready = true;
             LOGGER.info("SPARQL service initialized successfully");
@@ -47,12 +46,10 @@ public class SparqlService {
     }
 
     private void initializeEmptyDatasets() {
-        for (EPOSVersion version : EPOSVersion.values()) {
-            if (!datasets.containsKey(version)) {
-                Dataset emptyDataset = DatasetFactory.create(ModelFactory.createDefaultModel());
-                datasets.put(version, emptyDataset);
-                LOGGER.warn("Created empty dataset for version {}", version);
-            }
+        if (!datasets.containsKey(defaultVersion)) {
+            Dataset emptyDataset = DatasetFactory.create(ModelFactory.createDefaultModel());
+            datasets.put(defaultVersion, emptyDataset);
+            LOGGER.warn("Created empty dataset for version {}", defaultVersion);
         }
         try {
             startFusekiServer();
@@ -117,7 +114,6 @@ public class SparqlService {
         LOGGER.info("Refreshing RDF models");
         try {
             buildModel(EPOSVersion.V1);
-            buildModel(EPOSVersion.V3);
             startFusekiServer();
             ready = true;
             initializationError = null;

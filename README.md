@@ -216,7 +216,7 @@ POST /api/sparql
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | Request Body | SPARQL | Yes | SPARQL query string |
-| `version` | Query | No | Dataset version: `V1` or `V3` |
+| `version` | Query | No | Dataset version: `V1` only (`V3` returns `400`) |
 
 #### Supported Query Types
 
@@ -392,7 +392,7 @@ The OAI-PMH implementation leverages the existing in-memory triplestore:
                                                           ▼
                                                  ┌─────────────────┐
                                                  │  RDF Dataset    │
-                                                 │  (V1 or V3)     │
+                                                 │     (V1)        │
                                                  └─────────────────┘
 ```
 
