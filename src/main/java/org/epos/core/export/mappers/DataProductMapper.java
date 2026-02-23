@@ -228,7 +228,6 @@ public class DataProductMapper implements EntityMapper<DataProduct> {
 			}
 		}
 
-		// TODO: check if this works
 		// prov:qualifiedAttribution, prov:Attribution, 0..1
 		if (entity.getQualifiedAttribution() != null && !entity.getQualifiedAttribution().isEmpty()) {
 			for (LinkedEntity linkedEntity : entity.getQualifiedAttribution()) {
@@ -244,6 +243,8 @@ public class DataProductMapper implements EntityMapper<DataProduct> {
 				}
 			}
 		}
+
+		RDFHelper.addURILiteral(model, subject, RDFConstants.DCT_ACCESS_RIGHT, entity.getAccessRight());
 
 		return subject;
 	}

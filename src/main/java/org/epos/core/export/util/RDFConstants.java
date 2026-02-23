@@ -105,6 +105,7 @@ public class RDFConstants {
         public static final Property DCT_HAS_PART = ResourceFactory.createProperty(DCT_NS, "hasPart");
         public static final Property DCT_IS_PART_OF = ResourceFactory.createProperty(DCT_NS, "isPartOf");
         public static final Property DCT_RELATION = ResourceFactory.createProperty(DCT_NS, "relation");
+        public static final Property DCT_ACCESS_RIGHT = ResourceFactory.createProperty(DCT_NS, "accessRight");
 
         // ADMS Properties
         public static final Property ADMS_IDENTIFIER = ResourceFactory.createProperty(ADMS_NS, "identifier");
