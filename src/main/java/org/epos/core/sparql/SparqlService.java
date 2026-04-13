@@ -1,6 +1,7 @@
 package org.epos.core.sparql;
 
 import org.apache.jena.fuseki.main.FusekiServer;
+import org.apache.jena.query.ARQ;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
@@ -9,6 +10,7 @@ import org.epos.core.export.EPOSVersion;
 import org.epos.core.export.MetadataExporter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -26,12 +28,15 @@ public class SparqlService {
     private FusekiServer fusekiServer;
     private Map<EPOSVersion, Dataset> datasets = new HashMap<>();
     private EPOSVersion defaultVersion = EPOSVersion.V1;
+    @Value("${sparql.federated.service.enabled:false}")
+    private boolean federatedServiceEnabled;
     private volatile boolean ready = false;
     private volatile String initializationError = null;
 
     @PostConstruct
     public void init() {
         LOGGER.info("Initializing SPARQL service");
+        configureFederatedSparqlQueries();
         try {
             buildModel(EPOSVersion.V1);
             startFusekiServer();
@@ -48,6 +53,7 @@ public class SparqlService {
     private void initializeEmptyDatasets() {
         if (!datasets.containsKey(defaultVersion)) {
             Dataset emptyDataset = DatasetFactory.create(ModelFactory.createDefaultModel());
+            configureDatasetFederatedSparqlQueries(emptyDataset);
             datasets.put(defaultVersion, emptyDataset);
             LOGGER.warn("Created empty dataset for version {}", defaultVersion);
         }
@@ -89,6 +95,7 @@ public class SparqlService {
             Model rdfModel = ModelFactory.createDefaultModel();
             rdfModel.read(new java.io.StringReader(rdfContent), null, "TURTLE");
             Dataset dataset = DatasetFactory.create(rdfModel);
+            configureDatasetFederatedSparqlQueries(dataset);
             datasets.put(version, dataset);
             LOGGER.info("RDF model built for version {} with {} statements", version, rdfModel.size());
             return true;
@@ -96,6 +103,26 @@ public class SparqlService {
             LOGGER.error("Error building RDF model for version {}", version, e);
             throw new RuntimeException("Failed to build RDF model for version " + version, e);
         }
+    }
+
+    private void configureFederatedSparqlQueries() {
+        ARQ.globalServiceAllowed = federatedServiceEnabled;
+        ARQ.allowServiceDefault = federatedServiceEnabled;
+        if (federatedServiceEnabled) {
+            ARQ.setTrue(ARQ.httpServiceAllowed);
+            LOGGER.info("Federated SPARQL SERVICE execution is enabled");
+            return;
+        }
+        ARQ.setFalse(ARQ.httpServiceAllowed);
+        LOGGER.info("Federated SPARQL SERVICE execution is disabled");
+    }
+
+    private void configureDatasetFederatedSparqlQueries(Dataset dataset) {
+        if (federatedServiceEnabled) {
+            dataset.getContext().setTrue(ARQ.httpServiceAllowed);
+            return;
+        }
+        dataset.getContext().setFalse(ARQ.httpServiceAllowed);
     }
 
     private void startFusekiServer() {
