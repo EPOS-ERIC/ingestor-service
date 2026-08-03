@@ -23,12 +23,11 @@ public class CategoryMapper implements EntityMapper<Category> {
 	@Override
 	public Resource exportToV1(Category entity, Model model, Map<String, EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
 		// In v1, description and name are mandatory (1..1)
-		if (entity.getDescription() == null ||
-				entity.getDescription().trim().isEmpty() ||
-				entity.getName() == null ||
-				entity.getName().trim().isEmpty()) {
-			LOGGER.warn("Entity {} not compliant with v1 model: missing required fields (description or name)", entity.getUid());
-			return null;
+		if (entity.getDescription() == null || entity.getDescription().trim().isEmpty()) {
+			LOGGER.warn("Entity {} not compliant with v1 model: missing required field (description)", entity.getUid());
+		}
+		if (entity.getName() == null || entity.getName().trim().isEmpty()) {
+			LOGGER.warn("Entity {} not compliant with v1 model: missing required field (name)", entity.getUid());
 		}
 
 		if (resourceCache.containsKey(entity.getUid())) {
@@ -70,12 +69,11 @@ public class CategoryMapper implements EntityMapper<Category> {
 	@Override
 	public Resource exportToV3(Category entity, Model model, Map<String, EPOSDataModelEntity> entityMap, Map<String, Resource> resourceCache) {
 		// In v3, description and name are mandatory (1..1)
-		if (entity.getDescription() == null ||
-				entity.getDescription().trim().isEmpty() ||
-				entity.getName() == null ||
-				entity.getName().trim().isEmpty()) {
-			LOGGER.warn("Entity {} not compliant with v3 model: missing required fields (description or name)", entity.getUid());
-			return null;
+		if (entity.getDescription() == null || entity.getDescription().trim().isEmpty()) {
+			LOGGER.warn("Entity {} not compliant with v1 model: missing required field (description)", entity.getUid());
+		}
+		if (entity.getName() == null || entity.getName().trim().isEmpty()) {
+			LOGGER.warn("Entity {} not compliant with v1 model: missing required field (name)", entity.getUid());
 		}
 
 		if (resourceCache.containsKey(entity.getUid())) {
