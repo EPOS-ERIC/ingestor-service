@@ -18,6 +18,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Schema;
 import metadataapis.EntityNames;
+import model.StatusType;
 
 @RestController
 public class MetadataExportApiController implements MetadataExportApi {
@@ -33,7 +34,8 @@ public class MetadataExportApiController implements MetadataExportApi {
 			@Parameter(in = ParameterIn.QUERY, description = "output format (optional, default: turtle)", required = false, schema = @Schema(allowableValues = {
 					"turtle",
 					"json-ld" })) @RequestParam(value = "format", required = false, defaultValue = "turtle") String format,
-			@Parameter(in = ParameterIn.QUERY, description = "specific entity UIDs to export (optional, only published entities are included)", required = false, schema = @Schema()) @RequestParam(value = "ids", required = false) List<String> ids,
+			@Parameter(in = ParameterIn.QUERY, description = "specific entity UIDs to export (optional, only entities with the selected status are included)", required = false, schema = @Schema()) @RequestParam(value = "ids", required = false) List<String> ids,
+			@Parameter(in = ParameterIn.QUERY, description = "status of entities to export (optional, default: PUBLISHED)", required = false, schema = @Schema()) @RequestParam(value = "status", required = false, defaultValue = "PUBLISHED") StatusType status,
 			@Parameter(in = ParameterIn.QUERY, description = "EPOS-DCAT-AP version (optional, default: V1)", required = false, schema = @Schema()) @RequestParam(value = "version", required = false, defaultValue = "V1") EPOSVersion version) {
 
 		// Validation
@@ -45,9 +47,9 @@ public class MetadataExportApiController implements MetadataExportApi {
 
 		try {
 			LOGGER.info(
-					"[Export initialized] Exporting {} entities in format: {}, version: {}, IDs: {}",
-					entityType != null ? entityType : "all types", format, version, ids != null ? ids : "all");
-			String rdfOutput = MetadataExporter.exportToRDF(entityType, format, ids, version);
+					"[Export initialized] Exporting {} entities in format: {}, version: {}, status: {}, IDs: {}",
+					entityType != null ? entityType : "all types", format, version, status, ids != null ? ids : "all");
+			String rdfOutput = MetadataExporter.exportToRDF(entityType, format, ids, status, version);
 			LOGGER.info("[Export finished] Successfully exported entities to {} characters of {} content",
 					rdfOutput != null ? rdfOutput.length() : 0, format);
 

@@ -184,6 +184,7 @@ GET /export
 | `entityType` | Query | No | Entity type to export (e.g., `DATAPRODUCT`, `DISTRIBUTION`) |
 | `format` | Query | No | Output format: `turtle` (default) or `json-ld` |
 | `ids` | Query | No | Specific entity IDs to export (requires `entityType`) |
+| `status` | Query | No | Entity status to export (default: `PUBLISHED`) |
 | `version` | Query | No | EPOS-DCAT-AP version: `V1` (default) or `V3` |
 
 #### Example
@@ -197,6 +198,9 @@ curl "http://localhost:8080/api/ingestor-service/v1/export?entityType=DATAPRODUC
 
 # Export specific entities by ID
 curl "http://localhost:8080/api/ingestor-service/v1/export?entityType=DATAPRODUCT&ids=https://example.org/dataset/001,https://example.org/dataset/002"
+
+# Export draft entities
+curl "http://localhost:8080/api/ingestor-service/v1/export?status=DRAFT"
 ```
 
 ---

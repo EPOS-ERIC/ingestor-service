@@ -10,6 +10,7 @@ import org.epos.core.export.EPOSVersion;
 import org.epos.core.export.MetadataExporter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import model.StatusType;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -91,7 +92,7 @@ public class SparqlService {
     private boolean buildModel(EPOSVersion version) {
         LOGGER.info("Building RDF model for version {}", version);
         try {
-            String rdfContent = MetadataExporter.exportToRDF(null, "turtle", null, version);
+            String rdfContent = MetadataExporter.exportToRDF(null, "turtle", null, StatusType.PUBLISHED, version);
             Model rdfModel = ModelFactory.createDefaultModel();
             rdfModel.read(new java.io.StringReader(rdfContent), null, "TURTLE");
             Dataset dataset = DatasetFactory.create(rdfModel);

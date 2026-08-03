@@ -44,7 +44,6 @@ import org.epos.core.export.mappers.QuantitativeValueMapper;
 import org.epos.core.export.mappers.SoftwareApplicationMapper;
 import org.epos.core.export.mappers.SoftwareSourceCodeMapper;
 import org.epos.core.export.mappers.WebServiceMapper;
-import org.epos.core.export.EPOSVersion;
 import org.epos.eposdatamodel.EPOSDataModelEntity;
 import org.epos.eposdatamodel.LinkedEntity;
 import org.slf4j.Logger;
@@ -92,18 +91,24 @@ public class MetadataExporter {
 	 * @param entityType The type of entities to export (null for all types)
 	 * @param format     The output format ("turtle" or "json-ld")
 	 * @param ids        Specific entity IDs to export (null for all)
-	 * @param version    The EPOS-DCAT-AP version (default V3)
+	 * @param status     The status of entities to export (default PUBLISHED)
+	 * @param version    The EPOS-DCAT-AP version (default V1)
 	 * @return RDF content as string
 	 */
 	public static String exportToRDF(
 			EntityNames entityType,
 			String format,
 			List<String> ids,
+			StatusType status,
 			EPOSVersion version) {
 		long startedAt = System.currentTimeMillis();
 
 		if (format == null || format.trim().isEmpty()) {
 			format = "turtle";
+		}
+
+		if (status == null) {
+			status = StatusType.PUBLISHED;
 		}
 
 		if (!format.matches("(?i)(turtle|json-ld)")) {
@@ -119,16 +124,16 @@ public class MetadataExporter {
 		}
 
 		try {
-			LOGGER.info("Starting new export for entity type '{}' in format '{}' and version '{}'",
-					entityType != null ? entityType : "all types", format, version);
+			LOGGER.info("Starting new export for entity type '{}' in format '{}', status '{}' and version '{}'",
+					entityType != null ? entityType : "all types", format, status, version);
 
 			// 1. Retrieve entities from database
 			List<EPOSDataModelEntity> entities;
 			if (entityType != null) {
-				entities = retrieveEntities(entityType, ids);
+				entities = retrieveEntities(entityType, ids, status);
 				LOGGER.debug("Retrieved {} entities of type '{}' from database", entities.size(), entityType);
 			} else {
-				entities = retrieveAllEntities(ids);
+				entities = retrieveAllEntities(ids, status);
 				LOGGER.debug("Retrieved {} entities from all types from database", entities.size());
 			}
 
@@ -141,7 +146,7 @@ public class MetadataExporter {
 
 			// 2. Build entity map
 			if (entityType != null) {
-				entities = collectAllLinkedEntities(entities);
+				entities = collectAllLinkedEntities(entities, status);
 				LOGGER.debug("After collecting linked entities: {} total entities", entities.size());
 			}
 
@@ -318,7 +323,7 @@ public class MetadataExporter {
 		return filteredModel;
 	}
 
-	private static List<EPOSDataModelEntity> retrieveEntities(EntityNames entityType, List<String> ids) {
+	private static List<EPOSDataModelEntity> retrieveEntities(EntityNames entityType, List<String> ids, StatusType status) {
 		try {
 			LOGGER.debug("Retrieving API for entity type '{}'", entityType.name());
 			AbstractAPI api = AbstractAPI.retrieveAPI(entityType.name());
@@ -331,12 +336,12 @@ public class MetadataExporter {
 							LOGGER.debug("Retrieving entity with ID: {}", id);
 							return (EPOSDataModelEntity) api.retrieveByUID(id);
 						})
-						.filter(MetadataExporter::isPublished)
+					.filter(entity -> hasStatus(entity, status))
 						.collect(Collectors.toList());
 				LOGGER.debug("Retrieved {} entities out of {} requested IDs", entities.size(), ids.size());
 			} else {
 				LOGGER.debug("Retrieving all entities of type '{}'", entityType);
-				entities = (List<EPOSDataModelEntity>) api.retrieveAllWithStatus(StatusType.PUBLISHED);
+				entities = (List<EPOSDataModelEntity>) api.retrieveAllWithStatus(status);
 				LOGGER.debug("Retrieved {} entities from retrieveAll()", entities.size());
 			}
 
@@ -348,7 +353,7 @@ public class MetadataExporter {
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private static List<EPOSDataModelEntity> retrieveAllEntities(List<String> ids) {
+	private static List<EPOSDataModelEntity> retrieveAllEntities(List<String> ids, StatusType status) {
 		try {
 			List<EPOSDataModelEntity> allEntities = new ArrayList<>();
 
@@ -371,11 +376,11 @@ public class MetadataExporter {
 									LOGGER.debug("Retrieving entity with ID: {} for type {}", id, entityType);
 									return (EPOSDataModelEntity) api.retrieveByUID(id);
 								})
-								.filter(MetadataExporter::isPublished)
+								.filter(entity -> hasStatus(entity, status))
 								.collect(Collectors.toList());
 					} else {
 						LOGGER.debug("Retrieving all entities for type {}", entityType);
-						entities = (List<EPOSDataModelEntity>) api.retrieveAllWithStatus(StatusType.PUBLISHED);
+						entities = (List<EPOSDataModelEntity>) api.retrieveAllWithStatus(status);
 						LOGGER.debug("Retrieved {} entities for type {}", entities.size(), entityType);
 					}
 
@@ -395,7 +400,8 @@ public class MetadataExporter {
 	private static final int MAX_DEPTH = 20;
 	private static final int MAX_ENTITIES = 1000;
 
-	private static List<EPOSDataModelEntity> collectAllLinkedEntities(List<EPOSDataModelEntity> startingEntities) {
+	private static List<EPOSDataModelEntity> collectAllLinkedEntities(List<EPOSDataModelEntity> startingEntities,
+			StatusType status) {
 		Set<EPOSDataModelEntity> allEntities = new LinkedHashSet<>(startingEntities);
 		Set<String> visitedUids = new HashSet<>();
 		Queue<EPOSDataModelEntity> queue = new LinkedList<>();
@@ -431,7 +437,7 @@ public class MetadataExporter {
 						if (value != null) {
 							if (value instanceof LinkedEntity) {
 								EPOSDataModelEntity linkedEntity = resolveLinkedEntity((LinkedEntity) value,
-										linkedEntityCache, apiCache);
+										linkedEntityCache, apiCache, status);
 								if (linkedEntity != null && !visitedUids.contains(linkedEntity.getUid())) {
 									visitedUids.add(linkedEntity.getUid());
 									allEntities.add(linkedEntity);
@@ -444,7 +450,7 @@ public class MetadataExporter {
 								for (Object item : list) {
 									if (item instanceof LinkedEntity) {
 										EPOSDataModelEntity linkedEntity = resolveLinkedEntity((LinkedEntity) item,
-												linkedEntityCache, apiCache);
+												linkedEntityCache, apiCache, status);
 										if (linkedEntity != null && !visitedUids.contains(linkedEntity.getUid())) {
 											visitedUids.add(linkedEntity.getUid());
 											allEntities.add(linkedEntity);
@@ -472,7 +478,8 @@ public class MetadataExporter {
 	}
 
 	private static EPOSDataModelEntity resolveLinkedEntity(LinkedEntity linkedEntity,
-			Map<String, EPOSDataModelEntity> linkedEntityCache, Map<EntityNames, AbstractAPI> apiCache) {
+			Map<String, EPOSDataModelEntity> linkedEntityCache, Map<EntityNames, AbstractAPI> apiCache,
+			StatusType status) {
 		try {
 			String entityTypeStr = linkedEntity.getEntityType();
 			String instanceId = linkedEntity.getInstanceId();
@@ -495,7 +502,7 @@ public class MetadataExporter {
 				return null;
 			}
 
-			if (!isPublished(entity)) {
+			if (!hasStatus(entity, status)) {
 				linkedEntityCache.put(cacheKey, null);
 				return null;
 			}
@@ -508,7 +515,7 @@ public class MetadataExporter {
 		}
 	}
 
-	private static boolean isPublished(EPOSDataModelEntity entity) {
-		return entity != null && StatusType.PUBLISHED.equals(entity.getStatus());
+	private static boolean hasStatus(EPOSDataModelEntity entity, StatusType status) {
+		return entity != null && status.equals(entity.getStatus());
 	}
 }
